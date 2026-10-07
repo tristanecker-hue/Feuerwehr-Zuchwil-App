@@ -1,8 +1,8 @@
-const APP_VERSION = "1.0";
+const APP_VERSION = "1.1";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
-let state = { mod: null, tab: "sum", ch: null, cf: null };
+let state = { mod: null, tab: "sum", ch: null, cf: null, lc: null };
 let prog = {};
 try { prog = JSON.parse(localStorage.getItem("fwz-progress") || "{}"); } catch (e) { prog = {}; }
 if (prog.einsatz && !prog.einsatz.v2) prog.einsatz = { known: [], best: null, v2: 1 };
@@ -114,19 +114,20 @@ function home() {
 }
 
 /* ---------- Reglement ---------- */
-function openMod(id, tab) { state.ch = null; state.cf = null; state.mod = id; state.tab = tab || "sum"; renderMod(); window.scrollTo(0, 0); }
+function openMod(id, tab) { state.ch = null; state.cf = null; state.lc = null; state.mod = id; state.tab = tab || "sum"; renderMod(); window.scrollTo(0, 0); }
 function renderMod() {
   const m = getMod(state.mod); backBtn.hidden = false;
   app.innerHTML = `
     <section class="head"><h1>${esc(m.title)}</h1><div class="ver">${esc(m.ver)}</div></section>
     <div class="tabs" role="tablist">
-      ${[["sum", "Zusammenfassung"], ["cards", "Lernkarten"], ["quiz", "Quiz"]].map(([k, l]) => `<button role="tab" data-tab="${k}" aria-selected="${state.tab === k}">${l}</button>`).join("")}
+      ${[["sum", "Zusammenfassung"], ["cards", "Lernkarten"], ["quiz", "Quiz"], ["les", "Lektionen"]].map(([k, l]) => `<button role="tab" data-tab="${k}" aria-selected="${state.tab === k}">${l}</button>`).join("")}
     </div>
     <div id="body"></div>`;
-  app.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => { state.tab = b.dataset.tab; renderMod(); }));
+  app.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => { state.tab = b.dataset.tab; state.lc = null; renderMod(); }));
   const body = document.getElementById("body");
   if (state.tab === "sum") summary(m, body);
   else if (state.tab === "cards") cards(m, body);
+  else if (state.tab === "les") lektionen(m, body);
   else quiz(m, body);
 }
 const CH = {
@@ -292,7 +293,86 @@ function quiz(m, el) {
   draw();
 }
 
-backBtn.addEventListener("click", () => { if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod) home(); else start(); });
+
+/* ---------- Lektionen (PDFs je Kapitel, lokal im Browser gespeichert) ---------- */
+const LDB = {
+  db: null,
+  open() {
+    if (this.db) return Promise.resolve(this.db);
+    return new Promise((res, rej) => {
+      const r = indexedDB.open("fwz-lektionen", 1);
+      r.onupgradeneeded = () => r.result.createObjectStore("files", { keyPath: "id", autoIncrement: true });
+      r.onsuccess = () => { this.db = r.result; res(r.result); };
+      r.onerror = () => rej(r.error);
+    });
+  },
+  async tx(mode, fn) {
+    const db = await this.open();
+    return new Promise((res, rej) => { const t = db.transaction("files", mode), s = t.objectStore("files"); const q = fn(s); t.oncomplete = () => res(q && q.result); t.onerror = () => rej(t.error); });
+  },
+  all() { return this.tx("readonly", s => s.getAll()); },
+  add(rec) { return this.tx("readwrite", s => s.add(rec)); },
+  del(id) { return this.tx("readwrite", s => s.delete(id)); }
+};
+function chaptersOf(m) {
+  const seen = [];
+  m.sections.forEach(s => { if (s.g && /^\d+ /.test(s.g) && !seen.includes(s.g)) seen.push(s.g); });
+  return seen.map(g => ({ g, k: g.split(" ")[0], n: g.replace(/^\d+ /, "") }));
+}
+function fmtSize(b) { return b > 1048576 ? (b / 1048576).toFixed(1).replace(".", ",") + " MB" : Math.max(1, Math.round(b / 1024)) + " KB"; }
+async function lektionen(m, el) {
+  const chs = chaptersOf(m);
+  let files = [];
+  try { files = (await LDB.all()).filter(f => f.mod === m.id); } catch (e) { el.innerHTML = '<div class="note">Der Speicher im Browser ist nicht verfügbar (z. B. im privaten Modus). Lektionen können hier nicht abgelegt werden.</div>'; return; }
+  if (!state.lc) {
+    el.innerHTML = '<div class="note">Lege hier PDF-Lektionen pro Kapitel ab. Sie bleiben auf diesem Gerät gespeichert und lassen sich teilen und drucken.</div><div class="grid">' + chs.map(c => {
+      const n = files.filter(f => f.ch === c.k).length;
+      return `<button class="tile chtile" data-k="${c.k}"><span class="num">Kapitel ${c.k}</span><h2>${esc(c.n)}</h2><div class="facts"><span>${n === 0 ? "Noch keine PDFs" : n + (n === 1 ? " PDF" : " PDFs")}</span></div></button>`;
+    }).join("") + "</div>";
+    el.querySelectorAll(".chtile").forEach(b => b.addEventListener("click", () => { state.lc = b.dataset.k; renderMod(); window.scrollTo(0, 0); }));
+    return;
+  }
+  const c = chs.find(x => x.k === state.lc) || chs[0];
+  const mine = files.filter(f => f.ch === c.k).sort((a, b) => b.added - a.added);
+  el.innerHTML = `<div class="banner"><h2>Kapitel ${c.k} – ${esc(c.n)}</h2><p>Lektionen als PDF</p></div>
+    <div class="lesbar"><label class="btn primary lesup">PDF hinzufügen<input type="file" id="lfile" accept="application/pdf,.pdf" multiple hidden></label></div>
+    <div id="lmsg" class="sinfo" role="status"></div>
+    <div class="sres">${mine.length ? mine.map(f => `<div class="hit les" data-id="${f.id}"><h3>${esc(f.name)}</h3><p>${fmtSize(f.size)} · ${new Date(f.added).toLocaleDateString("de-CH")}</p>
+      <div class="lesact"><button class="btn" data-a="open">Öffnen</button><button class="btn" data-a="share">Teilen</button><button class="btn" data-a="print">Drucken</button><button class="btn ghost" data-a="del">Löschen</button></div></div>`).join("") : '<p class="sinfo">Noch keine PDFs in diesem Kapitel.</p>'}</div>`;
+  const msg = document.getElementById("lmsg");
+  document.getElementById("lfile").addEventListener("change", async e => {
+    const list = [...e.target.files]; let ok = 0;
+    for (const f of list) {
+      if (!/pdf$/i.test(f.name) && f.type !== "application/pdf") { msg.textContent = "«" + f.name + "» ist kein PDF."; continue; }
+      try { await LDB.add({ mod: m.id, ch: c.k, name: f.name, size: f.size, added: Date.now(), blob: f }); ok++; } catch (err) { msg.textContent = "Speichern nicht möglich: " + f.name; }
+    }
+    if (ok) renderMod();
+  });
+  el.querySelectorAll(".les").forEach(row => {
+    const f = mine.find(x => String(x.id) === row.dataset.id);
+    row.querySelectorAll("button").forEach(b => b.addEventListener("click", async () => {
+      const a = b.dataset.a, file = new File([f.blob], f.name, { type: "application/pdf" });
+      if (a === "open") { const u = URL.createObjectURL(file); const w = window.open(u, "_blank"); if (!w) location.href = u; setTimeout(() => URL.revokeObjectURL(u), 60000); }
+      else if (a === "share") {
+        try { if (navigator.canShare && navigator.canShare({ files: [file] })) await navigator.share({ files: [file], title: f.name }); else msg.textContent = "Teilen wird von diesem Gerät nicht unterstützt. Nutze «Öffnen» und dort das Teilen-Symbol."; }
+        catch (err) { if (err && err.name !== "AbortError") msg.textContent = "Teilen nicht möglich."; }
+      }
+      else if (a === "print") {
+        const u = URL.createObjectURL(file), fr = document.createElement("iframe");
+        fr.style.cssText = "position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0";
+        fr.src = u; document.body.appendChild(fr);
+        fr.onload = () => { try { fr.contentWindow.focus(); fr.contentWindow.print(); } catch (err) { window.open(u, "_blank"); } setTimeout(() => { fr.remove(); URL.revokeObjectURL(u); }, 60000); };
+        msg.textContent = "Falls kein Druckfenster erscheint: «Öffnen» wählen und dort drucken.";
+      }
+      else if (a === "del") {
+        if (b.dataset.sure) { await LDB.del(f.id); renderMod(); }
+        else { b.dataset.sure = "1"; b.textContent = "Wirklich löschen?"; setTimeout(() => { if (b.isConnected) { delete b.dataset.sure; b.textContent = "Löschen"; } }, 4000); }
+      }
+    }));
+  });
+}
+
+backBtn.addEventListener("click", () => { if (state.mod && state.tab === "les" && state.lc) { state.lc = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod) home(); else start(); });
 start();
 
 if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {
