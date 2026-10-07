@@ -168,3 +168,28 @@ h3.zh { margin-top: 24px; }
 .mu { color: var(--muted); font-size: .9rem; }
 .zt.sch td:first-child { width: 6.5em; white-space: nowrap; }
 .zt tr.mute td { color: var(--muted); }
+
+/* Musterlektion */
+.lek{background:#fff;color:#111;border-radius:12px;padding:14px;margin:10px 0;font-size:.95rem}
+.lek .lh{display:flex;justify-content:space-between;gap:10px;border-bottom:2px solid #d22;padding-bottom:8px;margin-bottom:10px}
+.lek .ln{text-align:right}
+.lek dl.lm{display:grid;grid-template-columns:max-content 1fr;gap:6px 12px;margin:0 0 12px}
+.lek dt{font-weight:700}.lek dd{margin:0}
+.lek ul{margin:0;padding-left:0;list-style:none}
+.lek ul.lkc li:before{content:"✓ ";}.lek ul.lkb li:before{content:"☐ ";}.lek ul.lkz li:before{content:"– ";}
+.lek .ztw{margin:0}
+.lek table.la{width:100%;border-collapse:collapse;color:#111}
+.lek table.la th,.lek table.la td{border:1px solid #444;padding:6px;vertical-align:top;text-align:left}
+.lek table.la th{background:#bfbfbf}
+.lek table.la p{margin:4px 0}
+.lek table.la td:first-child{white-space:nowrap}
+@media(max-width:560px){.lek dl.lm{grid-template-columns:1fr}.lek dt{margin-top:4px}}
+@media print{body.lekprint .top,body.lekprint .back,body.lekprint .zh,body.lekprint .note,body.lekprint .banner,body.lekprint .row,body.lekprint .chklist,body.lekprint .fld,body.lekprint .chips,body.lekprint #dr,body.lekprint #sx,body.lekprint .tabs{display:none!important}body.lekprint{background:#fff}}
+.lek table.la td,.lek table.la tbody tr{background:#fff!important;color:#111!important;font-size:.9rem}
+.lek table.la th{color:#111!important;background:#bfbfbf!important;font-size:.9rem}
+.lek table.la{table-layout:auto;min-width:0}
+.lek table.la th:first-child,.lek table.la td:first-child{width:2.6em;padding-left:4px;padding-right:4px}
+.lek table.la th:last-child,.lek table.la td:last-child{width:5.5em}
+.lek table.la td{overflow-wrap:anywhere;hyphens:auto}
+.lek .ztw{overflow:visible}
+.lek table.la th:last-child,.lek table.la td:last-child{width:6.8em;overflow-wrap:normal;hyphens:manual}
