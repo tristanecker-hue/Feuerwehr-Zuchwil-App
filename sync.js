@@ -1,16 +1,17 @@
-/* Synchronisation über Firebase (gleiches Projekt und gleiche Anmeldung wie die Atemschutz-App) */
+/* Synchronisation über Firebase (eigenes Projekt, eigene Benutzer). Ohne Konfiguration bleibt alles lokal. */
 const FWZ = (function () {
   const CFG = {
-    apiKey: "AIzaSyBh9I_HgsJ-Ck5l8O77qu2BFTkAkJT_iMo",
-    authDomain: "atemschutz-zuchwil.firebaseapp.com",
-    projectId: "atemschutz-zuchwil",
-    storageBucket: "atemschutz-zuchwil.firebasestorage.app",
-    messagingSenderId: "786967409105",
-    appId: "1:786967409105:web:6c859e2f7635f3c1e470f0"
+    // Hier die Firebase-Konfiguration des neuen, eigenen Projekts eintragen
+    apiKey: "",
+    authDomain: "",
+    projectId: "",
+    storageBucket: "",
+    messagingSenderId: "",
+    appId: ""
   };
-  const DOMAIN = "atemschutz-zuchwil.app", FLAG = "fwz-sync", PART = 512 * 1024, MAXSIZE = 8 * 1024 * 1024;
+  const DOMAIN = "feuerwehr-zuchwil-app.ch", FLAG = "fwz-sync", PART = 512 * 1024, MAXSIZE = 8 * 1024 * 1024;
   let ready = null, listeners = [];
-  const api = { user: null, MAXSIZE };
+  const api = { user: null, MAXSIZE, enabled: !!CFG.apiKey };
   const emit = () => listeners.forEach(f => { try { f(api.user); } catch (e) {} });
   const load = src => new Promise((res, rej) => { const s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = () => rej(new Error("Firebase konnte nicht geladen werden (offline?)")); document.head.appendChild(s); });
   function init() {
@@ -66,6 +67,7 @@ const FWZ = (function () {
     await db().collection("fwz_lessons").doc(f.id).delete();
     for (let i = 0; i < f.parts; i++) await db().collection("fwz_parts").doc(f.id + "_" + i).delete();
   };
+  if (!api.enabled) { api.init = () => Promise.reject(new Error("Synchronisation nicht eingerichtet.")); return api; }
   try { if (localStorage.getItem(FLAG) === "1" && navigator.onLine) init().catch(() => {}); } catch (e) {}
   return api;
 })();

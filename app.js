@@ -121,7 +121,7 @@ function home() {
         <div class="facts"><span>${k} von ${n} Karten gewusst</span><span>${best === null ? "Quiz offen" : "Quiz-Bestwert " + best + "/" + m.quiz.length}</span></div>
       </button>`;
     }).join("")}</div>
-    <div class="syncline" id="syncline">${FWZ.user ? `Synchronisiert als <b>${esc(FWZ.label())}</b> · <button class="linkbtn" id="so">Abmelden</button>` : `Nicht angemeldet. Fortschritt und Lektionen bleiben nur auf diesem Gerät. <button class="linkbtn" id="si">Anmelden</button>`}</div>
+    <div class="syncline" id="syncline"${FWZ.enabled ? "" : " hidden"}>${FWZ.user ? `Synchronisiert als <b>${esc(FWZ.label())}</b> · <button class="linkbtn" id="so">Abmelden</button>` : `Nicht angemeldet. Fortschritt und Lektionen bleiben nur auf diesem Gerät. <button class="linkbtn" id="si">Anmelden</button>`}</div>
     <p class="foot">Lernhilfe aus den FKS-Reglementen von feukos.ch. Massgebend ist immer das jeweilige Reglement in der gültigen Fassung.</p>`;
   app.querySelectorAll(".tile").forEach(b => b.addEventListener("click", () => openMod(b.dataset.id)));
   const si = document.getElementById("si"); if (si) si.onclick = loginView;
@@ -319,7 +319,7 @@ function quiz(m, el) {
 /* ---------- Anmeldung ---------- */
 function loginView() {
   state.mod = null; state.view = "login"; backBtn.hidden = false;
-  app.innerHTML = `<section class="hero"><h1>Anmelden</h1><p>Mit der Anmeldung werden Fortschritt und Lektionen auf allen Geräten abgeglichen. Es gelten dieselben Zugangsdaten wie in der Atemschutz-App.</p></section>
+  app.innerHTML = `<section class="hero"><h1>Anmelden</h1><p>Mit der Anmeldung werden Fortschritt und Lektionen auf allen Geräten abgeglichen. Die Zugangsdaten bekommst du vom Kader.</p></section>
     <form id="lgf" class="lgf">
       <input id="lgu" type="text" autocomplete="username" autocapitalize="none" placeholder="Benutzername" aria-label="Benutzername">
       <input id="lgp" type="password" autocomplete="current-password" placeholder="Passwort" aria-label="Passwort">
@@ -373,7 +373,7 @@ async function lektionen(m, el) {
     else { el.innerHTML = '<div class="note">Der Speicher im Browser ist nicht verfügbar (z. B. im privaten Modus). Lektionen können hier nicht abgelegt werden.</div>'; return; }
   }
   if (!state.lc) {
-    el.innerHTML = '<div class="note">' + (FWZ.user ? "Lektionen sind für alle angemeldeten Mitglieder sichtbar. Teilen und drucken ist möglich." : 'Lege hier PDF-Lektionen pro Kapitel ab. Ohne Anmeldung bleiben sie nur auf diesem Gerät. <button class="linkbtn" id="lgo">Anmelden</button>, um sie mit allen zu teilen.') + (cloudErr ? '<br><b>' + cloudErr + '</b>' : '') + '</div><div class="grid">' + chs.map(c => {
+    el.innerHTML = '<div class="note">' + (FWZ.user ? "Lektionen sind für alle angemeldeten Mitglieder sichtbar. Teilen und drucken ist möglich." : 'Lege hier PDF-Lektionen pro Kapitel ab. Ohne Anmeldung bleiben sie nur auf diesem Gerät.' + (FWZ.enabled ? ' <button class="linkbtn" id="lgo">Anmelden</button>, um sie mit allen zu teilen.' : '')) + (cloudErr ? '<br><b>' + cloudErr + '</b>' : '') + '</div><div class="grid">' + chs.map(c => {
       const n = files.filter(f => f.ch === c.k).length;
       return `<button class="tile chtile" data-k="${c.k}"><span class="num">Kapitel ${c.k}</span><h2>${esc(c.n)}</h2><div class="facts"><span>${n === 0 ? "Noch keine PDFs" : n + (n === 1 ? " PDF" : " PDFs")}</span></div></button>`;
     }).join("") + "</div>";
