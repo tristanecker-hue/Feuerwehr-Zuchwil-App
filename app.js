@@ -1,30 +1,13 @@
-const APP_VERSION = "1.3";
+const APP_VERSION = "1.4";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
-let lastUid = null;
-FWZ.onChange(u => { if (u && u.uid !== lastUid) { lastUid = u.uid; syncNow(); } else if (!u) { lastUid = null; if (state.view === "list") home(); } });
+FWZ.onChange(() => { if (state.view === "les") lesView(); });
 let state = { mod: null, tab: "sum", ch: null, cf: null, lc: null };
 let prog = {};
 try { prog = JSON.parse(localStorage.getItem("fwz-progress") || "{}"); } catch (e) { prog = {}; }
 if (prog.einsatz && !prog.einsatz.v2) prog.einsatz = { known: [], best: null, v2: 1 };
-function save() { try { localStorage.setItem("fwz-progress", JSON.stringify(prog)); } catch (e) {} queuePush(); }
-let pushT = null;
-function queuePush() { if (!FWZ.user) return; clearTimeout(pushT); pushT = setTimeout(() => FWZ.pushProgress(prog).catch(() => {}), 1500); }
-function mergeProg(r) {
-  Object.keys(r || {}).forEach(id => {
-    const x = r[id], l = prog[id] || (prog[id] = { known: [], best: null, v2: 1 });
-    l.known = [...new Set([...(l.known || []), ...(x.known || [])])];
-    if (x.best != null) l.best = l.best == null ? x.best : Math.max(l.best, x.best);
-    l.bs = l.bs || {};
-    Object.keys(x.bs || {}).forEach(k => { l.bs[k] = l.bs[k] == null ? x.bs[k] : Math.max(l.bs[k], x.bs[k]); });
-  });
-}
-async function syncNow() {
-  if (!FWZ.user) return;
-  try { mergeProg(await FWZ.pullProgress()); try { localStorage.setItem("fwz-progress", JSON.stringify(prog)); } catch (e) {} await FWZ.pushProgress(prog); } catch (e) {}
-  if (state.view === "list") home(); else if (state.mod && state.tab === "les") renderMod();
-}
+function save() { try { localStorage.setItem("fwz-progress", JSON.stringify(prog)); } catch (e) {} }
 function mp(id) { return prog[id] || (prog[id] = { known: [], best: null, v2: 1 }); }
 function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
 function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
@@ -40,6 +23,7 @@ function start() {
       <img src="logo.jpg" alt="Feuerwehr Zuchwil">
       <div class="menu">
         <button class="mbtn main" id="t-reg">Reglemente</button>
+        <button class="mbtn main" id="t-les">Lektionen</button>
       </div>
       <div class="bottom">
         <div class="clock" id="clock"></div>
@@ -50,6 +34,7 @@ function start() {
   const tick = () => { const c = document.getElementById("clock"); if (!c) return clearInterval(clk); c.textContent = new Date().toLocaleTimeString("de-CH", { hour12: false }); const dt = document.getElementById("date"); if (dt) dt.textContent = new Date().toLocaleDateString("de-CH", { weekday: "long", day: "numeric", month: "long", year: "numeric" }); };
   clearInterval(window.clk); tick(); window.clk = setInterval(tick, 1000); var clk = window.clk;
   document.getElementById("t-reg").onclick = home;
+  document.getElementById("t-les").onclick = () => { state.lc = null; lesView(); };
   window.scrollTo(0, 0);
 }
 
@@ -121,11 +106,8 @@ function home() {
         <div class="facts"><span>${k} von ${n} Karten gewusst</span><span>${best === null ? "Quiz offen" : "Quiz-Bestwert " + best + "/" + m.quiz.length}</span></div>
       </button>`;
     }).join("")}</div>
-    <div class="syncline" id="syncline"${FWZ.enabled ? "" : " hidden"}>${FWZ.user ? `Synchronisiert als <b>${esc(FWZ.label())}</b> · <button class="linkbtn" id="so">Abmelden</button>` : `Nicht angemeldet. Fortschritt und Lektionen bleiben nur auf diesem Gerät. <button class="linkbtn" id="si">Anmelden</button>`}</div>
     <p class="foot">Lernhilfe aus den FKS-Reglementen von feukos.ch. Massgebend ist immer das jeweilige Reglement in der gültigen Fassung.</p>`;
   app.querySelectorAll(".tile").forEach(b => b.addEventListener("click", () => openMod(b.dataset.id)));
-  const si = document.getElementById("si"); if (si) si.onclick = loginView;
-  const so = document.getElementById("so"); if (so) so.onclick = () => FWZ.logout().then(() => home());
   const qi = document.getElementById("q"), sb = document.getElementById("sbox"), mg = document.getElementById("mgrid");
   qi.addEventListener("input", () => {
     const v = qi.value.trim();
@@ -142,14 +124,13 @@ function renderMod() {
   app.innerHTML = `
     <section class="head"><h1>${esc(m.title)}</h1><div class="ver">${esc(m.ver)}</div></section>
     <div class="tabs" role="tablist">
-      ${[["sum", "Zusammenfassung"], ["cards", "Lernkarten"], ["quiz", "Quiz"], ["les", "Lektionen"]].map(([k, l]) => `<button role="tab" data-tab="${k}" aria-selected="${state.tab === k}">${l}</button>`).join("")}
+      ${[["sum", "Zusammenfassung"], ["cards", "Lernkarten"], ["quiz", "Quiz"]].map(([k, l]) => `<button role="tab" data-tab="${k}" aria-selected="${state.tab === k}">${l}</button>`).join("")}
     </div>
     <div id="body"></div>`;
   app.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => { state.tab = b.dataset.tab; state.lc = null; renderMod(); }));
   const body = document.getElementById("body");
   if (state.tab === "sum") summary(m, body);
   else if (state.tab === "cards") cards(m, body);
-  else if (state.tab === "les") lektionen(m, body);
   else quiz(m, body);
 }
 const CH = {
@@ -316,10 +297,18 @@ function quiz(m, el) {
 }
 
 
+/* ---------- Lektionen-Seite ---------- */
+function lesView() {
+  state.mod = null; state.view = "les"; backBtn.hidden = false;
+  document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
+  app.innerHTML = '<section class="hero"><h1>Lektionen</h1></section><div id="body"></div>';
+  lektionen(getMod("basis"), document.getElementById("body"));
+}
+
 /* ---------- Anmeldung ---------- */
 function loginView() {
   state.mod = null; state.view = "login"; backBtn.hidden = false;
-  app.innerHTML = `<section class="hero"><h1>Anmelden</h1><p>Mit der Anmeldung werden Fortschritt und Lektionen auf allen Geräten abgeglichen. Die Zugangsdaten bekommst du vom Kader.</p></section>
+  app.innerHTML = `<section class="hero"><h1>Anmelden</h1><p>Mit der Anmeldung sind die Lektionen für alle Mitglieder gemeinsam abrufbar. Die Zugangsdaten bekommst du vom Kader.</p></section>
     <form id="lgf" class="lgf">
       <input id="lgu" type="text" autocomplete="username" autocapitalize="none" placeholder="Benutzername" aria-label="Benutzername">
       <input id="lgp" type="password" autocomplete="current-password" placeholder="Passwort" aria-label="Passwort">
@@ -330,7 +319,7 @@ function loginView() {
   document.getElementById("lgf").addEventListener("submit", async e => {
     e.preventDefault(); const m = document.getElementById("lgm"), u = document.getElementById("lgu").value, p = document.getElementById("lgp").value;
     if (!u.trim() || !p) return; m.textContent = "Anmelden …";
-    try { await FWZ.login(u, p); try { localStorage.setItem("fwz-user", u.trim()); } catch (e2) {} home(); }
+    try { await FWZ.login(u, p); try { localStorage.setItem("fwz-user", u.trim()); } catch (e2) {} lesView(); }
     catch (err) { m.textContent = /Firebase konnte/.test(err.message) ? err.message : "Anmeldung fehlgeschlagen. Benutzername oder Passwort prüfen."; }
   });
 }
@@ -373,12 +362,13 @@ async function lektionen(m, el) {
     else { el.innerHTML = '<div class="note">Der Speicher im Browser ist nicht verfügbar (z. B. im privaten Modus). Lektionen können hier nicht abgelegt werden.</div>'; return; }
   }
   if (!state.lc) {
-    el.innerHTML = '<div class="note">' + (FWZ.user ? "Lektionen sind für alle angemeldeten Mitglieder sichtbar. Teilen und drucken ist möglich." : 'Lege hier PDF-Lektionen pro Kapitel ab. Ohne Anmeldung bleiben sie nur auf diesem Gerät.' + (FWZ.enabled ? ' <button class="linkbtn" id="lgo">Anmelden</button>, um sie mit allen zu teilen.' : '')) + (cloudErr ? '<br><b>' + cloudErr + '</b>' : '') + '</div><div class="grid">' + chs.map(c => {
+    el.innerHTML = '<div class="note">' + (FWZ.user ? 'Angemeldet als <b>' + esc(FWZ.label()) + '</b>. Lektionen sind für alle angemeldeten Mitglieder sichtbar. <button class="linkbtn" id="lgx">Abmelden</button>' : 'Lege hier PDF-Lektionen pro Kapitel ab. Ohne Anmeldung bleiben sie nur auf diesem Gerät.' + (FWZ.enabled ? ' <button class="linkbtn" id="lgo">Anmelden</button>, um sie mit allen zu teilen.' : '')) + (cloudErr ? '<br><b>' + cloudErr + '</b>' : '') + '</div><div class="grid">' + chs.map(c => {
       const n = files.filter(f => f.ch === c.k).length;
       return `<button class="tile chtile" data-k="${c.k}"><span class="num">Kapitel ${c.k}</span><h2>${esc(c.n)}</h2><div class="facts"><span>${n === 0 ? "Noch keine PDFs" : n + (n === 1 ? " PDF" : " PDFs")}</span></div></button>`;
     }).join("") + "</div>";
-    el.querySelectorAll(".chtile").forEach(b => b.addEventListener("click", () => { state.lc = b.dataset.k; renderMod(); window.scrollTo(0, 0); }));
+    el.querySelectorAll(".chtile").forEach(b => b.addEventListener("click", () => { state.lc = b.dataset.k; lesView(); window.scrollTo(0, 0); }));
     const lgo = document.getElementById("lgo"); if (lgo) lgo.onclick = loginView;
+    const lgx = document.getElementById("lgx"); if (lgx) lgx.onclick = () => FWZ.logout().then(() => lesView());
     return;
   }
   const c = chs.find(x => x.k === state.lc) || chs[0];
@@ -399,7 +389,7 @@ async function lektionen(m, el) {
         ok++;
       } catch (err) { msg.textContent = /permission|insufficient/i.test(err.message || "") ? "Keine Berechtigung (Firestore-Regeln fehlen)." : (err.message || "Speichern nicht möglich: " + f.name); }
     }
-    if (ok) renderMod();
+    if (ok) lesView();
   });
   el.querySelectorAll(".les").forEach(row => {
     const f = mine.find(x => String(x.id) === row.dataset.id);
@@ -421,14 +411,14 @@ async function lektionen(m, el) {
         msg.textContent = "Falls kein Druckfenster erscheint: «Öffnen» wählen und dort drucken.";
       }
       else if (a === "del") {
-        if (b.dataset.sure) { try { if (f.cloud) await FWZ.delLesson(f); else await LDB.del(f.id); renderMod(); } catch (err) { msg.textContent = "Löschen nicht möglich."; } }
+        if (b.dataset.sure) { try { if (f.cloud) await FWZ.delLesson(f); else await LDB.del(f.id); lesView(); } catch (err) { msg.textContent = "Löschen nicht möglich."; } }
         else { b.dataset.sure = "1"; b.textContent = "Wirklich löschen?"; setTimeout(() => { if (b.isConnected) { delete b.dataset.sure; b.textContent = "Löschen"; } }, 4000); }
       }
     }));
   });
 }
 
-backBtn.addEventListener("click", () => { if (state.mod && state.tab === "les" && state.lc) { state.lc = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod) home(); else start(); });
+backBtn.addEventListener("click", () => { if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod) home(); else start(); });
 start();
 
 if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {
