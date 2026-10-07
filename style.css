@@ -40,7 +40,7 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 700; line-height: 1.
 mark { background:rgba(232,172,82,.28); color:var(--ink); border-radius:3px; padding:0 1px; }
 .sinfo { color:var(--muted); font-size:.9rem; margin:0 0 10px; }
 .landing { min-height: 78vh; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; text-align:center; gap:0; padding-block:22px 24px; font-family:"Oswald","Barlow Condensed",Arial Narrow,sans-serif; }
-.landing .clock { font-family:"Source Sans 3",sans-serif; font-size:clamp(2.4rem,11vw,3.4rem); font-weight:600; font-variant-numeric:tabular-nums; letter-spacing:.02em; margin:36px 0 36px; }
+.landing .clock { font-family:"Source Sans 3",sans-serif; font-size:clamp(2.4rem,11vw,3.4rem); font-weight:600; font-variant-numeric:tabular-nums; letter-spacing:.02em; margin:32px 0 0; }
 .landing img { width:min(82vw,360px); height:auto; background:#fafffe; padding:18px 20px; border-radius:16px; box-shadow:0 0 60px rgba(255,255,255,.05); }
 .landing .org { margin-top:30px; font-family:"Source Sans 3",sans-serif; letter-spacing:.28em; text-transform:uppercase; color:var(--muted); font-size:.95rem; }
 .landing h1 { font-family:"Oswald",sans-serif; font-weight:700; font-size:clamp(2.4rem,11vw,3.4rem); text-transform:uppercase; margin:0 0 24px; letter-spacing:.01em; }
@@ -125,3 +125,6 @@ mark { background:rgba(232,172,82,.28); color:var(--ink); border-radius:3px; pad
 @media (prefers-reduced-motion: no-preference) { .tile { transition: border-color .15s; } }
 
 [hidden] { display:none !important; }
+.landing .date { margin:6px 0 36px; color:var(--muted); font-family:"Source Sans 3",sans-serif; font-size:1.05rem; }
+.landing { position:relative; min-height:calc(100vh - 40px); }
+.ver-foot { margin-top:auto; padding-top:32px; color:var(--muted); font-family:"Source Sans 3",sans-serif; font-size:.85rem; letter-spacing:.08em; }
