@@ -39,11 +39,11 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 700; line-height: 1.
 .hit.card .ans { color:var(--ink); margin-top:4px; }
 mark { background:rgba(232,172,82,.28); color:var(--ink); border-radius:3px; padding:0 1px; }
 .sinfo { color:var(--muted); font-size:.9rem; margin:0 0 10px; }
-.landing { min-height: 78vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:0; padding-block:24px; font-family:"Oswald","Barlow Condensed",Arial Narrow,sans-serif; }
-.landing .clock { font-family:"Source Sans 3",sans-serif; font-size:clamp(2.4rem,11vw,3.4rem); font-weight:600; font-variant-numeric:tabular-nums; letter-spacing:.02em; margin-bottom:28px; }
+.landing { min-height: 78vh; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; text-align:center; gap:0; padding-block:22px 24px; font-family:"Oswald","Barlow Condensed",Arial Narrow,sans-serif; }
+.landing .clock { font-family:"Source Sans 3",sans-serif; font-size:clamp(2.4rem,11vw,3.4rem); font-weight:600; font-variant-numeric:tabular-nums; letter-spacing:.02em; margin:36px 0 36px; }
 .landing img { width:min(82vw,360px); height:auto; background:#fafffe; padding:18px 20px; border-radius:16px; box-shadow:0 0 60px rgba(255,255,255,.05); }
 .landing .org { margin-top:30px; font-family:"Source Sans 3",sans-serif; letter-spacing:.28em; text-transform:uppercase; color:var(--muted); font-size:.95rem; }
-.landing h1 { font-family:"Oswald",sans-serif; font-weight:700; font-size:clamp(2.4rem,11vw,3.4rem); text-transform:uppercase; margin-top:28px; letter-spacing:.01em; }
+.landing h1 { font-family:"Oswald",sans-serif; font-weight:700; font-size:clamp(2.4rem,11vw,3.4rem); text-transform:uppercase; margin:0 0 24px; letter-spacing:.01em; }
 .menu { width:100%; max-width:480px; display:flex; flex-direction:column; gap:14px; margin-top:34px; }
 .mbtn { font-family:"Oswald",sans-serif; font-weight:700; text-transform:uppercase; letter-spacing:.04em; font-size:1.25rem; padding:22px 16px; border-radius:20px; border:2px solid var(--line); background:transparent; color:var(--ink); min-height:64px; }
 .mbtn.main { background:#e8ac52; border-color:#e8ac52; color:#1a1a1a; }
@@ -123,3 +123,5 @@ mark { background:rgba(232,172,82,.28); color:var(--ink); border-radius:3px; pad
 .chnav { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 18px; }
 .foot { margin-top: 28px; color: var(--muted); font-size: .85rem; max-width: 60ch; }
 @media (prefers-reduced-motion: no-preference) { .tile { transition: border-color .15s; } }
+
+[hidden] { display:none !important; }

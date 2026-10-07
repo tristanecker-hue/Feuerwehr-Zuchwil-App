@@ -18,9 +18,9 @@ function start() {
   document.body.classList.add("startpage"); document.querySelector(".top").hidden = true;
   app.innerHTML = `
     <section class="landing">
-      <div class="clock" id="clock"></div>
-      <img src="logo.jpg" alt="Feuerwehr Zuchwil">
       <h1>Ausbildung</h1>
+      <img src="logo.jpg" alt="Feuerwehr Zuchwil">
+      <div class="clock" id="clock"></div>
       <div class="menu">
         <button class="mbtn main" id="t-reg">Reglemente</button>
       </div>
