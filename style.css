@@ -128,3 +128,5 @@ mark { background:rgba(232,172,82,.28); color:var(--ink); border-radius:3px; pad
 .landing .date { margin:6px 0 36px; color:var(--muted); font-family:"Source Sans 3",sans-serif; font-size:1.05rem; }
 .landing { position:relative; min-height:calc(100vh - 40px); }
 .ver-foot { margin-top:auto; padding-top:32px; color:var(--muted); font-family:"Source Sans 3",sans-serif; font-size:.85rem; letter-spacing:.08em; }
+.landing .menu { max-width:300px; margin-top:0; }
+.landing .mbtn.main { font-size:1.05rem; padding:12px 16px; min-height:48px; border-radius:16px; }
