@@ -1,0 +1,11 @@
+{
+  "name": "Feuerwehr Zuchwil Reglemente",
+  "short_name": "FW Zuchwil",
+  "lang": "de",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#121419",
+  "theme_color": "#121419",
+  "icons": [{"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}]
+}
