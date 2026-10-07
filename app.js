@@ -1,4 +1,4 @@
-const APP_VERSION = "1.4";
+const APP_VERSION = "1.5";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -24,6 +24,7 @@ function start() {
       <div class="menu">
         <button class="mbtn main" id="t-reg">Reglemente</button>
         <button class="mbtn main" id="t-les">Lektionen</button>
+        <button class="mbtn main" id="t-ao">Lernen für den Ausbildungsoffizier</button>
       </div>
       <div class="bottom">
         <div class="clock" id="clock"></div>
@@ -35,6 +36,15 @@ function start() {
   clearInterval(window.clk); tick(); window.clk = setInterval(tick, 1000); var clk = window.clk;
   document.getElementById("t-reg").onclick = home;
   document.getElementById("t-les").onclick = () => { state.lc = null; lesView(); };
+  document.getElementById("t-ao").onclick = aoView;
+  window.scrollTo(0, 0);
+}
+
+/* ---------- Lernen für den Ausbildungsoffizier ---------- */
+function aoView() {
+  state.mod = null; state.view = "ao"; backBtn.hidden = false;
+  document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
+  app.innerHTML = '<section class="hero"><h1>Ausbildungsoffizier</h1><p>Lernen für den Ausbildungsoffizier. Die Inhalte folgen.</p></section>';
   window.scrollTo(0, 0);
 }
 
