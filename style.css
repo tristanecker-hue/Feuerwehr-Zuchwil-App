@@ -49,7 +49,7 @@ mark { background:rgba(232,172,82,.28); color:var(--ink); border-radius:3px; pad
 .mbtn.main { background:#e8ac52; border-color:#e8ac52; color:#1a1a1a; }
 .mbtn.sec { font-size:1.05rem; color:#c9ced6; padding:18px 16px; }
 .hero { padding-block: 28px 18px; }
-.hero h1 { font-size: clamp(2rem, 8vw, 3rem); text-transform: uppercase; }
+.hero h1 { font-size: clamp(1.6rem, 6.8vw, 3rem); text-transform: uppercase; overflow-wrap: anywhere; }
 .hero p { color: var(--muted); margin: 10px 0 0; max-width: 46ch; }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: 14px; }
 .tile { text-align: left; background: var(--surface); border: 1px solid var(--line); border: 2px solid var(--line); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; min-height: 190px; }
@@ -144,3 +144,27 @@ mark { background:rgba(232,172,82,.28); color:var(--ink); border-radius:3px; pad
 .lgf { display:flex; flex-direction:column; gap:12px; max-width:420px; }
 .lgf input { background:var(--surface); color:var(--ink); border:1px solid var(--line); border-radius:14px; padding:14px 16px; font:inherit; font-size:1rem; }
 .landing .menu { gap:12px; }
+
+/* Ausbildungsoffizier */
+h3.zh { margin-top: 24px; }
+.tabs.t2 { grid-template-columns: 1fr 1fr; }
+.chklist { display: flex; flex-direction: column; gap: 8px; margin-bottom: 6px; }
+.chk { display: flex; gap: 12px; align-items: flex-start; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; cursor: pointer; line-height: 1.35; }
+.chk input { width: 22px; height: 22px; margin: 1px 0 0; flex: none; accent-color: var(--red); }
+.chk input:checked + span { color: var(--muted); }
+.chk small { display: block; color: var(--muted); font-size: .85rem; margin-top: 2px; }
+.chkrow { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: stretch; }
+.fld { display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; }
+.fl { font-family: var(--font-display); font-weight: 600; font-size: 1.05rem; text-transform: uppercase; letter-spacing: .02em; }
+.fh { color: var(--muted); font-size: .9rem; }
+.ta { width: 100%; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; font: inherit; font-size: 1rem; resize: vertical; min-height: 84px; }
+.ta:focus { outline: 2px solid var(--red); outline-offset: 1px; }
+.keilt { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+.ktime { font-family: var(--font-body); font-variant-numeric: tabular-nums; font-size: 3.4rem; font-weight: 600; text-align: center; }
+.ktime.ok { color: var(--ok); }
+.ktime.bad { color: var(--bad); }
+.row3 { display: grid; grid-template-columns: 1fr; gap: 8px; margin: 10px 0; }
+.lnk { color: var(--red); }
+.mu { color: var(--muted); font-size: .9rem; }
+.zt.sch td:first-child { width: 6.5em; white-space: nowrap; }
+.zt tr.mute td { color: var(--muted); }

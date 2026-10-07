@@ -1,4 +1,4 @@
-const APP_VERSION = "1.5";
+const APP_VERSION = "1.6";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -16,7 +16,7 @@ function getMod(id) { return MODS.find(m => m.id === id); }
 /* ---------- Startseite ---------- */
 const LOGO_OLD = `<svg viewBox="0 0 120 140" width="120" height="140" role="img" aria-label="Wappen Feuerwehr Zuchwil"><path d="M60 4 112 22v50c0 32-22 52-52 64C30 124 8 104 8 72V22z" fill="var(--red)"/><path d="M60 14 102 28v44c0 26-17 43-42 53-25-10-42-27-42-53V28z" fill="none" stroke="var(--red-ink)" stroke-width="2.5"/><path d="M60 30c4 14 20 22 20 42a20 20 0 0 1-40 0c0-10 5-16 9-22 1 7 4 10 8 11-3-12-1-22 3-31z" fill="var(--red-ink)"/><path d="M60 68c2 7 10 10 10 19a10 10 0 0 1-20 0c0-5 3-8 5-11 1 3 2 5 5 5-1-5-1-9 0-13z" fill="var(--red)"/></svg>`;
 function start() {
-  state.mod = null; state.view = "start"; backBtn.hidden = true;
+  state.mod = null; state.from = null; state.view = "start"; backBtn.hidden = true;
   document.body.classList.add("startpage"); document.querySelector(".top").hidden = true;
   app.innerHTML = `
     <section class="landing">
@@ -37,14 +37,6 @@ function start() {
   document.getElementById("t-reg").onclick = home;
   document.getElementById("t-les").onclick = () => { state.lc = null; lesView(); };
   document.getElementById("t-ao").onclick = aoView;
-  window.scrollTo(0, 0);
-}
-
-/* ---------- Lernen für den Ausbildungsoffizier ---------- */
-function aoView() {
-  state.mod = null; state.view = "ao"; backBtn.hidden = false;
-  document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
-  app.innerHTML = '<section class="hero"><h1>Ausbildungsoffizier</h1><p>Lernen für den Ausbildungsoffizier. Die Inhalte folgen.</p></section>';
   window.scrollTo(0, 0);
 }
 
@@ -98,7 +90,7 @@ function renderSearch(q, box) {
 }
 function home() {
   document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
-  state.mod = null; state.view = "list"; backBtn.hidden = false;
+  state.mod = null; state.from = null; state.view = "list"; backBtn.hidden = false;
   app.innerHTML = `
     <section class="hero">
       <h1>Reglemente</h1>
@@ -428,7 +420,7 @@ async function lektionen(m, el) {
   });
 }
 
-backBtn.addEventListener("click", () => { if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod) home(); else start(); });
+backBtn.addEventListener("click", () => { if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) home(); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
 start();
 
 if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {
