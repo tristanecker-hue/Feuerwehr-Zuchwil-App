@@ -1,4 +1,4 @@
-const APP_VERSION = "1.1";
+const APP_VERSION = "1.2";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -19,14 +19,15 @@ function start() {
   document.body.classList.add("startpage"); document.querySelector(".top").hidden = true;
   app.innerHTML = `
     <section class="landing">
-      <h1>Ausbildung</h1>
       <img src="logo.jpg" alt="Feuerwehr Zuchwil">
-      <div class="clock" id="clock"></div>
-      <div class="date" id="date"></div>
       <div class="menu">
         <button class="mbtn main" id="t-reg">Reglemente</button>
       </div>
-      <div class="ver-foot">V${APP_VERSION}</div>
+      <div class="bottom">
+        <div class="clock" id="clock"></div>
+        <div class="date" id="date"></div>
+        <div class="ver-foot">V${APP_VERSION}</div>
+      </div>
     </section>`;
   const tick = () => { const c = document.getElementById("clock"); if (!c) return clearInterval(clk); c.textContent = new Date().toLocaleTimeString("de-CH", { hour12: false }); const dt = document.getElementById("date"); if (dt) dt.textContent = new Date().toLocaleDateString("de-CH", { weekday: "long", day: "numeric", month: "long", year: "numeric" }); };
   clearInterval(window.clk); tick(); window.clk = setInterval(tick, 1000); var clk = window.clk;

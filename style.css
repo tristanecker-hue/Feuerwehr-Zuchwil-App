@@ -134,3 +134,8 @@ mark { background:rgba(232,172,82,.28); color:var(--ink); border-radius:3px; pad
 .lesup { display:inline-flex; align-items:center; justify-content:center; cursor:pointer; }
 .les .lesact { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
 .les .lesact .btn { flex:1 1 auto; min-width:0; }
+.landing .menu { margin-top:28px; }
+.landing .bottom { margin-top:auto; padding-top:32px; display:flex; flex-direction:column; align-items:center; }
+.landing .bottom .clock { margin:0; }
+.landing .bottom .date { margin:6px 0 0; }
+.landing .bottom .ver-foot { margin-top:18px; padding-top:0; }
