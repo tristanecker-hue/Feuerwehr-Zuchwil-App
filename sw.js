@@ -1,5 +1,5 @@
-const CACHE = "fwz-v9";
-const FILES = ["./", "index.html", "style.css", "app.js", "data.enc", "lock.js", "logo.jpg", "manifest.webmanifest", "icon-512.png", "icon-180.png"];
+const CACHE = "fwz-v10";
+const FILES = ["./", "index.html", "style.css", "app.js", "data.enc", "lock.js", "sync.js", "logo.jpg", "manifest.webmanifest", "icon-512.png", "icon-180.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener("fetch", e => {

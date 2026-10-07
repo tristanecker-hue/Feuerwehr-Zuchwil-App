@@ -139,3 +139,7 @@ mark { background:rgba(232,172,82,.28); color:var(--ink); border-radius:3px; pad
 .landing .bottom .clock { margin:0; }
 .landing .bottom .date { margin:6px 0 0; }
 .landing .bottom .ver-foot { margin-top:18px; padding-top:0; }
+.linkbtn { background:none; border:0; padding:0; color:var(--red); font:inherit; text-decoration:underline; cursor:pointer; }
+.syncline { margin:18px 0 6px; color:var(--muted); font-size:.9rem; line-height:1.5; }
+.lgf { display:flex; flex-direction:column; gap:12px; max-width:420px; }
+.lgf input { background:var(--surface); color:var(--ink); border:1px solid var(--line); border-radius:14px; padding:14px 16px; font:inherit; font-size:1rem; }

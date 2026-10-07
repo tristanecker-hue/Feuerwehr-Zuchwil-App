@@ -10,7 +10,7 @@
   }
   function run(code) {
     const s = document.createElement("script"); s.text = code; document.head.appendChild(s);
-    const a = document.createElement("script"); a.src = "app.js"; document.body.appendChild(a);
+    const y = document.createElement("script"); y.src = "sync.js"; y.onload = () => { const a = document.createElement("script"); a.src = "app.js"; document.body.appendChild(a); }; document.body.appendChild(y);
   }
   async function tryCode(code, remember) {
     const plain = await decrypt(code);
