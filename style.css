@@ -314,3 +314,5 @@ body.keilprint .kprint{display:block!important;color:#000;font-family:Arial,sans
 .wxnow { background: linear-gradient(145deg, rgba(255, 255, 255, .10), rgba(255, 255, 255, .03)); border-color: rgba(255, 255, 255, .12); border-radius: 22px; box-shadow: 0 10px 30px rgba(0, 0, 0, .3); }
 .wxc, .wxr { background: rgba(255, 255, 255, .05); border-color: rgba(255, 255, 255, .09); border-radius: 16px; }
 .landing .wxcard { margin-top: 16px; }
+.landing .wxcard { margin-top: 20px; margin-bottom: 4px; }
+.landing .date { margin: 8px 0 14px; }

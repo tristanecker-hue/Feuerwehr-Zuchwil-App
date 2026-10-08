@@ -1,4 +1,4 @@
-const APP_VERSION = "1.37";
+const APP_VERSION = "1.38";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -94,8 +94,8 @@ function start() {
       </div>
       <div class="bottom">
         <div class="clock" id="clock"></div>
-        <div class="date" id="date"></div>
         <button class="wxcard" id="wxs" aria-label="Wetter Zuchwil"><span class="wxl">Wetter Zuchwil …</span></button>
+        <div class="date" id="date"></div>
         <div class="ver-foot" id="verf">V${APP_VERSION} · Logo antippen zum Aktualisieren</div>
       </div>
     </section>`;
