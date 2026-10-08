@@ -1,4 +1,4 @@
-const APP_VERSION = "1.34";
+const APP_VERSION = "1.35";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -15,6 +15,59 @@ function getMod(id) { return MODS.find(m => m.id === id); }
 
 /* ---------- Startseite ---------- */
 const LOGO_OLD = `<svg viewBox="0 0 120 140" width="120" height="140" role="img" aria-label="Wappen Feuerwehr Zuchwil"><path d="M60 4 112 22v50c0 32-22 52-52 64C30 124 8 104 8 72V22z" fill="var(--red)"/><path d="M60 14 102 28v44c0 26-17 43-42 53-25-10-42-27-42-53V28z" fill="none" stroke="var(--red-ink)" stroke-width="2.5"/><path d="M60 30c4 14 20 22 20 42a20 20 0 0 1-40 0c0-10 5-16 9-22 1 7 4 10 8 11-3-12-1-22 3-31z" fill="var(--red-ink)"/><path d="M60 68c2 7 10 10 10 19a10 10 0 0 1-20 0c0-5 3-8 5-11 1 3 2 5 5 5-1-5-1-9 0-13z" fill="var(--red)"/></svg>`;
+/* ---------- Wetter Zuchwil (Open-Meteo) ---------- */
+const WX_URL = "https://api.open-meteo.com/v1/forecast?latitude=47.2&longitude=7.56&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,wind_gusts_10m,precipitation&hourly=temperature_2m,precipitation_probability,weather_code,wind_gusts_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_gusts_10m_max,sunrise,sunset&timezone=Europe%2FZurich&forecast_days=7";
+function wxIcon(c, night) {
+  if (c === 0) return night ? "🌙" : "☀️"; if (c === 1) return night ? "🌙" : "🌤️"; if (c === 2) return "⛅"; if (c === 3) return "☁️";
+  if (c === 45 || c === 48) return "🌫️"; if (c >= 51 && c <= 57) return "🌦️"; if (c >= 61 && c <= 67) return "🌧️"; if (c >= 71 && c <= 77) return "🌨️";
+  if (c >= 80 && c <= 82) return "🌦️"; if (c === 85 || c === 86) return "🌨️"; if (c >= 95) return "⛈️"; return "🌡️";
+}
+function wxText(c) {
+  const t = { 0: "Klar", 1: "Überwiegend klar", 2: "Teils bewölkt", 3: "Bedeckt", 45: "Nebel", 48: "Reifnebel", 51: "Leichter Niesel", 53: "Niesel", 55: "Starker Niesel", 56: "Gefrierender Niesel", 57: "Gefrierender Niesel", 61: "Leichter Regen", 63: "Regen", 65: "Starker Regen", 66: "Gefrierender Regen", 67: "Gefrierender Regen", 71: "Leichter Schnee", 73: "Schnee", 75: "Starker Schnee", 77: "Schneegriesel", 80: "Leichte Schauer", 81: "Schauer", 82: "Heftige Schauer", 85: "Schneeschauer", 86: "Starke Schneeschauer", 95: "Gewitter", 96: "Gewitter mit Hagel", 99: "Starkes Gewitter mit Hagel" };
+  return t[c] || "Wetter";
+}
+async function wxGet() {
+  let cache = null; try { cache = JSON.parse(localStorage.getItem("fwz-wx") || "null"); } catch (e) {}
+  if (cache && Date.now() - cache.t < 20 * 60 * 1000) return { d: cache.d, t: cache.t, old: false };
+  try {
+    const d = await (await fetch(WX_URL)).json(); if (!d.current) throw new Error("x");
+    try { localStorage.setItem("fwz-wx", JSON.stringify({ t: Date.now(), d })); } catch (e) {}
+    return { d, t: Date.now(), old: false };
+  } catch (e) { if (cache) return { d: cache.d, t: cache.t, old: true }; throw e; }
+}
+async function wxStrip() {
+  const b = document.getElementById("wxs"); if (!b) return;
+  try {
+    const { d } = await wxGet(), c = d.current, h = new Date(c.time).getHours(), night = h < 6 || h >= 21;
+    if (!document.getElementById("wxs")) return;
+    b.innerHTML = `<span class="wxi">${wxIcon(c.weather_code, night)}</span><b>${Math.round(c.temperature_2m)}°</b><span>${esc(wxText(c.weather_code))}</span><span class="wxm">${Math.round(d.daily.temperature_2m_min[0])}° / ${Math.round(d.daily.temperature_2m_max[0])}°</span>`;
+  } catch (e) { b.textContent = "Wetter Zuchwil"; }
+}
+async function wxView() {
+  state.mod = null; state.view = "wx"; backBtn.hidden = false;
+  document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
+  app.innerHTML = '<section class="hero"><h1>Wetter Zuchwil</h1><p>Prognose für die nächsten Tage. Quelle: Open-Meteo.</p></section><div id="wxb" class="note">Lade Wetter …</div>';
+  window.scrollTo(0, 0);
+  let r; try { r = await wxGet(); } catch (e) { const bx = document.getElementById("wxb"); if (bx) bx.textContent = "Wetter nicht verfügbar (keine Verbindung)."; return; }
+  if (state.view !== "wx") return;
+  const d = r.d, c = d.current, dy = d.daily, now = new Date(c.time).getTime(), day = x => new Date(x).toLocaleDateString("de-CH", { weekday: "short" });
+  const hrs = []; d.hourly.time.forEach((t, i) => { const ms = new Date(t).getTime(); if (ms >= now - 30 * 60 * 1000 && hrs.length < 24) hrs.push(i); });
+  const gust = Math.max(...d.hourly.wind_gusts_10m.slice(0, 48), c.wind_gusts_10m || 0), thunder = d.hourly.weather_code.slice(0, 48).some(x => x >= 95);
+  const warn = [];
+  if (gust >= 60) warn.push("Böen bis " + Math.round(gust) + " km/h in den nächsten 48 Stunden");
+  if (thunder) warn.push("Gewitter in den nächsten 48 Stunden möglich");
+  if (dy.precipitation_sum.slice(0, 2).some(x => x >= 20)) warn.push("Viel Regen erwartet (über 20 mm pro Tag)");
+  if (dy.temperature_2m_min.slice(0, 2).some(x => x <= 0)) warn.push("Frost möglich (Glatteisgefahr)");
+  document.getElementById("wxb").outerHTML = `
+    <div class="wxnow"><div class="wxbig">${wxIcon(c.weather_code, new Date(c.time).getHours() < 6 || new Date(c.time).getHours() >= 21)}</div><div><div class="wxt">${Math.round(c.temperature_2m)}°</div><div class="wxd">${esc(wxText(c.weather_code))}</div></div>
+      <div class="wxs"><div>Gefühlt ${Math.round(c.apparent_temperature)}°</div><div>Wind ${Math.round(c.wind_speed_10m)} km/h</div><div>Böen ${Math.round(c.wind_gusts_10m)} km/h</div><div>Regen ${c.precipitation} mm</div></div></div>
+    ${warn.length ? `<div class="note wxwarn"><b>Achtung</b><ul>${warn.map(w => `<li>${esc(w)}</li>`).join("")}</ul></div>` : ""}
+    <h3 class="zh">Nächste 24 Stunden</h3>
+    <div class="wxh">${hrs.map(i => { const t = new Date(d.hourly.time[i]), n = t.getHours() < 6 || t.getHours() >= 21; return `<div class="wxc"><div>${String(t.getHours()).padStart(2, "0")}</div><div class="wxi">${wxIcon(d.hourly.weather_code[i], n)}</div><b>${Math.round(d.hourly.temperature_2m[i])}°</b><div class="wxp">${d.hourly.precipitation_probability[i]}%</div></div>`; }).join("")}</div>
+    <h3 class="zh">7 Tage</h3>
+    <div class="wxdays">${dy.time.map((t, i) => `<div class="wxr"><span class="wxdn">${i === 0 ? "Heute" : day(t)}</span><span class="wxi">${wxIcon(dy.weather_code[i])}</span><span class="wxp">${dy.precipitation_probability_max[i]}% · ${dy.precipitation_sum[i]} mm</span><span class="wxmm"><span>${Math.round(dy.temperature_2m_min[i])}°</span> <b>${Math.round(dy.temperature_2m_max[i])}°</b></span></div>`).join("")}</div>
+    <p class="foot">Sonne: ${esc(dy.sunrise[0].slice(11))} bis ${esc(dy.sunset[0].slice(11))} Uhr. Stand ${new Date(r.t).toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" })}${r.old ? " (zuletzt gespeichert, keine Verbindung)" : ""}. Amtliche Warnungen: <a class="lnk" href="https://www.meteoschweiz.admin.ch/lokal/warnungen.html" target="_blank" rel="noopener">MeteoSchweiz</a>.</p>`;
+}
 function greetUpd() {
   const el = document.getElementById("greet"); if (!el) return;
   const h = new Date().getHours(), tod = h < 5 ? "night" : h < 10 ? "morning" : h < 17 ? "day" : h < 22 ? "evening" : "night";
@@ -32,6 +85,7 @@ function start() {
     <section class="landing">
       <button class="logobtn" id="logoup" aria-label="Nach Update suchen"><img src="logo.jpg" alt="Feuerwehr Zuchwil"></button>
       <div class="greet" id="greet"></div>
+      <button class="wxstrip" id="wxs" aria-label="Wetter Zuchwil">Wetter Zuchwil …</button>
       <div class="menu">
         <button class="mbtn main" id="t-reg">Reglemente</button>
         <button class="mbtn main" id="t-les">Lektionen</button>
@@ -46,6 +100,7 @@ function start() {
   const tick = () => { const c = document.getElementById("clock"); if (!c) return clearInterval(clk); c.textContent = new Date().toLocaleTimeString("de-CH", { hour12: false }); const dt = document.getElementById("date"); if (dt) dt.textContent = new Date().toLocaleDateString("de-CH", { weekday: "long", day: "numeric", month: "long", year: "numeric" }); greetUpd(); };
   clearInterval(window.clk); tick(); window.clk = setInterval(tick, 1000); var clk = window.clk;
   document.getElementById("logoup").onclick = appUpdate;
+  document.getElementById("wxs").onclick = wxView; wxStrip();
   document.getElementById("t-reg").onclick = home;
   document.getElementById("t-les").onclick = () => { state.lc = null; lesView(); };
   document.getElementById("t-ao").onclick = aoView;
