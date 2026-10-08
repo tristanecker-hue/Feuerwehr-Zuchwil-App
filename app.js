@@ -1,4 +1,4 @@
-const APP_VERSION = "1.31";
+const APP_VERSION = "1.32";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -50,22 +50,22 @@ function fireFx(btn) {
   cv.width = (W + 2 * PX) * dpr; cv.height = (H + PT + 20) * dpr;
   const g = cv.getContext("2d"); g.scale(dpr, dpr);
   const ps = []; if (btn.isConnected) { /* Platz nach oben */ } let lvl = 0, rate = 0, last = 0, run = false;
-  const rates = [0, 360, 900];
+  const rates = [0, 200, 450];
   function frame(t) {
     if (!cv.isConnected) return;
     const dt = Math.min(.05, (t - last) / 1000 || .016); last = t;
     rate += (rates[lvl] - rate) * Math.min(1, dt * 6);
     let n = rate * dt + Math.random(); n = n | 0;
     for (let i = 0; i < n; i++) {
-      const edge = Math.random() < .4, x = edge ? (Math.random() < .5 ? Math.random() * .2 : 1 - Math.random() * .2) : Math.random(), big = lvl === 2, spark = Math.random() < .14;
-      ps.push({ x: PX + x * W, y: PT + H - 4 - Math.random() * H * (big ? .5 : .15), vx: (Math.random() - .5) * (spark ? 140 : 44), vy: -(spark ? 200 + Math.random() * 260 : 110 + Math.random() * 190) * (big ? 1.5 : 1.1), l: 0, life: spark ? .8 + Math.random() * 1.2 : .9 + Math.random() * 1.1, r: spark ? 2 + Math.random() * 2.5 : (16 + Math.random() * 26) * (big ? 1.3 : 1), spark });
+      const edge = Math.random() < .4, x = edge ? (Math.random() < .5 ? Math.random() * .2 : 1 - Math.random() * .2) : Math.random(), big = lvl === 2, spark = Math.random() < .08;
+      ps.push({ x: PX + x * W, y: PT + H - 4 - Math.random() * H * (big ? .5 : .15), vx: (Math.random() - .5) * (spark ? 140 : 44), vy: -(spark ? 200 + Math.random() * 260 : 110 + Math.random() * 190) * (big ? 1.5 : 1.1), l: 0, life: spark ? .8 + Math.random() * 1.2 : .9 + Math.random() * 1.1, r: spark ? 2 + Math.random() * 2.5 : (12 + Math.random() * 20) * (big ? 1.2 : 1), spark });
     }
     g.clearRect(0, 0, W + 2 * PX, H + PT + 20); g.globalCompositeOperation = "lighter";
-    if (rate > 40) { const gl = g.createRadialGradient(PX + W / 2, PT + H * .7, 10, PX + W / 2, PT + H * .7, W * .75); gl.addColorStop(0, `rgba(255,120,20,${Math.min(.32, rate / 3000)})`); gl.addColorStop(1, "rgba(255,60,0,0)"); g.fillStyle = gl; g.fillRect(0, 0, W + 2 * PX, H + PT + 20); }
+    if (rate > 40) { const gl = g.createRadialGradient(PX + W / 2, PT + H * .7, 10, PX + W / 2, PT + H * .7, W * .75); gl.addColorStop(0, `rgba(255,120,20,${Math.min(.2, rate / 3500)})`); gl.addColorStop(1, "rgba(255,60,0,0)"); g.fillStyle = gl; g.fillRect(0, 0, W + 2 * PX, H + PT + 20); }
     for (let i = ps.length - 1; i >= 0; i--) {
       const p = ps[i]; p.l += dt; if (p.l >= p.life) { ps.splice(i, 1); continue; }
       const a = p.l / p.life; p.x += (p.vx + Math.sin(p.l * 9 + i) * 18) * dt; p.y += p.vy * dt; p.vy *= .995;
-      const r = p.spark ? p.r * (1 - a * .5) : p.r * (1 - a * .7), col = p.spark ? "255,240,170" : a < .2 ? "255,200,70" : a < .5 ? "255,130,20" : a < .8 ? "235,50,20" : "90,40,35", al = p.spark ? 1 - a : (a > .8 ? .3 : (1 - a) * .6);
+      const r = p.spark ? p.r * (1 - a * .5) : p.r * (1 - a * .7), col = p.spark ? "255,240,170" : a < .2 ? "255,200,70" : a < .5 ? "255,130,20" : a < .8 ? "235,50,20" : "90,40,35", al = p.spark ? 1 - a : (a > .8 ? .3 : (1 - a) * .45);
       g.globalCompositeOperation = p.spark ? "lighter" : "source-over"; const gr = g.createRadialGradient(p.x, p.y, 0, p.x, p.y, r); gr.addColorStop(0, `rgba(${col},${al})`); gr.addColorStop(1, `rgba(${col},0)`);
       g.fillStyle = gr; g.beginPath(); g.arc(p.x, p.y, r, 0, 6.2832); g.fill();
     }
