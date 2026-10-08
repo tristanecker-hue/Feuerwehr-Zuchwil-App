@@ -1,4 +1,4 @@
-const APP_VERSION = "1.36";
+const APP_VERSION = "1.37";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -42,7 +42,7 @@ async function wxStrip() {
     if (!document.getElementById("wxs")) return;
     const idx = []; d.hourly.time.forEach((t, i) => { const ms = new Date(t).getTime(); if (ms >= new Date(c.time).getTime() + 30 * 60 * 1000 && idx.length < 5 && (new Date(t).getHours() % 3 === 0)) idx.push(i); });
     b.innerHTML = `<div class="wxtop"><span class="wxbi">${wxIcon(c.weather_code, night)}</span><div class="wxtemp">${Math.round(c.temperature_2m)}°</div><div class="wxinfo"><b>${esc(wxText(c.weather_code))}</b><span>Zuchwil · ${Math.round(d.daily.temperature_2m_min[0])}° / ${Math.round(d.daily.temperature_2m_max[0])}°</span></div></div>
-      <div class="wxrow">${idx.map(i => { const t = new Date(d.hourly.time[i]), n = t.getHours() < 6 || t.getHours() >= 21; return `<div><span>${String(t.getHours()).padStart(2, "0")}</span><i>${wxIcon(d.hourly.weather_code[i], n)}</i><b>${Math.round(d.hourly.temperature_2m[i])}°</b></div>`; }).join("")}</div>`;
+      <div class="wxrow">${idx.map(i => { const t = new Date(d.hourly.time[i]), n = t.getHours() < 6 || t.getHours() >= 21; return `<div><span>${String(t.getHours()).padStart(2, "0") + ":00"}</span><i>${wxIcon(d.hourly.weather_code[i], n)}</i><b>${Math.round(d.hourly.temperature_2m[i])}°</b></div>`; }).join("")}</div>`;
   } catch (e) { b.textContent = "Wetter Zuchwil"; }
 }
 async function wxView() {
@@ -65,7 +65,7 @@ async function wxView() {
       <div class="wxs"><div>Gefühlt ${Math.round(c.apparent_temperature)}°</div><div>Wind ${Math.round(c.wind_speed_10m)} km/h</div><div>Böen ${Math.round(c.wind_gusts_10m)} km/h</div><div>Regen ${c.precipitation} mm</div></div></div>
     ${warn.length ? `<div class="note wxwarn"><b>Achtung</b><ul>${warn.map(w => `<li>${esc(w)}</li>`).join("")}</ul></div>` : ""}
     <h3 class="zh">Nächste 24 Stunden</h3>
-    <div class="wxh">${hrs.map(i => { const t = new Date(d.hourly.time[i]), n = t.getHours() < 6 || t.getHours() >= 21; return `<div class="wxc"><div>${String(t.getHours()).padStart(2, "0")}</div><div class="wxi">${wxIcon(d.hourly.weather_code[i], n)}</div><b>${Math.round(d.hourly.temperature_2m[i])}°</b><div class="wxp">${d.hourly.precipitation_probability[i]}%</div></div>`; }).join("")}</div>
+    <div class="wxh">${hrs.map(i => { const t = new Date(d.hourly.time[i]), n = t.getHours() < 6 || t.getHours() >= 21; return `<div class="wxc"><div>${String(t.getHours()).padStart(2, "0") + ":00"}</div><div class="wxi">${wxIcon(d.hourly.weather_code[i], n)}</div><b>${Math.round(d.hourly.temperature_2m[i])}°</b><div class="wxp">${d.hourly.precipitation_probability[i]}%</div></div>`; }).join("")}</div>
     <h3 class="zh">7 Tage</h3>
     <div class="wxdays">${dy.time.map((t, i) => `<div class="wxr"><span class="wxdn">${i === 0 ? "Heute" : day(t)}</span><span class="wxi">${wxIcon(dy.weather_code[i])}</span><span class="wxp">${dy.precipitation_probability_max[i]}% · ${dy.precipitation_sum[i]} mm</span><span class="wxmm"><span>${Math.round(dy.temperature_2m_min[i])}°</span> <b>${Math.round(dy.temperature_2m_max[i])}°</b></span></div>`).join("")}</div>
     <p class="foot">Sonne: ${esc(dy.sunrise[0].slice(11))} bis ${esc(dy.sunset[0].slice(11))} Uhr. Stand ${new Date(r.t).toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" })}${r.old ? " (zuletzt gespeichert, keine Verbindung)" : ""}. Amtliche Warnungen: <a class="lnk" href="https://www.meteoschweiz.admin.ch/lokal/warnungen.html" target="_blank" rel="noopener">MeteoSchweiz</a>.</p>`;
