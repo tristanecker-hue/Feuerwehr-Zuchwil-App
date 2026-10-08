@@ -14,6 +14,7 @@
   }
   async function tryCode(code, remember) {
     const plain = await decrypt(code);
+    window.FWZ_CODE = code;
     if (remember) { try { localStorage.setItem("fwz-code", code); } catch (e) {} }
     run(plain);
   }

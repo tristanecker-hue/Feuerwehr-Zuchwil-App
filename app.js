@@ -1,4 +1,4 @@
-const APP_VERSION = "1.19";
+const APP_VERSION = "1.20";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -108,6 +108,10 @@ function home() {
         <div class="facts"><span>${k} von ${n} Karten gewusst</span><span>${best === null ? "Quiz offen" : "Quiz-Bestwert " + best + "/" + m.quiz.length}</span></div>
       </button>`;
     }).join("")}</div>
+    <div class="note" id="rgpdf" style="margin-top:16px"><b>Reglement Basiswissen als PDF</b><br>Das ganze Reglement (296 Seiten, FKS 07/2026, ca. 36 MB). Beim ersten Öffnen wird es einmal geladen und entschlüsselt, das dauert kurz.
+      <div class="row" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn primary" id="rgo">PDF öffnen</button><button class="btn" id="rgs">Teilen</button><button class="btn" id="rgp">Drucken</button></div>
+      <div id="rgm" role="status" style="margin-top:8px;color:var(--muted)"></div>
+      <div style="margin-top:6px;font-size:.85rem;color:var(--muted)">Online-Version: <a class="lnk" href="https://docs.feukos.ch/Basiswissen/ReglementBasiswissenDE/" target="_blank" rel="noopener">docs.feukos.ch</a>. © FKS, nur zur internen Ausbildung in der Feuerwehr, nicht weitergeben.</div></div>
     <p class="foot">Lernhilfe aus den FKS-Reglementen von feukos.ch. Massgebend ist immer das jeweilige Reglement in der gültigen Fassung.</p>`;
   app.querySelectorAll(".tile").forEach(b => b.addEventListener("click", () => openMod(b.dataset.id)));
   const qi = document.getElementById("q"), sb = document.getElementById("sbox"), mg = document.getElementById("mgrid");
@@ -116,7 +120,26 @@ function home() {
     if (v.length < 2) { sb.hidden = true; mg.hidden = false; return; }
     mg.hidden = true; sb.hidden = false; renderSearch(v, sb);
   });
+  rgBind();
   window.scrollTo(0, 0);
+}
+let RGFILE = null;
+async function rgLoad(m) {
+  if (RGFILE) return RGFILE;
+  if (!window.FWZ_CODE) throw new Error("Bitte App neu laden und PIN eingeben.");
+  m.textContent = "Lade PDF …";
+  const r = await fetch("reglement-basiswissen.enc"); if (!r.ok) throw new Error("PDF nicht erreichbar (offline?).");
+  const raw = new Uint8Array(await r.arrayBuffer()); m.textContent = "Entschlüssle …";
+  const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(window.FWZ_CODE), "PBKDF2", false, ["deriveKey"]);
+  const key = await crypto.subtle.deriveKey({ name: "PBKDF2", salt: raw.slice(0, 16), iterations: 600000, hash: "SHA-256" }, base, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
+  const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: raw.slice(16, 28) }, key, raw.slice(28));
+  m.textContent = "";
+  return RGFILE = new File([pt], "Reglement Basiswissen FKS.pdf", { type: "application/pdf" });
+}
+function rgBind() {
+  const m = document.getElementById("rgm"); if (!m) return;
+  const go = k => async () => { try { const f = await rgLoad(m); aoPdfActs(f, m)[k](); } catch (e) { m.textContent = e.message || "Fehler beim Laden."; } };
+  document.getElementById("rgo").onclick = go("open"); document.getElementById("rgs").onclick = go("share"); document.getElementById("rgp").onclick = go("print");
 }
 
 /* ---------- Reglement ---------- */
