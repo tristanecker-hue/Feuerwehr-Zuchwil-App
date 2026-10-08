@@ -1,13 +1,12 @@
 /* Synchronisation über Firebase (eigenes Projekt, eigene Benutzer). Ohne Konfiguration bleibt alles lokal. */
 const FWZ = (function () {
   const CFG = {
-    // Hier die Firebase-Konfiguration des neuen, eigenen Projekts eintragen
-    apiKey: "",
-    authDomain: "",
-    projectId: "",
-    storageBucket: "",
-    messagingSenderId: "",
-    appId: ""
+    apiKey: "AIzaSyB2NFTwBtS4oVw0UtyC-LkY0HRB53W6PXw",
+    authDomain: "feuerwehr-zuchwil-app.firebaseapp.com",
+    projectId: "feuerwehr-zuchwil-app",
+    storageBucket: "feuerwehr-zuchwil-app.firebasestorage.app",
+    messagingSenderId: "864668105341",
+    appId: "1:864668105341:web:bfb06877af522c79110f14"
   };
   const DOMAIN = "feuerwehr-zuchwil-app.ch", FLAG = "fwz-sync", PART = 512 * 1024, MAXSIZE = 8 * 1024 * 1024;
   let ready = null, listeners = [];
