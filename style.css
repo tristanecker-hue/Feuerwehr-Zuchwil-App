@@ -239,3 +239,21 @@ body.keilprint .kprint{display:block!important;color:#000;font-family:Arial,sans
 .bx ul { margin: 0; }
 
 .logobtn { background: none; border: 0; padding: 0; cursor: pointer; border-radius: 16px; -webkit-tap-highlight-color: transparent; }
+
+.logobtn { position: relative; perspective: 700px; }
+.logobtn::after { content: ""; position: absolute; inset: 0; border-radius: 16px; pointer-events: none; opacity: 0; box-shadow: 0 0 0 0 rgba(227, 0, 11, .6); }
+@media (prefers-reduced-motion: no-preference) {
+  .logobtn:active img { transform: scale(.96); }
+  .logobtn img { transition: transform .15s; }
+  .logobtn.busy img { animation: lflip 1s cubic-bezier(.45, 0, .25, 1) infinite; }
+  .logobtn.busy::after { animation: lring 1s ease-out infinite; }
+  .logobtn.ok img { animation: lpop .6s ease-out; }
+  .logobtn.ok::after { animation: lok 1s ease-out; }
+  .logobtn.upd img { animation: lflip .5s linear infinite, lglow 1.1s ease-in forwards; }
+  .logobtn.upd::after { animation: lring .55s ease-out infinite; }
+}
+@keyframes lflip { to { transform: rotateY(360deg); } }
+@keyframes lring { 0% { opacity: .9; box-shadow: 0 0 0 0 rgba(227, 0, 11, .6); } 100% { opacity: 0; box-shadow: 0 0 0 26px rgba(227, 0, 11, 0); } }
+@keyframes lpop { 0% { transform: scale(1); } 40% { transform: scale(1.07); } 100% { transform: scale(1); } }
+@keyframes lok { 0% { opacity: 1; box-shadow: 0 0 0 0 rgba(60, 200, 110, .7); } 100% { opacity: 0; box-shadow: 0 0 0 30px rgba(60, 200, 110, 0); } }
+@keyframes lglow { to { filter: brightness(1.8) saturate(1.4); } }

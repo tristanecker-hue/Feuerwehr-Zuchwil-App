@@ -1,4 +1,4 @@
-const APP_VERSION = "1.25";
+const APP_VERSION = "1.26";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -43,16 +43,18 @@ function start() {
 
 async function appUpdate() {
   const v = document.getElementById("verf"); if (!v) return;
-  v.textContent = "Suche nach Update …";
+  const lb = document.getElementById("logoup"); if (lb.classList.contains("busy")) return;
+  const fx = c => { lb.classList.remove("busy", "ok", "upd"); void lb.offsetWidth; if (c) lb.classList.add(c); };
+  fx("busy"); v.textContent = "Suche nach Update …"; const t0 = Date.now(), wait = () => new Promise(r => setTimeout(r, Math.max(0, 900 - (Date.now() - t0))));
   try {
     const t = await (await fetch("app.js?u=" + Date.now(), { cache: "no-store" })).text();
     const nv = (t.match(/APP_VERSION = "([^"]+)"/) || [])[1];
-    if (nv && nv === APP_VERSION) { v.textContent = "Die App ist aktuell (V" + APP_VERSION + ")"; setTimeout(() => { const e = document.getElementById("verf"); if (e) e.textContent = "V" + APP_VERSION + " · Logo antippen zum Aktualisieren"; }, 3500); return; }
-    v.textContent = "Neue Version" + (nv ? " V" + nv : "") + " wird geladen …";
+    if (nv && nv === APP_VERSION) { await wait(); fx("ok"); setTimeout(() => lb.classList.remove("ok"), 1200); v.textContent = "Die App ist aktuell (V" + APP_VERSION + ")"; setTimeout(() => { const e = document.getElementById("verf"); if (e) e.textContent = "V" + APP_VERSION + " · Logo antippen zum Aktualisieren"; }, 3500); return; }
+    await wait(); fx("upd"); v.textContent = "Neue Version" + (nv ? " V" + nv : "") + " wird geladen …";
     if ("caches" in window) for (const k of await caches.keys()) await caches.delete(k);
     if ("serviceWorker" in navigator) for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
-    location.reload();
-  } catch (e) { v.textContent = "Keine Verbindung, Update nicht möglich."; }
+    await new Promise(r => setTimeout(r, 1100)); location.reload();
+  } catch (e) { lb.classList.remove("busy", "ok", "upd"); v.textContent = "Keine Verbindung, Update nicht möglich."; }
 }
 
 /* ---------- Suche ---------- */
