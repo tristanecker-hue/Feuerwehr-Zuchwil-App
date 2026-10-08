@@ -193,3 +193,13 @@ h3.zh { margin-top: 24px; }
 .lek table.la td{overflow-wrap:anywhere;hyphens:auto}
 .lek .ztw{overflow:visible}
 .lek table.la th:last-child,.lek table.la td:last-child{width:6.8em;overflow-wrap:normal;hyphens:manual}
+
+/* KEIL drucken */
+.kprint{display:none}
+@media print{body.keilprint .top,body.keilprint #app>*:not(.kprint){display:none!important}
+body.keilprint{background:#fff!important;color:#000}
+body.keilprint .kprint{display:block!important;color:#000;font-family:Arial,sans-serif}
+.kprint h1{font-size:18pt;margin:0 0 2pt}.kprint .kp0{margin:0 0 12pt;color:#444}
+.kprint .kp{border:1px solid #444;padding:8pt;margin-bottom:10pt;break-inside:avoid}
+.kprint h2{font-size:13pt;margin:0}.kprint .kh{margin:2pt 0 6pt;color:#555;font-size:10pt}
+.kprint .kn{white-space:pre-wrap;min-height:60pt;font-size:12pt}}

@@ -142,20 +142,6 @@ const AO_CHK = [
     ["v1", "Reglement Basiswissen intensiv durchgearbeitet"], ["v2", "Kantonale Ergänzungen zum Basiswissen gelesen (LODUR → Info SGV)"],
     ["v3", "KEIL-Vorstellung vorbereitet und mit Stoppuhr geübt (2–3 Min.)"], ["v4", "Alle Fachthemen durchgegangen (Seite «Lektionen»)"]] }
 ];
-const AO_PLAN = [
-  ["Methodik: Wie lernt der Mensch, Kompetenzen, Beurteilen (Basiswissen Kap. 3)", "meth"],
-  ["KEIL-Vorstellung entwerfen und mit Stoppuhr üben", "keil"],
-  ["Einsatzort sichern (Kap. 1)", "lek:ort"],
-  ["Leitern, Personenrettung und Transport, Rettung über Leitern (Kap. 5)", "lek:leiter"],
-  ["Persönliche Ausrüstung, Sicherheit, Bindungen, Knoten", "lek:ausr"],
-  ["Leitungsbau und Verbraucher", "lek:lbau"],
-  ["Kleinlöschgeräte", "lek:kl"],
-  ["TLF", "lek:tlf"],
-  ["SL / SLS, MS ab Gewässer, MS ab Hydrant", "lek:sl"],
-  ["Lüften", "lek:lueft"],
-  ["FBEHK (Führungsablauf, Kap. 2) und kantonale Ergänzungen (LODUR → Info SGV)", "meth"],
-  ["Probelektion laut halten und die Zeit stoppen", "meth"]
-];
 const AO_ZK = [["basis", "1"], ["basis", "2"], ["basis", "3"], ["basis", "5"], ["basis", "6"], ["basis", "8"], ["einsatz", "3"], ["einsatz", "5"]];
 const AO_KEIL = [["Persönliches", "Wer bin ich, was gehört zu mir?"], ["Feuerwehrerfahrungen", "Wie lange dabei, welche Funktionen und Einsätze?"], ["Motivation für den Kurs", "Warum Ausbildungsoffizier?"], ["Mein Beitrag am Kurs", "Was bringe ich für die Gruppe mit?"], ["Erwartungen", "Was möchte ich aus dem Kurs mitnehmen?"]];
 
@@ -205,7 +191,7 @@ function aoBack() { const r = state.aoR || ""; if (!r) return start(); aoGo(r.in
 function aoGo(r) {
   state.aoR = r; state.from = null; state.direct = false; state.mod = null; state.view = r ? "ao-sub" : "ao"; backBtn.hidden = false;
   document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
-  const f = { "": aoHub, check: aoCheck, plan: aoPlan, keil: aoKeil, lek: aoTopics, meth: aoMeth, zahl: aoZahl, prog: aoProg }[r];
+  const f = { "": aoHub, check: aoCheck, keil: aoKeil, lek: aoTopics, meth: aoMeth, zahl: aoZahl, prog: aoProg }[r];
   if (f) f(); else if (r.indexOf("lek:") === 0) aoTopic(r.slice(4)); else aoHub();
   window.scrollTo(0, 0);
 }
@@ -215,12 +201,11 @@ function aoHub() {
   const days = aoDiff(AO_T0);
   const cnt = days > 0 ? `Noch ${days} ${days === 1 ? "Tag" : "Tage"} bis zum Kursbeginn.` : days === 0 ? "Heute ist Kursbeginn: Rapport Kursstab 07.30, Appell 08.00." : "Der Kurs läuft oder ist vorbei.";
   const nC = AO_CHK.reduce((n, g) => n + g.items.length, 0), dC = AO_CHK.reduce((n, g) => n + g.items.filter(i => AOS.chk[i[0]]).length, 0);
-  const dT = AO_T.filter(t => AOS.chk["d:" + t.id]).length, dP = AO_PLAN.filter((p, i) => AOS.chk["p" + i]).length;
+  const dT = AO_T.filter(t => AOS.chk["d:" + t.id]).length;
   const dK = AO_KEIL.filter((p, i) => (AOS.notes["keil" + i] || "").trim()).length;
   const pool = aoRows(), dZ = pool.filter(p => AOS.known[p.id]).length;
   const tiles = [
     ["check", "Vorbereitung", "Checkliste", "Material und Vorbereitung laut Kursaufgebot", dC, nC, dC + " von " + nC + " erledigt"],
-    ["plan", "Lernplan", "Thema für Thema bis zum Kurs", "Jedes Thema bekommt ein Datum vor Kursbeginn", dP, AO_PLAN.length, dP + " von " + AO_PLAN.length + " erledigt"],
     ["keil", "Vorstellung", "KEIL", "Persönliche Vorstellung, 2–3 Minuten: Notizen und Stoppuhr", dK, AO_KEIL.length, dK + " von " + AO_KEIL.length + " Punkten notiert"],
     ["lek", "Fachthemen", "Lektionen", "Alle Kurs-Lektionen mit Selbsttest, Reglement-Suche und eigener Planung", dT, AO_T.length, dT + " von " + AO_T.length + " Themen sitzen"],
     ["meth", "Methodik", "Lektion halten", "Aufbau, Beurteilung, Theorieblöcke und Probelektion", 0, 0, ""],
@@ -243,27 +228,20 @@ function aoCheck() {
   aoBind(app);
 }
 
-/* ---------- Lernplan ---------- */
-function aoPlan() {
-  const today = aoDay0(new Date()), last = new Date(2026, 9, 19), n = AO_PLAN.length;
-  const span = Math.max(1, Math.round((last - today) / 864e5) + 1);
-  app.innerHTML = `<section class="hero"><h1>Lernplan</h1><p>${n} Schritte, gleichmässig bis Montag, 19.10. verteilt. Die Daten passen sich dem heutigen Tag an.</p></section>
-    <div class="chklist">${AO_PLAN.map((p, i) => {
-      const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + Math.floor(i * span / n));
-      return `<div class="chkrow">${aoChkHtml("p" + i, esc(p[0]) + `<small>${last >= today ? aoDate(d) : "bis Kursbeginn"}</small>`)}<button class="chip" data-r="${p[1]}">Öffnen</button></div>`;
-    }).join("")}</div>
-    <p class="foot">Der Plan ist ein Vorschlag. Schwache Themen länger üben: Selbsttest und Zahlen-Trainer zeigen, was noch nicht sitzt.</p>`;
-  aoBind(app);
-}
-
 /* ---------- KEIL ---------- */
 function aoKeil() {
   app.innerHTML = `<section class="hero"><h1>KEIL</h1><p>Persönliche Vorstellung am Kurs: 2–3 Minuten, kreativ und ansprechend. Hilfsmittel frei wählbar, aber keine PowerPoint-Präsentation und ohne Flipchart. Auf- und Abbau müssen schnell gehen.</p></section>
     <div class="note">Im Tagesbefehl steht am Dienstag, 08.15–08.45: L 1 «KEIL (Kennenlernen / Einsteigen / Informieren / Loslegen)» im Theorieraum.</div>
-    <div class="keilt"><div class="ktime" id="kt">00:00</div><div class="row"><button class="btn primary" id="kgo">Start</button><button class="btn ghost" id="krs">Zurücksetzen</button></div><div class="sinfo">Ziel: zwischen 2:00 und 3:00. Die Anzeige wird grün, ab 3:00 rot.</div></div>
+    <div class="keilt"><div class="ktime" id="kt">00:00</div><div class="row"><button class="btn primary" id="kgo">Start</button><button class="btn ghost" id="krs">Zurücksetzen</button><button class="btn" id="kpr">Drucken / als PDF</button></div><div class="sinfo">Ziel: zwischen 2:00 und 3:00. Die Anzeige wird grün, ab 3:00 rot.</div></div>
     ${AO_KEIL.map((k, i) => `<label class="fld"><span class="fl">${i + 1}. ${k[0]}</span><span class="fh">${k[1]}</span><textarea class="ta" rows="3" data-n="keil${i}" placeholder="Stichworte …">${esc(AOS.notes["keil" + i] || "")}</textarea></label>`).join("")}
     <h3 class="zh">Checkliste</h3><div class="chklist">${[["Alle 5 Punkte haben ein Bild, einen Gegenstand oder eine Geste", "k1"], ["Hilfsmittel passen in die Tasche und stehen in unter einer Minute", "k2"], ["Laut geübt und gestoppt, mindestens dreimal", "k3"], ["Anfang und Schluss auswendig", "k4"]].map(c => aoChkHtml(c[1], esc(c[0]))).join("")}</div>`;
   aoBind(app);
+  document.getElementById("kpr").onclick = () => {
+    const d = document.createElement("div"); d.className = "kprint";
+    d.innerHTML = `<h1>KEIL-Vorstellung · Ausbildungsoffizier Ku 70</h1><p class="kp0">Feuerwehr Zuchwil · Ziel: 2–3 Minuten</p>` + AO_KEIL.map((k, i) => `<div class="kp"><h2>${i + 1}. ${esc(k[0])}</h2><p class="kh">${esc(k[1])}</p><div class="kn">${esc(AOS.notes["keil" + i] || "")}</div></div>`).join("");
+    app.appendChild(d); document.body.classList.add("keilprint"); window.print();
+    setTimeout(() => { document.body.classList.remove("keilprint"); d.remove(); }, 500);
+  };
   let sec = 0, iv = null; const out = document.getElementById("kt"), b = document.getElementById("kgo"), r = document.getElementById("krs");
   const show = () => { out.textContent = String(Math.floor(sec / 60)).padStart(2, "0") + ":" + String(sec % 60).padStart(2, "0"); out.className = "ktime" + (sec > 180 ? " bad" : sec >= 120 ? " ok" : ""); };
   b.onclick = () => { if (iv) { clearInterval(iv); iv = null; b.textContent = "Weiter"; } else { iv = setInterval(() => { if (!document.body.contains(out)) return clearInterval(iv); sec++; show(); }, 1000); b.textContent = "Stopp"; } };
