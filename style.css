@@ -237,3 +237,5 @@ body.keilprint .kprint{display:block!important;color:#000;font-family:Arial,sans
 .bx.b .bxh { color: #7db8e8; }
 .bxh span { font-weight: 400; color: var(--muted); text-transform: none; letter-spacing: 0; }
 .bx ul { margin: 0; }
+
+.logobtn { background: none; border: 0; padding: 0; cursor: pointer; border-radius: 16px; -webkit-tap-highlight-color: transparent; }
