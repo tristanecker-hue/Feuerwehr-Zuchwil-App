@@ -1,4 +1,4 @@
-const APP_VERSION = "1.21";
+const APP_VERSION = "1.22";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -102,15 +102,15 @@ function home() {
       const k = mp(m.id).known.length, n = m.cards.length, best = mp(m.id).best;
       return `<button class="tile" data-id="${m.id}">
         ${m.id === "basis" ? '<span class="tag">Neu 2026</span>' : '<span class="tag plain">FKS</span>'}
-        <h2>${esc(m.id === "basis" ? "Basiswissen Zusammengefassung" : m.title)}</h2>
+        <h2>${esc(m.id === "basis" ? "Basiswissen Zusammengefassung" : m.title + " Zusammenfassung")}</h2>
         <div class="sub">${esc(m.sub)}</div>
         <div class="meter" aria-hidden="true"><i style="width:${Math.round(100 * k / n)}%"></i></div>
         <div class="facts"><span>${k} von ${n} Karten gewusst</span><span>${best === null ? "Quiz offen" : "Quiz-Bestwert " + best + "/" + m.quiz.length}</span></div>
-      </button>`;
-    }).join("")}
-      <button class="tile" data-id="pdf"><span class="tag">PDF</span><h2>Basiswissen komplett</h2><div class="sub">Das ganze Reglement mit allen 296 Seiten (FKS 07/2026), direkt in der App zum Blättern.</div></button></div>
+      </button>
+      <button class="tile" data-id="pdf:${m.id}"><span class="tag">PDF</span><h2>${esc(RGDEF[m.id].short)} komplett</h2><div class="sub">${RGDEF[m.id].tile}</div></button>`;
+    }).join("")}</div>
     <p class="foot">Lernhilfe aus den FKS-Reglementen von feukos.ch. Massgebend ist immer das jeweilige Reglement in der gültigen Fassung.</p>`;
-  app.querySelectorAll(".tile").forEach(b => b.addEventListener("click", () => b.dataset.id === "pdf" ? rgView() : openMod(b.dataset.id)));
+  app.querySelectorAll(".tile").forEach(b => b.addEventListener("click", () => b.dataset.id.startsWith("pdf:") ? rgView(b.dataset.id.slice(4)) : openMod(b.dataset.id)));
   const qi = document.getElementById("q"), sb = document.getElementById("sbox"), mg = document.getElementById("mgrid");
   qi.addEventListener("input", () => {
     const v = qi.value.trim();
@@ -119,36 +119,40 @@ function home() {
   });
   window.scrollTo(0, 0);
 }
-let RGFILE = null;
-async function rgLoad(m) {
-  if (RGFILE) return RGFILE;
+const RGDEF = {
+  basis: { short: "Basiswissen", enc: "reglement-basiswissen.enc", file: "Reglement Basiswissen FKS.pdf", tile: "Das ganze Reglement mit allen 296 Seiten (FKS 07/2026), direkt in der App zum Blättern.", hero: "Das ganze Reglement Basiswissen, FKS 07/2026.", online: "https://docs.feukos.ch/Basiswissen/ReglementBasiswissenDE/" },
+  einsatz: { short: "Einsatzführung", enc: "reglement-einsatzfuehrung.enc", file: "Reglement Einsatzführung FKS.pdf", tile: "Das ganze Reglement mit allen 84 Seiten, direkt in der App zum Blättern.", hero: "Das ganze Reglement Einsatzführung, FKS.", online: "" }
+};
+const RGFILES = {}, RGDOCS = {};
+async function rgLoad(m, id) {
+  if (RGFILES[id]) return RGFILES[id];
   if (!window.FWZ_CODE) throw new Error("Bitte App neu laden und PIN eingeben.");
   m.textContent = "Lade PDF …";
-  const r = await fetch("reglement-basiswissen.enc"); if (!r.ok) throw new Error("PDF nicht erreichbar (offline?).");
+  const r = await fetch(RGDEF[id].enc); if (!r.ok) throw new Error("PDF nicht erreichbar (offline?).");
   const raw = new Uint8Array(await r.arrayBuffer()); m.textContent = "Entschlüssle …";
   const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(window.FWZ_CODE), "PBKDF2", false, ["deriveKey"]);
   const key = await crypto.subtle.deriveKey({ name: "PBKDF2", salt: raw.slice(0, 16), iterations: 600000, hash: "SHA-256" }, base, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
   const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: raw.slice(16, 28) }, key, raw.slice(28));
   m.textContent = "";
-  return RGFILE = new File([pt], "Reglement Basiswissen FKS.pdf", { type: "application/pdf" });
+  return RGFILES[id] = new File([pt], RGDEF[id].file, { type: "application/pdf" });
 }
-let RGDOC = null, RGOBS = null;
+let RGOBS = null;
 function rgClose() { if (RGOBS) { RGOBS.disconnect(); RGOBS = null; } window.removeEventListener("scroll", rgScroll); }
 let rgScroll = () => {};
-async function rgView() {
-  rgClose();
+async function rgView(id) {
+  rgClose(); const D = RGDEF[id]; let RGDOC = RGDOCS[id];
   state.mod = null; state.view = "pdf"; backBtn.hidden = false;
   document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
-  app.innerHTML = `<section class="hero"><h1>Basiswissen komplett</h1><p>Das ganze Reglement Basiswissen, FKS 07/2026. © FKS, nur zur internen Ausbildung. <a class="lnk" href="https://docs.feukos.ch/Basiswissen/ReglementBasiswissenDE/" target="_blank" rel="noopener">Online-Version</a></p></section>
+  app.innerHTML = `<section class="hero"><h1>${esc(D.short)} komplett</h1><p>${D.hero} © FKS, nur zur internen Ausbildung.${D.online ? ' <a class="lnk" href="' + D.online + '" target="_blank" rel="noopener">Online-Version</a>' : ""}</p></section>
     <div id="rgm" role="status" class="note">Lade Reglement …</div><div id="rgv"></div>`;
   window.scrollTo(0, 0);
   const msg = document.getElementById("rgm");
   let file;
-  try { file = await rgLoad(msg); msg.textContent = "Öffne …"; if (!RGDOC) { const lib = await import("./pdfjs/pdf.min.mjs"); lib.GlobalWorkerOptions.workerSrc = new URL("./pdfjs/pdf.worker.min.mjs", location.href).href; RGDOC = await lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise; } }
+  try { file = await rgLoad(msg, id); msg.textContent = "Öffne …"; if (!RGDOC) { const lib = await import("./pdfjs/pdf.min.mjs"); lib.GlobalWorkerOptions.workerSrc = new URL("./pdfjs/pdf.worker.min.mjs", location.href).href; RGDOC = await lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise; RGDOCS[id] = RGDOC; } }
   catch (e) { msg.textContent = (e && e.message) || "Fehler beim Laden."; return; }
   if (state.view !== "pdf") return;
   const N = RGDOC.numPages, host = document.getElementById("rgv"), p1 = await RGDOC.getPage(1), vp1 = p1.getViewport({ scale: 1 }), ratio = vp1.height / vp1.width;
-  let zoom = 1, saved = 1; try { saved = Math.min(N, Math.max(1, +localStorage.getItem("fwz-rgp") || 1)); } catch (e) {}
+  let zoom = 1, saved = 1; try { saved = Math.min(N, Math.max(1, +localStorage.getItem("fwz-rgp-" + id) || 1)); } catch (e) {}
   msg.className = "rgbar"; msg.innerHTML = `<button class="btn" id="rgz-">−</button><button class="btn" id="rgz+">+</button><span class="rgpg"><input id="rgn" type="number" min="1" max="${N}" value="${saved}" inputmode="numeric" aria-label="Seite"> / ${N}</span><button class="btn" id="rgs">Teilen</button><button class="btn" id="rgp">Drucken</button>`;
   const acts = aoPdfActs(file, msg), W = () => Math.min(host.clientWidth || 360, 1000) * zoom;
   host.className = "rgpages"; host.innerHTML = "";
@@ -172,7 +176,7 @@ async function rgView() {
   size(); pages.forEach(d => RGOBS.observe(d));
   const goto = n => { n = Math.min(N, Math.max(1, n | 0)); cur = n; pages[n - 1].scrollIntoView({ block: "start" }); window.scrollBy(0, -130); };
   const inp = document.getElementById("rgn");
-  let tk = 0; rgScroll = () => { if (tk) return; tk = requestAnimationFrame(() => { tk = 0; const mid = window.innerHeight / 3; let lo = 0, hi = N - 1; while (lo < hi) { const m = (lo + hi + 1) >> 1; if (pages[m].getBoundingClientRect().top <= mid) lo = m; else hi = m - 1; } cur = lo + 1; if (document.activeElement !== inp) inp.value = cur; try { localStorage.setItem("fwz-rgp", cur); } catch (e) {} }); };
+  let tk = 0; rgScroll = () => { if (tk) return; tk = requestAnimationFrame(() => { tk = 0; const mid = window.innerHeight / 3; let lo = 0, hi = N - 1; while (lo < hi) { const m = (lo + hi + 1) >> 1; if (pages[m].getBoundingClientRect().top <= mid) lo = m; else hi = m - 1; } cur = lo + 1; if (document.activeElement !== inp) inp.value = cur; try { localStorage.setItem("fwz-rgp-" + id, cur); } catch (e) {} }); };
   window.addEventListener("scroll", rgScroll, { passive: true });
   inp.addEventListener("change", () => goto(+inp.value));
   const setZ = z => { const keep = cur; zoom = Math.min(3, Math.max(1, z)); host.style.overflowX = zoom > 1 ? "auto" : ""; RGOBS.disconnect(); size(); pages.forEach(d => RGOBS.observe(d)); goto(keep); };
