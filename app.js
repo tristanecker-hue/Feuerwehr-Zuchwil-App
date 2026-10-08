@@ -1,4 +1,4 @@
-const APP_VERSION = "1.35";
+const APP_VERSION = "1.36";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -40,7 +40,9 @@ async function wxStrip() {
   try {
     const { d } = await wxGet(), c = d.current, h = new Date(c.time).getHours(), night = h < 6 || h >= 21;
     if (!document.getElementById("wxs")) return;
-    b.innerHTML = `<span class="wxi">${wxIcon(c.weather_code, night)}</span><b>${Math.round(c.temperature_2m)}°</b><span>${esc(wxText(c.weather_code))}</span><span class="wxm">${Math.round(d.daily.temperature_2m_min[0])}° / ${Math.round(d.daily.temperature_2m_max[0])}°</span>`;
+    const idx = []; d.hourly.time.forEach((t, i) => { const ms = new Date(t).getTime(); if (ms >= new Date(c.time).getTime() + 30 * 60 * 1000 && idx.length < 5 && (new Date(t).getHours() % 3 === 0)) idx.push(i); });
+    b.innerHTML = `<div class="wxtop"><span class="wxbi">${wxIcon(c.weather_code, night)}</span><div class="wxtemp">${Math.round(c.temperature_2m)}°</div><div class="wxinfo"><b>${esc(wxText(c.weather_code))}</b><span>Zuchwil · ${Math.round(d.daily.temperature_2m_min[0])}° / ${Math.round(d.daily.temperature_2m_max[0])}°</span></div></div>
+      <div class="wxrow">${idx.map(i => { const t = new Date(d.hourly.time[i]), n = t.getHours() < 6 || t.getHours() >= 21; return `<div><span>${String(t.getHours()).padStart(2, "0")}</span><i>${wxIcon(d.hourly.weather_code[i], n)}</i><b>${Math.round(d.hourly.temperature_2m[i])}°</b></div>`; }).join("")}</div>`;
   } catch (e) { b.textContent = "Wetter Zuchwil"; }
 }
 async function wxView() {
@@ -85,7 +87,6 @@ function start() {
     <section class="landing">
       <button class="logobtn" id="logoup" aria-label="Nach Update suchen"><img src="logo.jpg" alt="Feuerwehr Zuchwil"></button>
       <div class="greet" id="greet"></div>
-      <button class="wxstrip" id="wxs" aria-label="Wetter Zuchwil">Wetter Zuchwil …</button>
       <div class="menu">
         <button class="mbtn main" id="t-reg">Reglemente</button>
         <button class="mbtn main" id="t-les">Lektionen</button>
@@ -94,6 +95,7 @@ function start() {
       <div class="bottom">
         <div class="clock" id="clock"></div>
         <div class="date" id="date"></div>
+        <button class="wxcard" id="wxs" aria-label="Wetter Zuchwil"><span class="wxl">Wetter Zuchwil …</span></button>
         <div class="ver-foot" id="verf">V${APP_VERSION} · Logo antippen zum Aktualisieren</div>
       </div>
     </section>`;
