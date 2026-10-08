@@ -1,4 +1,4 @@
-const APP_VERSION = "1.11";
+const APP_VERSION = "1.12";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -385,7 +385,7 @@ async function lektionen(m, el) {
   el.innerHTML = `<div class="banner"><h2>Kapitel ${c.k} – ${esc(c.n)}</h2><p>Lektionen als PDF</p></div>
     <div class="lesbar"><label class="btn primary lesup">PDF hinzufügen<input type="file" id="lfile" accept="application/pdf,.pdf" multiple hidden></label></div>
     <div id="lmsg" class="sinfo" role="status"></div>
-    <div class="sres">${mine.length ? mine.map(f => `<div class="hit les" data-id="${f.id}"><h3>${esc(f.name)}</h3><p>${fmtSize(f.size)} · ${new Date(f.added).toLocaleDateString("de-CH")}</p>
+    <div class="sres">${mine.length ? mine.map(f => `<div class="hit les" data-id="${f.id}"><h3>${esc(f.name)}</h3><p>${fmtSize(f.size)} · ${new Date(f.added).toLocaleDateString("de-CH")}${f.by ? " · von " + esc(f.by) : ""}</p>
       <div class="lesact"><button class="btn" data-a="open">Öffnen</button><button class="btn" data-a="share">Teilen</button><button class="btn" data-a="print">Drucken</button><button class="btn ghost" data-a="del">Löschen</button></div></div>`).join("") : '<p class="sinfo">Noch keine PDFs in diesem Kapitel.</p>'}</div>`;
   const msg = document.getElementById("lmsg");
   document.getElementById("lfile").addEventListener("change", async e => {
