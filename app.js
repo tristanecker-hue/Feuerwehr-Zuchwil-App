@@ -1,4 +1,4 @@
-const APP_VERSION = "1.18";
+const APP_VERSION = "1.19";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -159,6 +159,27 @@ function secHtml(s, i, open) {
 function bindZoom(el) { el.querySelectorAll(".zoom").forEach(b => b.addEventListener("click", () => zoom(b.dataset.k))); }
 function chKey(g) { return /^\d+ /.test(g) ? g.split(" ")[0] : "Neu"; }
 function chName(g) { return /^\d+ /.test(g) ? g.replace(/^\d+ /, "") : "Änderungen 2026"; }
+/* ---------- Spickzettel (PDF mit den wichtigsten Zahlen) ---------- */
+function spickPdf(m, only) {
+  const src = CHS[m.id] || {}, groups = [], blocks = [];
+  m.sections.forEach(s => { if (s.g && !groups.includes(s.g)) groups.push(s.g); });
+  groups.forEach(g => {
+    const k = chKey(g); if (only && k !== only) return;
+    const z = (src[k] || {}).z || []; if (!z.length) return;
+    blocks.push({ h: (k === "Neu" ? "" : k + " ") + chName(g), t: z.map(([x, y]) => "· " + x + ": " + y).join("\n") });
+  });
+  if (!blocks.length) return null;
+  const nm = m.title + (only ? " Kapitel " + only : "");
+  return aoPdf("Spickzettel " + nm, "Feuerwehr Zuchwil · aus dem " + (m.src || m.title), blocks, "Spickzettel " + nm + ".pdf");
+}
+function spickBar(label) { return `<div class="row spick"><button class="btn" data-sp="open">${label} öffnen</button><button class="btn" data-sp="share">Teilen</button><button class="btn" data-sp="print">Drucken</button></div><div class="sinfo" id="spmsg" role="status"></div>`; }
+function spickBind(el, m, only) {
+  const msg = el.querySelector("#spmsg");
+  el.querySelectorAll("[data-sp]").forEach(b => b.addEventListener("click", () => {
+    try { const f = spickPdf(m, only); if (!f) { msg.textContent = "Für dieses Kapitel gibt es keine Zahlen."; return; } msg.textContent = ""; aoPdfActs(f, msg)[b.dataset.sp](); }
+    catch (e) { msg.textContent = "PDF konnte nicht erstellt werden."; }
+  }));
+}
 function summary(m, el) {
   if (!m.sections.some(s => s.g)) {
     el.innerHTML = (m.note ? `<div class="note">${esc(m.note)}</div>` : "") + m.sections.map((s, i) => secHtml(s, i, i === 0)).join("");
@@ -173,6 +194,8 @@ function summary(m, el) {
       return `<button class="tile chtile" data-g="${esc(g.g)}"><span class="num">${k === "Neu" ? "Neu" : "Kapitel " + k}</span><h2>${esc(chName(g.g))}</h2><div class="facts"><span>${g.items.length} Abschnitte</span>${pg ? `<span>Seiten ${pg}</span>` : ""}</div></button>`;
     }).join("")}</div>`;
     el.querySelectorAll(".chtile").forEach(b => b.addEventListener("click", () => { state.ch = b.dataset.g; renderMod(); window.scrollTo(0, 0); }));
+    el.insertAdjacentHTML("beforeend", '<h3 class="zh">Spickzettel</h3><div class="note">Die wichtigsten Zahlen aller Kapitel auf wenigen Seiten, zum Ausdrucken oder Teilen.</div>' + spickBar("Spickzettel"));
+    spickBind(el, m, null);
     return;
   }
   const g = groups[idx], k = chKey(g.g), info = (CHS[m.id] || {})[k] || { s: "", z: [] };
@@ -184,6 +207,7 @@ function summary(m, el) {
     <div class="chips">${g.items.map(([s, i]) => `<button class="chip" data-i="${i}">${esc(s.t)}</button>`).join("")}</div>
     ${z}${g.items.map(([s, i]) => secHtml(s, i, true)).join("")}
     <div class="chnav">${prev ? `<button class="btn" data-g="${esc(prev.g)}">← ${esc(chName(prev.g))}</button>` : "<span></span>"}${next ? `<button class="btn primary" data-g="${esc(next.g)}">${esc(chName(next.g))} →</button>` : "<span></span>"}</div>`;
+  if (info.z.length) { el.querySelector(".zh").insertAdjacentHTML("beforebegin", spickBar("Spickzettel")); spickBind(el, m, k); }
   el.querySelectorAll(".chip").forEach(b => b.addEventListener("click", () => { const d = document.getElementById("sec-" + b.dataset.i); d.open = true; d.scrollIntoView({ behavior: "smooth", block: "start" }); }));
   el.querySelectorAll(".chnav .btn").forEach(b => b.addEventListener("click", () => { state.ch = b.dataset.g; renderMod(); window.scrollTo(0, 0); }));
   bindZoom(el);

@@ -259,7 +259,7 @@ function aoCheck() {
 }
 
 /* ---------- Einfacher PDF-Export (Text, A4) ---------- */
-function aoPdf(title, sub, blocks) {
+function aoPdf(title, sub, blocks, fname) {
   const W = 595, H = 842, M = 56, TW = W - 2 * M, cv = document.createElement("canvas").getContext("2d");
   const fix = s => String(s).replace(/[\u201c\u201d\u201e]/g, '"').replace(/[\u2018\u2019]/g, "'").replace(/[\u2013\u2014]/g, "-").replace(/\u2026/g, "...").replace(/\u20ac/g, "EUR").replace(/\t/g, " ").replace(/[^\n\x20-\x7e\xa0-\xff]/g, "?");
   const pages = [[]]; let y = H - M;
@@ -277,7 +277,7 @@ function aoPdf(title, sub, blocks) {
     }); y -= gap || 0;
   };
   put(title, 18, true, 0, 4); put(sub, 10, false, .4, 14);
-  blocks.forEach(b => { put(b.h, 13, true, 0, 2); if (b.s) put(b.s, 9.5, false, .4, 3); put(b.t || "(leer)", 11, false, b.t ? 0 : .5, 14); });
+  blocks.forEach(b => { if (y - 80 < M) { pages.push([]); y = H - M; } put(b.h, 13, true, 0, 2); if (b.s) put(b.s, 9.5, false, .4, 3); put(b.t || "(leer)", 11, false, b.t ? 0 : .5, 14); });
   const esc2 = s => s.replace(/[\\()]/g, "\\$&");
   const objs = [null, "<< /Type /Catalog /Pages 2 0 R >>", null, "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>", "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>"];
   const kids = [];
@@ -292,7 +292,7 @@ function aoPdf(title, sub, blocks) {
   objs.slice(1).forEach((o, i) => { off.push(s.length); s += `${i + 1} 0 obj\n${o}\nendobj\n`; });
   const xr = s.length; s += `xref\n0 ${objs.length}\n0000000000 65535 f \n` + off.map(o => String(o).padStart(10, "0") + " 00000 n \n").join("") + `trailer\n<< /Size ${objs.length} /Root 1 0 R >>\nstartxref\n${xr}\n%%EOF`;
   const u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i) & 255;
-  return new File([u], "KEIL-Vorstellung.pdf", { type: "application/pdf" });
+  return new File([u], fname || "KEIL-Vorstellung.pdf", { type: "application/pdf" });
 }
 function aoPdfActs(file, msg) {
   return {
