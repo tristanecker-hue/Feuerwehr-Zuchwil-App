@@ -1,4 +1,4 @@
-const APP_VERSION = "1.27";
+const APP_VERSION = "1.30";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -45,27 +45,28 @@ function fireFx(btn) {
   if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return { level() {} };
   let cv = btn.querySelector("canvas.fire");
   if (!cv) { cv = document.createElement("canvas"); cv.className = "fire"; cv.style.position = "absolute"; btn.appendChild(cv); }
-  const im = btn.querySelector("img"), dpr = Math.min(window.devicePixelRatio || 1, 2), W = im.clientWidth, H = im.clientHeight, PX = 40, PT = 150;
+  const im = btn.querySelector("img"), dpr = Math.min(window.devicePixelRatio || 1, 2), W = im.clientWidth, H = im.clientHeight, PX = 60, PT = 280;
   cv.style.cssText = `position:absolute;left:${-PX}px;top:${-PT}px;width:${W + 2 * PX}px;height:${H + PT + 20}px;pointer-events:none`;
   cv.width = (W + 2 * PX) * dpr; cv.height = (H + PT + 20) * dpr;
   const g = cv.getContext("2d"); g.scale(dpr, dpr);
-  const ps = []; let lvl = 0, rate = 0, last = 0, run = false;
-  const rates = [0, 140, 520];
+  const ps = []; if (btn.isConnected) { /* Platz nach oben */ } let lvl = 0, rate = 0, last = 0, run = false;
+  const rates = [0, 360, 900];
   function frame(t) {
     if (!cv.isConnected) return;
     const dt = Math.min(.05, (t - last) / 1000 || .016); last = t;
     rate += (rates[lvl] - rate) * Math.min(1, dt * 6);
     let n = rate * dt + Math.random(); n = n | 0;
     for (let i = 0; i < n; i++) {
-      const edge = Math.random() < .35, x = edge ? (Math.random() < .5 ? Math.random() * .15 : 1 - Math.random() * .15) : Math.random();
-      ps.push({ x: PX + x * W, y: PT + H - 4 - Math.random() * H * .1, vx: (Math.random() - .5) * 30, vy: -(70 + Math.random() * 120) * (lvl === 2 ? 1.5 : 1), l: 0, life: .7 + Math.random() * .9, r: 10 + Math.random() * 18 });
+      const edge = Math.random() < .4, x = edge ? (Math.random() < .5 ? Math.random() * .2 : 1 - Math.random() * .2) : Math.random(), big = lvl === 2, spark = Math.random() < .14;
+      ps.push({ x: PX + x * W, y: PT + H - 4 - Math.random() * H * (big ? .5 : .15), vx: (Math.random() - .5) * (spark ? 140 : 44), vy: -(spark ? 200 + Math.random() * 260 : 110 + Math.random() * 190) * (big ? 1.5 : 1.1), l: 0, life: spark ? .8 + Math.random() * 1.2 : .9 + Math.random() * 1.1, r: spark ? 2 + Math.random() * 2.5 : (16 + Math.random() * 26) * (big ? 1.3 : 1), spark });
     }
     g.clearRect(0, 0, W + 2 * PX, H + PT + 20); g.globalCompositeOperation = "lighter";
+    if (rate > 40) { const gl = g.createRadialGradient(PX + W / 2, PT + H * .7, 10, PX + W / 2, PT + H * .7, W * .75); gl.addColorStop(0, `rgba(255,120,20,${Math.min(.32, rate / 3000)})`); gl.addColorStop(1, "rgba(255,60,0,0)"); g.fillStyle = gl; g.fillRect(0, 0, W + 2 * PX, H + PT + 20); }
     for (let i = ps.length - 1; i >= 0; i--) {
       const p = ps[i]; p.l += dt; if (p.l >= p.life) { ps.splice(i, 1); continue; }
       const a = p.l / p.life; p.x += (p.vx + Math.sin(p.l * 9 + i) * 18) * dt; p.y += p.vy * dt; p.vy *= .995;
-      const r = p.r * (1 - a * .75), col = a < .25 ? "255,230,140" : a < .55 ? "255,150,40" : "230,40,20", al = (1 - a) * .55;
-      const gr = g.createRadialGradient(p.x, p.y, 0, p.x, p.y, r); gr.addColorStop(0, `rgba(${col},${al})`); gr.addColorStop(1, `rgba(${col},0)`);
+      const r = p.spark ? p.r * (1 - a * .5) : p.r * (1 - a * .7), col = p.spark ? "255,240,170" : a < .2 ? "255,200,70" : a < .5 ? "255,130,20" : a < .8 ? "235,50,20" : "90,40,35", al = p.spark ? 1 - a : (a > .8 ? .3 : (1 - a) * .6);
+      g.globalCompositeOperation = p.spark ? "lighter" : "source-over"; const gr = g.createRadialGradient(p.x, p.y, 0, p.x, p.y, r); gr.addColorStop(0, `rgba(${col},${al})`); gr.addColorStop(1, `rgba(${col},0)`);
       g.fillStyle = gr; g.beginPath(); g.arc(p.x, p.y, r, 0, 6.2832); g.fill();
     }
     if (ps.length || lvl) requestAnimationFrame(frame); else { run = false; g.clearRect(0, 0, W + 2 * PX, H + PT + 20); }
@@ -85,7 +86,7 @@ async function appUpdate() {
     await wait(); fire.level(2); fx("upd"); v.textContent = "Neue Version" + (nv ? " V" + nv : "") + " wird geladen …";
     if ("caches" in window) for (const k of await caches.keys()) await caches.delete(k);
     if ("serviceWorker" in navigator) for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
-    await new Promise(r => setTimeout(r, 1600)); location.reload();
+    await new Promise(r => setTimeout(r, 2000)); location.reload();
   } catch (e) { fire.level(0); lb.classList.remove("busy", "ok", "upd"); v.textContent = "Keine Verbindung, Update nicht möglich."; }
 }
 
