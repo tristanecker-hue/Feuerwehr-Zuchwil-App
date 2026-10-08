@@ -1,4 +1,4 @@
-const APP_VERSION = "1.13";
+const APP_VERSION = "1.14";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -304,18 +304,20 @@ function lesView() {
   state.mod = null; state.view = "les"; backBtn.hidden = false;
   document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
   const ml = typeof AO_LEK !== "undefined" && typeof AO_T !== "undefined";
-  if (ml && state.lc && state.lc.indexOf("m:") === 0) {
+  if (ml && state.lc && /^[mf]:/.test(state.lc)) {
+    const fest = state.lc[0] === "f", src = fest ? (typeof AO_LEKF !== "undefined" ? AO_LEKF : {}) : AO_LEK;
     const t = AO_T.find(x => x.id === state.lc.slice(2));
-    if (t && AO_LEK[t.id]) { app.innerHTML = '<section class="hero"><h1>Musterlektion</h1></section>' + aoLekHtml(t); aoLekBind(app); return; }
+    if (t && src[t.id]) { app.innerHTML = '<section class="hero"><h1>Musterlektion</h1></section>' + aoLekHtml(t, fest); aoLekBind(app); return; }
     state.lc = null;
   }
   const loginBox = !FWZ.user && FWZ.enabled ? '<div class="loginbox"><div><b>Nicht angemeldet</b><span>Melde dich an, um PDFs mit allen zu teilen und die Lektionen der anderen zu sehen.</span></div><button class="btn primary" id="lgo">Anmelden</button></div>' : "";
-  const mlTiles = ml ? AO_T.filter(t => AO_LEK[t.id]) : [];
+  const tiles = (src, p) => '<div class="grid">' + AO_T.filter(t => src[t.id]).map(t => `<button class="tile chtile" data-m="${p}:${t.id}"><span class="num">${t.l.map(n => "L " + n).join(" · ")}</span><h2>${esc(t.t)}</h2></button>`).join("") + "</div>";
+  const nA = ml ? AO_T.filter(t => AO_LEK[t.id]).length : 0, nF = ml && typeof AO_LEKF !== "undefined" ? AO_T.filter(t => AO_LEKF[t.id]).length : 0;
   const grp = (t, n, inner) => `<details class="lgrp"><summary><span>${t}</span><b>${n}</b></summary><div class="lgbody">${inner}</div></details>`;
-  const mlHtml = ml && !state.lc ? grp("Musterlektionen (50 Min., Anlernstufe)", mlTiles.length, '<div class="grid" id="ml">' + mlTiles.map(t => `<button class="tile chtile" data-m="${t.id}"><span class="num">${t.l.map(n => "L " + n).join(" · ")}</span><h2>${esc(t.t)}</h2></button>`).join("") + "</div>") : "";
+  const mlHtml = ml && !state.lc ? grp("Musterlektionen (50 Min.)", nA + nF, '<h3 class="zh">Anlernstufe</h3>' + tiles(AO_LEK, "m") + (nF ? '<h3 class="zh">Festigungsstufe</h3>' + tiles(AO_LEKF, "f") : "")) : "";
   app.innerHTML = '<section class="hero"><h1>Lektionen</h1></section>' + loginBox + mlHtml + (state.lc ? '<div id="body"></div>' : '<details class="lgrp" id="eig"><summary><span>Eigene Lektionen (PDF)</span><b id="eign">…</b></summary><div class="lgbody" id="body"></div></details>');
   const lgo0 = document.getElementById("lgo"); if (lgo0) lgo0.onclick = loginView;
-  document.querySelectorAll("#ml [data-m]").forEach(b => b.addEventListener("click", () => { state.lc = "m:" + b.dataset.m; lesView(); window.scrollTo(0, 0); }));
+  document.querySelectorAll("[data-m]").forEach(b => b.addEventListener("click", () => { state.lc = b.dataset.m; lesView(); window.scrollTo(0, 0); }));
   lektionen(getMod("basis"), document.getElementById("body"));
 }
 

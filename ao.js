@@ -257,14 +257,16 @@ function aoTopics() {
     }).join("")}</div>`;
   aoBind(app);
 }
-function aoLekHtml(t) {
-  const m = typeof AO_LEK !== "undefined" ? AO_LEK[t.id] : null; if (!m) return "";
+function aoLekHtml(t, fest) {
+  const src = fest ? (typeof AO_LEKF !== "undefined" ? AO_LEKF : null) : (typeof AO_LEK !== "undefined" ? AO_LEK : null);
+  const m = src ? src[t.id] : null; if (!m) return "";
+  const stufe = fest ? "Festigungsstufe" : "Anlernstufe";
   const ul = a => a.map(x => `<li>${esc(x)}</li>`).join("");
   return `<h3 class="zh">Musterlektion</h3>
-    <div class="note">Muster im Layout der Lektionsvorlage: 50 Min., Anlernstufe. Als Ausgangspunkt für deine eigene Lektion gedacht.</div>
+    <div class="note">Muster im Layout der Lektionsvorlage: 50 Min., ${stufe}. Als Ausgangspunkt für deine eigene Lektion gedacht.</div>
     <article class="lek" id="lekdoc">
       <div class="lh"><b>Ausbildung<br>Feuerwehrdienst</b><b class="ln">Lektion Nr. ${esc(m.nr)}</b></div>
-      <dl class="lm"><dt>Thema:</dt><dd>${esc(m.thema)}</dd><dt>Ausbildungsstufe:</dt><dd>Anlernstufe · Dauer: 50 Min.</dd>
+      <dl class="lm"><dt>Thema:</dt><dd>${esc(m.thema)}</dd><dt>Ausbildungsstufe:</dt><dd>${stufe} · Dauer: 50 Min.</dd>
         <dt>Ziele:</dt><dd><ul class="lkz">${ul(m.ziele)}</ul></dd>
         <dt>Beurteilungskriterien:</dt><dd><ul class="lkc">${ul(m.krit)}</ul></dd>
         <dt>Material:</dt><dd><ul class="lkb">${ul(m.material)}</ul></dd>
