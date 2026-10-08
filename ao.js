@@ -3,8 +3,38 @@
    Fachinhalte (Zahlen, Zusammenfassung, Lernkarten, Quiz) stammen aus dem Reglement Basiswissen in dieser App. */
 const AO_REGL = "https://docs.feukos.ch/Basiswissen/ReglementBasiswissenDE/";
 const AO_T0 = new Date(2026, 9, 20, 7, 30);
-const AOS = Object.assign({ k: 1, chk: {}, notes: {}, known: {} }, (() => { try { return JSON.parse(localStorage.getItem("fwz-ao") || "{}"); } catch (e) { return {}; } })());
-function aoSave() { try { localStorage.setItem("fwz-ao", JSON.stringify(AOS)); } catch (e) {} }
+/* Persönlicher Stand (Notizen, Checklisten, Klasse): pro Benutzer getrennt, angemeldet zusätzlich in der Cloud (nur eigenes Dokument) */
+const AO_DEF = () => ({ k: 1, chk: {}, notes: {}, known: {} });
+const AOS = {};
+let aoUid = null, aoTm = null;
+const aoKey = u => "fwz-ao" + (u ? ":" + u : "");
+function aoRead(key) { try { return JSON.parse(localStorage.getItem(key) || "null") || {}; } catch (e) { return {}; } }
+function aoApply(o) { Object.keys(AOS).forEach(k => delete AOS[k]); Object.assign(AOS, AO_DEF(), o || {}); }
+const aoEmpty = o => !o || !Object.keys(o).length || (!Object.keys(o.notes || {}).some(k => (o.notes[k] || "").trim()) && !Object.keys(o.chk || {}).length && !Object.keys(o.known || {}).length);
+function aoSave() {
+  AOS._t = Date.now();
+  try { localStorage.setItem(aoKey(aoUid), JSON.stringify(AOS)); } catch (e) {}
+  if (aoUid) { clearTimeout(aoTm); aoTm = setTimeout(() => { try { FWZ.pushProgress(AOS).catch(() => {}); } catch (e) {} }, 1200); }
+}
+async function aoSync() {
+  const u = typeof FWZ !== "undefined" && FWZ.user ? FWZ.user.uid : null;
+  if (u === aoUid) return;
+  clearTimeout(aoTm); aoUid = u;
+  if (!u) { aoApply(aoRead(aoKey(null))); return; }
+  let local = aoRead(aoKey(u)), cloud = null, ok = true;
+  try { cloud = await FWZ.pullProgress(); } catch (e) { ok = false; }
+  if (aoEmpty(local) && aoEmpty(cloud)) { const anon = aoRead(aoKey(null)); if (!aoEmpty(anon)) { local = anon; try { localStorage.removeItem(aoKey(null)); } catch (e) {} } }
+  let use = local;
+  if (cloud && !aoEmpty(cloud) && (aoEmpty(local) || (cloud._t || 0) >= (local._t || 0))) use = cloud;
+  aoApply(use);
+  try { localStorage.setItem(aoKey(u), JSON.stringify(AOS)); } catch (e) {}
+  if (ok && !aoEmpty(AOS) && use !== cloud) { try { FWZ.pushProgress(AOS).catch(() => {}); } catch (e) {} }
+}
+aoApply(aoRead(aoKey(null)));
+if (typeof FWZ !== "undefined") {
+  const aoRefresh = () => aoSync().then(() => { if (typeof state !== "undefined" && /^ao/.test(state.view || "")) aoGo(state.aoR || ""); });
+  FWZ.onChange(aoRefresh); if (FWZ.user) aoRefresh();
+}
 
 /* ---------- Daten ---------- */
 const AO_L = { "1": "KEIL (Kennenlernen / Einsteigen / Informieren / Loslegen)", "2": "Lektionszuteilung und Vorbereitung (1. Staffel)", "3": "Lektionszuteilung / Vorbereitung (2. Staffel)", "101": "Pers. Ausrüstung / Sicherheit / Bindungen / Knoten", "102": "Rettungsmittel Leitern (Anlernstufe)", "103": "Rettungsmittel Leitern (Festigungsstufe)", "104": "Personenrettung und Transport", "105": "Leitungsbau", "106": "Verbraucher", "107": "Kleinlöschgeräte", "108": "TLF (Anlernstufe)", "109": "TLF (Festigungsstufe)", "201": "SL / SLS (Schiebeleiter, Schiebeleiter mit Stützen)", "202": "Leitungsbau", "203": "MS ab Gewässer", "204": "MS ab Hydrant", "205": "Personenrettung über Leitern", "206": "TLF", "207": "Lüften", "208": "Einsatzort sichern", "209": "Kleinlöschgeräte" };
@@ -273,15 +303,23 @@ function aoPdfActs(file, msg) {
 }
 
 /* ---------- KEIL ---------- */
+function aoWho() {
+  if (typeof FWZ === "undefined" || !FWZ.enabled) return '<div class="note">Deine Notizen bleiben auf diesem Gerät gespeichert.</div>';
+  if (FWZ.user) return '<div class="note"><b>Persönlich:</b> Diese Notizen gehören <b>' + esc(FWZ.label()) + '</b>. Sie sind nur für dich sichtbar und auf allen deinen Geräten verfügbar, wenn du angemeldet bist.</div>';
+  return '<div class="loginbox"><div><b>Nicht angemeldet</b><span>Melde dich an, damit deine Notizen dir gehören, nur du sie siehst und sie auf allen deinen Geräten da sind. Ohne Anmeldung bleiben sie nur auf diesem Gerät.</span></div><button class="btn primary" id="klg">Anmelden</button></div>';
+}
+
 function aoKeil() {
   app.innerHTML = `<section class="hero"><h1>KEIL</h1><p>Persönliche Vorstellung am Kurs: 2–3 Minuten, kreativ und ansprechend. Hilfsmittel frei wählbar, aber keine PowerPoint-Präsentation und ohne Flipchart. Auf- und Abbau müssen schnell gehen.</p></section>
+    ${aoWho()}
     <div class="note">Im Tagesbefehl steht am Dienstag, 08.15–08.45: L 1 «KEIL (Kennenlernen / Einsteigen / Informieren / Loslegen)» im Theorieraum.</div>
     <div class="keilt"><div class="ktime" id="kt">00:00</div><div class="row"><button class="btn primary" id="kgo">Start</button><button class="btn ghost" id="krs">Zurücksetzen</button><button class="btn" id="kpo">PDF öffnen</button><button class="btn" id="ksh">Teilen</button><button class="btn" id="kpr">Drucken</button></div><div class="sinfo" id="kmsg" role="status"></div><div class="sinfo">Ziel: zwischen 2:00 und 3:00. Die Anzeige wird grün, ab 3:00 rot.</div></div>
     ${AO_KEIL.map((k, i) => `<label class="fld"><span class="fl">${i + 1}. ${k[0]}</span><span class="fh">${k[1]}</span><textarea class="ta" rows="3" data-n="keil${i}" placeholder="Stichworte …">${esc(AOS.notes["keil" + i] || "")}</textarea></label>`).join("")}
     <h3 class="zh">Checkliste</h3><div class="chklist">${[["Alle 5 Punkte haben ein Bild, einen Gegenstand oder eine Geste", "k1"], ["Hilfsmittel passen in die Tasche und stehen in unter einer Minute", "k2"], ["Laut geübt und gestoppt, mindestens dreimal", "k3"], ["Anfang und Schluss auswendig", "k4"]].map(c => aoChkHtml(c[1], esc(c[0]))).join("")}</div>`;
   aoBind(app);
+  const klg = document.getElementById("klg"); if (klg) klg.onclick = () => { state.after = () => aoGo("keil"); loginView(); };
   const kmsg = document.getElementById("kmsg");
-  const kact = f => () => { try { const acts = aoPdfActs(aoPdf("KEIL-Vorstellung · Ausbildungsoffizier Ku 70", "Feuerwehr Zuchwil · Ziel: 2–3 Minuten", AO_KEIL.map((k, i) => ({ h: (i + 1) + ". " + k[0], s: k[1], t: (AOS.notes["keil" + i] || "").trim() }))), kmsg); kmsg.textContent = ""; acts[f](); } catch (e) { kmsg.textContent = "PDF konnte nicht erstellt werden."; } };
+  const kact = f => () => { try { const acts = aoPdfActs(aoPdf("KEIL-Vorstellung · Ausbildungsoffizier Ku 70", "Feuerwehr Zuchwil" + (typeof FWZ !== "undefined" && FWZ.user ? " · " + FWZ.label() : "") + " · Ziel: 2–3 Minuten", AO_KEIL.map((k, i) => ({ h: (i + 1) + ". " + k[0], s: k[1], t: (AOS.notes["keil" + i] || "").trim() }))), kmsg); kmsg.textContent = ""; acts[f](); } catch (e) { kmsg.textContent = "PDF konnte nicht erstellt werden."; } };
   document.getElementById("kpo").onclick = kact("open"); document.getElementById("ksh").onclick = kact("share"); document.getElementById("kpr").onclick = kact("print");
   let sec = 0, iv = null; const out = document.getElementById("kt"), b = document.getElementById("kgo"), r = document.getElementById("krs");
   const show = () => { out.textContent = String(Math.floor(sec / 60)).padStart(2, "0") + ":" + String(sec % 60).padStart(2, "0"); out.className = "ktime" + (sec > 180 ? " bad" : sec >= 120 ? " ok" : ""); };

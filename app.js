@@ -1,4 +1,4 @@
-const APP_VERSION = "1.17";
+const APP_VERSION = "1.18";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -335,7 +335,7 @@ function loginView() {
   document.getElementById("lgf").addEventListener("submit", async e => {
     e.preventDefault(); const m = document.getElementById("lgm"), u = document.getElementById("lgu").value, p = document.getElementById("lgp").value;
     if (!u.trim() || !p) return; m.textContent = "Anmelden …";
-    try { await FWZ.login(u, p); try { localStorage.setItem("fwz-user", u.trim()); } catch (e2) {} lesView(); }
+    try { await FWZ.login(u, p); try { localStorage.setItem("fwz-user", u.trim()); } catch (e2) {} if (state.after) { const f = state.after; state.after = null; await aoSync(); f(); } else lesView(); }
     catch (err) { m.textContent = /Firebase konnte/.test(err.message) ? err.message : "Anmeldung fehlgeschlagen. Benutzername oder Passwort prüfen."; }
   });
 }
