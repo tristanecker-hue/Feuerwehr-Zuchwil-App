@@ -250,10 +250,10 @@ function aoKeil() {
 
 /* ---------- Lektionen ---------- */
 function aoTopics() {
-  app.innerHTML = `<section class="hero"><h1>Lektionen</h1><p>Alle Fachthemen des Kurses in der Reihenfolge des Tagesbefehls. Pro Thema: Musterlektion (50 Min.), Selbsttest, Reglement, eigene Planung.</p></section>
+  app.innerHTML = `<section class="hero"><h1>Lektionen</h1><p>Alle Fachthemen des Kurses in der Reihenfolge des Tagesbefehls. Pro Thema: Selbsttest, Reglement, eigene Planung.</p></section>
     <div class="grid">${AO_T.map(t => {
       const d = t.fr.filter((f, i) => AOS.chk["s:" + t.id + ":" + i]).length, ok = AOS.chk["d:" + t.id];
-      return `<button class="tile chtile" data-r="lek:${t.id}"><span class="num">${t.l.map(n => "L " + n).join(" · ")}</span><h2>${esc(t.t)}</h2>${aoMeter(ok ? t.fr.length : d, t.fr.length)}<div class="facts"><span>${ok ? "sitzt" : d + " von " + t.fr.length + " Fragen sicher"}</span>${typeof AO_LEK !== "undefined" && AO_LEK[t.id] ? "<span>Musterlektion</span>" : ""}</div></button>`;
+      return `<button class="tile chtile" data-r="lek:${t.id}"><span class="num">${t.l.map(n => "L " + n).join(" · ")}</span><h2>${esc(t.t)}</h2>${aoMeter(ok ? t.fr.length : d, t.fr.length)}<div class="facts"><span>${ok ? "sitzt" : d + " von " + t.fr.length + " Fragen sicher"}</span></div></button>`;
     }).join("")}</div>`;
   aoBind(app);
 }
@@ -273,6 +273,7 @@ function aoLekHtml(t) {
     </article>
     <div class="row"><button class="btn" id="lekpr">Drucken / als PDF</button></div>`;
 }
+function aoLekBind(el) { const pb = el.querySelector("#lekpr"); if (pb) pb.onclick = () => { document.body.classList.add("lekprint"); window.print(); setTimeout(() => document.body.classList.remove("lekprint"), 500); }; }
 function aoTopic(id) {
   const t = AO_T.find(x => x.id === id); if (!t) return aoTopics();
   const sl = t.l.flatMap(n => aoSlots(n, AOS.k).map(s => Object.assign({ n }, s)));
@@ -282,7 +283,6 @@ function aoTopic(id) {
     ${aoKlasse()}
     <h3 class="zh">Wann und wo</h3>
     <div class="ztw"><table class="zt sch">${sl.map(s => `<tr><td>${s.day}<br>${s.von}–${s.bis}</td><td>L ${s.n}<br><span class="mu">Arbeitsplatz ${s.ap}: ${esc(AO_AP[s.ap] || "")}</span></td></tr>`).join("")}</table></div>
-    ${aoLekHtml(t)}
     <h3 class="zh">Selbsttest</h3><div class="note">Beantworte jede Frage laut und in eigenen Worten, als würdest du sie einer Gruppe erklären. Hake ab, was sicher sitzt.</div>
     <div class="chklist">${t.fr.map((f, i) => aoChkHtml("s:" + t.id + ":" + i, esc(f))).join("")}</div>
     <h3 class="zh">Karten und Fragen zum Thema</h3>
@@ -298,7 +298,6 @@ function aoTopic(id) {
     <div class="chklist">${aoChkHtml("d:" + t.id, "<b>Dieses Thema sitzt</b>")}</div>`;
   aoBind(app);
   app.querySelectorAll("[data-o]").forEach(b => b.addEventListener("click", () => { const [tab, k] = b.dataset.o.split(":"); aoOpen(tab, k); }));
-  const pb = document.getElementById("lekpr"); if (pb) pb.onclick = () => { document.body.classList.add("lekprint"); window.print(); setTimeout(() => document.body.classList.remove("lekprint"), 500); };
   document.getElementById("mc").onclick = () => aoDrill(document.getElementById("dr"), mt.cards);
   document.getElementById("mq").onclick = () => aoQuizRun(document.getElementById("dr"), mt.quiz);
   const box = document.getElementById("sx");

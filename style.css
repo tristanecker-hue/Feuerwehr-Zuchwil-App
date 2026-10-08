@@ -203,3 +203,5 @@ body.keilprint .kprint{display:block!important;color:#000;font-family:Arial,sans
 .kprint .kp{border:1px solid #444;padding:8pt;margin-bottom:10pt;break-inside:avoid}
 .kprint h2{font-size:13pt;margin:0}.kprint .kh{margin:2pt 0 6pt;color:#555;font-size:10pt}
 .kprint .kn{white-space:pre-wrap;min-height:60pt;font-size:12pt}}
+
+@media print{body.lekprint .hero{display:none!important}}
