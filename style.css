@@ -266,3 +266,12 @@ body.keilprint .kprint{display:block!important;color:#000;font-family:Arial,sans
 @keyframes lshake { 0% { transform: translate(0, 0); } 25% { transform: translate(2px, -1px); } 50% { transform: translate(-2px, 1px); } 75% { transform: translate(1px, 2px); } 100% { transform: translate(0, 0); } }
 @keyframes lbeat { to { transform: scale(1.03); } }
 .landing .logobtn { margin-top: 18px; }
+
+.landing .greet { margin-top: 14px; font-size: 1.15rem; font-weight: 600; letter-spacing: .02em; color: var(--ink); min-height: 1.6em; }
+.landing .menu { margin-top: 5vh; }
+.landing { background-repeat: no-repeat; background-size: 100% 70%; }
+.landing[data-tod="morning"] { background-image: radial-gradient(ellipse at 50% 0, rgba(255, 190, 90, .16), transparent 70%); }
+.landing[data-tod="day"] { background-image: radial-gradient(ellipse at 50% 0, rgba(120, 180, 255, .12), transparent 70%); }
+.landing[data-tod="evening"] { background-image: radial-gradient(ellipse at 50% 0, rgba(255, 110, 50, .18), transparent 70%); }
+.landing[data-tod="night"] { background-image: radial-gradient(ellipse at 50% 0, rgba(70, 90, 200, .18), transparent 70%); }
+.landing .clock { text-shadow: 0 0 24px rgba(255, 255, 255, .12); }

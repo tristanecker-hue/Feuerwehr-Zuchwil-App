@@ -1,8 +1,8 @@
-const APP_VERSION = "1.33";
+const APP_VERSION = "1.34";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
-FWZ.onChange(() => { if (state.view === "les") lesView(); });
+FWZ.onChange(() => { if (state.view === "les") lesView(); greetUpd(); });
 let state = { mod: null, tab: "sum", ch: null, cf: null, lc: null };
 let prog = {};
 try { prog = JSON.parse(localStorage.getItem("fwz-progress") || "{}"); } catch (e) { prog = {}; }
@@ -15,12 +15,23 @@ function getMod(id) { return MODS.find(m => m.id === id); }
 
 /* ---------- Startseite ---------- */
 const LOGO_OLD = `<svg viewBox="0 0 120 140" width="120" height="140" role="img" aria-label="Wappen Feuerwehr Zuchwil"><path d="M60 4 112 22v50c0 32-22 52-52 64C30 124 8 104 8 72V22z" fill="var(--red)"/><path d="M60 14 102 28v44c0 26-17 43-42 53-25-10-42-27-42-53V28z" fill="none" stroke="var(--red-ink)" stroke-width="2.5"/><path d="M60 30c4 14 20 22 20 42a20 20 0 0 1-40 0c0-10 5-16 9-22 1 7 4 10 8 11-3-12-1-22 3-31z" fill="var(--red-ink)"/><path d="M60 68c2 7 10 10 10 19a10 10 0 0 1-20 0c0-5 3-8 5-11 1 3 2 5 5 5-1-5-1-9 0-13z" fill="var(--red)"/></svg>`;
+function greetUpd() {
+  const el = document.getElementById("greet"); if (!el) return;
+  const h = new Date().getHours(), tod = h < 5 ? "night" : h < 10 ? "morning" : h < 17 ? "day" : h < 22 ? "evening" : "night";
+  const hi = h < 5 ? "Gute Nacht" : h < 10 ? "Guten Morgen" : h < 17 ? "Guten Tag" : h < 22 ? "Guten Abend" : "Gute Nacht";
+  let n = ""; try { n = FWZ.user ? FWZ.label() : ""; } catch (e) {}
+  n = n ? n.charAt(0).toUpperCase() + n.slice(1) : "";
+  const t = hi + (n ? ", " + n : "");
+  if (el.textContent !== t) el.textContent = t;
+  const L = document.querySelector(".landing"); if (L && L.dataset.tod !== tod) L.dataset.tod = tod;
+}
 function start() {
   state.mod = null; state.from = null; state.view = "start"; backBtn.hidden = true;
   document.body.classList.add("startpage"); document.querySelector(".top").hidden = true;
   app.innerHTML = `
     <section class="landing">
       <button class="logobtn" id="logoup" aria-label="Nach Update suchen"><img src="logo.jpg" alt="Feuerwehr Zuchwil"></button>
+      <div class="greet" id="greet"></div>
       <div class="menu">
         <button class="mbtn main" id="t-reg">Reglemente</button>
         <button class="mbtn main" id="t-les">Lektionen</button>
@@ -32,7 +43,7 @@ function start() {
         <div class="ver-foot" id="verf">V${APP_VERSION} · Logo antippen zum Aktualisieren</div>
       </div>
     </section>`;
-  const tick = () => { const c = document.getElementById("clock"); if (!c) return clearInterval(clk); c.textContent = new Date().toLocaleTimeString("de-CH", { hour12: false }); const dt = document.getElementById("date"); if (dt) dt.textContent = new Date().toLocaleDateString("de-CH", { weekday: "long", day: "numeric", month: "long", year: "numeric" }); };
+  const tick = () => { const c = document.getElementById("clock"); if (!c) return clearInterval(clk); c.textContent = new Date().toLocaleTimeString("de-CH", { hour12: false }); const dt = document.getElementById("date"); if (dt) dt.textContent = new Date().toLocaleDateString("de-CH", { weekday: "long", day: "numeric", month: "long", year: "numeric" }); greetUpd(); };
   clearInterval(window.clk); tick(); window.clk = setInterval(tick, 1000); var clk = window.clk;
   document.getElementById("logoup").onclick = appUpdate;
   document.getElementById("t-reg").onclick = home;
