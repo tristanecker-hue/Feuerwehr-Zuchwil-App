@@ -228,20 +228,61 @@ function aoCheck() {
   aoBind(app);
 }
 
+/* ---------- Einfacher PDF-Export (Text, A4) ---------- */
+function aoPdf(title, sub, blocks) {
+  const W = 595, H = 842, M = 56, TW = W - 2 * M, cv = document.createElement("canvas").getContext("2d");
+  const fix = s => String(s).replace(/[\u201c\u201d\u201e]/g, '"').replace(/[\u2018\u2019]/g, "'").replace(/[\u2013\u2014]/g, "-").replace(/\u2026/g, "...").replace(/\u20ac/g, "EUR").replace(/\t/g, " ").replace(/[^\n\x20-\x7e\xa0-\xff]/g, "?");
+  const pages = [[]]; let y = H - M;
+  const wrap = (txt, size, bold) => {
+    cv.font = (bold ? "bold " : "") + size + "px Helvetica, Arial, sans-serif"; const out = [];
+    fix(txt).split("\n").forEach(par => {
+      if (!par.trim()) { out.push(""); return; }
+      let line = ""; par.split(" ").forEach(w => { const t = line ? line + " " + w : w; if (cv.measureText(t).width > TW && line) { out.push(line); line = w; } else line = t; }); out.push(line);
+    }); return out;
+  };
+  const put = (txt, size, bold, gray, gap) => {
+    wrap(txt, size, bold).forEach(l => {
+      const lh = size * 1.35; if (y - lh < M) { pages.push([]); y = H - M; }
+      y -= lh; pages[pages.length - 1].push({ x: M, y, l, size, bold, gray });
+    }); y -= gap || 0;
+  };
+  put(title, 18, true, 0, 4); put(sub, 10, false, .4, 14);
+  blocks.forEach(b => { put(b.h, 13, true, 0, 2); if (b.s) put(b.s, 9.5, false, .4, 3); put(b.t || "(leer)", 11, false, b.t ? 0 : .5, 14); });
+  const esc2 = s => s.replace(/[\\()]/g, "\\$&");
+  const objs = [null, "<< /Type /Catalog /Pages 2 0 R >>", null, "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>", "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>"];
+  const kids = [];
+  pages.forEach(p => {
+    const st = p.map(t => `BT /${t.bold ? "F2" : "F1"} ${t.size} Tf ${t.gray} g ${t.x} ${t.y.toFixed(1)} Td (${esc2(t.l)}) Tj ET`).join("\n");
+    const ci = objs.length + 1, pi = objs.length;
+    objs.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${ci} 0 R >>`, `<< /Length ${st.length} >>\nstream\n${st}\nendstream`);
+    kids.push(pi);
+  });
+  objs[2] = `<< /Type /Pages /Kids [${kids.map(k => k + " 0 R").join(" ")}] /Count ${kids.length} >>`;
+  let s = "%PDF-1.4\n", off = [];
+  objs.slice(1).forEach((o, i) => { off.push(s.length); s += `${i + 1} 0 obj\n${o}\nendobj\n`; });
+  const xr = s.length; s += `xref\n0 ${objs.length}\n0000000000 65535 f \n` + off.map(o => String(o).padStart(10, "0") + " 00000 n \n").join("") + `trailer\n<< /Size ${objs.length} /Root 1 0 R >>\nstartxref\n${xr}\n%%EOF`;
+  const u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i) & 255;
+  return new File([u], "KEIL-Vorstellung.pdf", { type: "application/pdf" });
+}
+function aoPdfActs(file, msg) {
+  return {
+    open() { const u = URL.createObjectURL(file); const w = window.open(u, "_blank"); if (!w) location.href = u; setTimeout(() => URL.revokeObjectURL(u), 60000); },
+    async share() { try { if (navigator.canShare && navigator.canShare({ files: [file] })) await navigator.share({ files: [file], title: file.name }); else msg.textContent = "Teilen wird von diesem Gerät nicht unterstützt. Nutze «PDF öffnen» und dort das Teilen-Symbol."; } catch (e) { if (e && e.name !== "AbortError") msg.textContent = "Teilen nicht möglich."; } },
+    print() { const u = URL.createObjectURL(file), fr = document.createElement("iframe"); fr.style.cssText = "position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0"; fr.src = u; document.body.appendChild(fr); fr.onload = () => { try { fr.contentWindow.focus(); fr.contentWindow.print(); } catch (e) { window.open(u, "_blank"); } setTimeout(() => { fr.remove(); URL.revokeObjectURL(u); }, 60000); }; msg.textContent = "Falls kein Druckfenster erscheint: «PDF öffnen» wählen und dort drucken."; }
+  };
+}
+
 /* ---------- KEIL ---------- */
 function aoKeil() {
   app.innerHTML = `<section class="hero"><h1>KEIL</h1><p>Persönliche Vorstellung am Kurs: 2–3 Minuten, kreativ und ansprechend. Hilfsmittel frei wählbar, aber keine PowerPoint-Präsentation und ohne Flipchart. Auf- und Abbau müssen schnell gehen.</p></section>
     <div class="note">Im Tagesbefehl steht am Dienstag, 08.15–08.45: L 1 «KEIL (Kennenlernen / Einsteigen / Informieren / Loslegen)» im Theorieraum.</div>
-    <div class="keilt"><div class="ktime" id="kt">00:00</div><div class="row"><button class="btn primary" id="kgo">Start</button><button class="btn ghost" id="krs">Zurücksetzen</button><button class="btn" id="kpr">Drucken / als PDF</button></div><div class="sinfo">Ziel: zwischen 2:00 und 3:00. Die Anzeige wird grün, ab 3:00 rot.</div></div>
+    <div class="keilt"><div class="ktime" id="kt">00:00</div><div class="row"><button class="btn primary" id="kgo">Start</button><button class="btn ghost" id="krs">Zurücksetzen</button><button class="btn" id="kpo">PDF öffnen</button><button class="btn" id="ksh">Teilen</button><button class="btn" id="kpr">Drucken</button></div><div class="sinfo" id="kmsg" role="status"></div><div class="sinfo">Ziel: zwischen 2:00 und 3:00. Die Anzeige wird grün, ab 3:00 rot.</div></div>
     ${AO_KEIL.map((k, i) => `<label class="fld"><span class="fl">${i + 1}. ${k[0]}</span><span class="fh">${k[1]}</span><textarea class="ta" rows="3" data-n="keil${i}" placeholder="Stichworte …">${esc(AOS.notes["keil" + i] || "")}</textarea></label>`).join("")}
     <h3 class="zh">Checkliste</h3><div class="chklist">${[["Alle 5 Punkte haben ein Bild, einen Gegenstand oder eine Geste", "k1"], ["Hilfsmittel passen in die Tasche und stehen in unter einer Minute", "k2"], ["Laut geübt und gestoppt, mindestens dreimal", "k3"], ["Anfang und Schluss auswendig", "k4"]].map(c => aoChkHtml(c[1], esc(c[0]))).join("")}</div>`;
   aoBind(app);
-  document.getElementById("kpr").onclick = () => {
-    const d = document.createElement("div"); d.className = "kprint";
-    d.innerHTML = `<h1>KEIL-Vorstellung · Ausbildungsoffizier Ku 70</h1><p class="kp0">Feuerwehr Zuchwil · Ziel: 2–3 Minuten</p>` + AO_KEIL.map((k, i) => `<div class="kp"><h2>${i + 1}. ${esc(k[0])}</h2><p class="kh">${esc(k[1])}</p><div class="kn">${esc(AOS.notes["keil" + i] || "")}</div></div>`).join("");
-    app.appendChild(d); document.body.classList.add("keilprint"); window.print();
-    setTimeout(() => { document.body.classList.remove("keilprint"); d.remove(); }, 500);
-  };
+  const kmsg = document.getElementById("kmsg");
+  const kact = f => () => { try { const acts = aoPdfActs(aoPdf("KEIL-Vorstellung · Ausbildungsoffizier Ku 70", "Feuerwehr Zuchwil · Ziel: 2–3 Minuten", AO_KEIL.map((k, i) => ({ h: (i + 1) + ". " + k[0], s: k[1], t: (AOS.notes["keil" + i] || "").trim() }))), kmsg); kmsg.textContent = ""; acts[f](); } catch (e) { kmsg.textContent = "PDF konnte nicht erstellt werden."; } };
+  document.getElementById("kpo").onclick = kact("open"); document.getElementById("ksh").onclick = kact("share"); document.getElementById("kpr").onclick = kact("print");
   let sec = 0, iv = null; const out = document.getElementById("kt"), b = document.getElementById("kgo"), r = document.getElementById("krs");
   const show = () => { out.textContent = String(Math.floor(sec / 60)).padStart(2, "0") + ":" + String(sec % 60).padStart(2, "0"); out.className = "ktime" + (sec > 180 ? " bad" : sec >= 120 ? " ok" : ""); };
   b.onclick = () => { if (iv) { clearInterval(iv); iv = null; b.textContent = "Weiter"; } else { iv = setInterval(() => { if (!document.body.contains(out)) return clearInterval(iv); sec++; show(); }, 1000); b.textContent = "Stopp"; } };
