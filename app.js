@@ -1,4 +1,4 @@
-const APP_VERSION = "1.26";
+const APP_VERSION = "1.27";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -41,20 +41,52 @@ function start() {
   window.scrollTo(0, 0);
 }
 
+function fireFx(btn) {
+  if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return { level() {} };
+  let cv = btn.querySelector("canvas.fire");
+  if (!cv) { cv = document.createElement("canvas"); cv.className = "fire"; cv.style.position = "absolute"; btn.appendChild(cv); }
+  const im = btn.querySelector("img"), dpr = Math.min(window.devicePixelRatio || 1, 2), W = im.clientWidth, H = im.clientHeight, PX = 40, PT = 150;
+  cv.style.cssText = `position:absolute;left:${-PX}px;top:${-PT}px;width:${W + 2 * PX}px;height:${H + PT + 20}px;pointer-events:none`;
+  cv.width = (W + 2 * PX) * dpr; cv.height = (H + PT + 20) * dpr;
+  const g = cv.getContext("2d"); g.scale(dpr, dpr);
+  const ps = []; let lvl = 0, rate = 0, last = 0, run = false;
+  const rates = [0, 140, 520];
+  function frame(t) {
+    if (!cv.isConnected) return;
+    const dt = Math.min(.05, (t - last) / 1000 || .016); last = t;
+    rate += (rates[lvl] - rate) * Math.min(1, dt * 6);
+    let n = rate * dt + Math.random(); n = n | 0;
+    for (let i = 0; i < n; i++) {
+      const edge = Math.random() < .35, x = edge ? (Math.random() < .5 ? Math.random() * .15 : 1 - Math.random() * .15) : Math.random();
+      ps.push({ x: PX + x * W, y: PT + H - 4 - Math.random() * H * .1, vx: (Math.random() - .5) * 30, vy: -(70 + Math.random() * 120) * (lvl === 2 ? 1.5 : 1), l: 0, life: .7 + Math.random() * .9, r: 10 + Math.random() * 18 });
+    }
+    g.clearRect(0, 0, W + 2 * PX, H + PT + 20); g.globalCompositeOperation = "lighter";
+    for (let i = ps.length - 1; i >= 0; i--) {
+      const p = ps[i]; p.l += dt; if (p.l >= p.life) { ps.splice(i, 1); continue; }
+      const a = p.l / p.life; p.x += (p.vx + Math.sin(p.l * 9 + i) * 18) * dt; p.y += p.vy * dt; p.vy *= .995;
+      const r = p.r * (1 - a * .75), col = a < .25 ? "255,230,140" : a < .55 ? "255,150,40" : "230,40,20", al = (1 - a) * .55;
+      const gr = g.createRadialGradient(p.x, p.y, 0, p.x, p.y, r); gr.addColorStop(0, `rgba(${col},${al})`); gr.addColorStop(1, `rgba(${col},0)`);
+      g.fillStyle = gr; g.beginPath(); g.arc(p.x, p.y, r, 0, 6.2832); g.fill();
+    }
+    if (ps.length || lvl) requestAnimationFrame(frame); else { run = false; g.clearRect(0, 0, W + 2 * PX, H + PT + 20); }
+  }
+  return { level(l) { lvl = l; if (!run) { run = true; last = performance.now(); requestAnimationFrame(frame); } } };
+}
 async function appUpdate() {
   const v = document.getElementById("verf"); if (!v) return;
   const lb = document.getElementById("logoup"); if (lb.classList.contains("busy")) return;
   const fx = c => { lb.classList.remove("busy", "ok", "upd"); void lb.offsetWidth; if (c) lb.classList.add(c); };
+  const fire = lb._fire || (lb._fire = fireFx(lb)); fire.level(1);
   fx("busy"); v.textContent = "Suche nach Update …"; const t0 = Date.now(), wait = () => new Promise(r => setTimeout(r, Math.max(0, 900 - (Date.now() - t0))));
   try {
     const t = await (await fetch("app.js?u=" + Date.now(), { cache: "no-store" })).text();
     const nv = (t.match(/APP_VERSION = "([^"]+)"/) || [])[1];
-    if (nv && nv === APP_VERSION) { await wait(); fx("ok"); setTimeout(() => lb.classList.remove("ok"), 1200); v.textContent = "Die App ist aktuell (V" + APP_VERSION + ")"; setTimeout(() => { const e = document.getElementById("verf"); if (e) e.textContent = "V" + APP_VERSION + " · Logo antippen zum Aktualisieren"; }, 3500); return; }
-    await wait(); fx("upd"); v.textContent = "Neue Version" + (nv ? " V" + nv : "") + " wird geladen …";
+    if (nv && nv === APP_VERSION) { await wait(); fire.level(0); fx("ok"); setTimeout(() => lb.classList.remove("ok"), 1200); v.textContent = "Die App ist aktuell (V" + APP_VERSION + ")"; setTimeout(() => { const e = document.getElementById("verf"); if (e) e.textContent = "V" + APP_VERSION + " · Logo antippen zum Aktualisieren"; }, 3500); return; }
+    await wait(); fire.level(2); fx("upd"); v.textContent = "Neue Version" + (nv ? " V" + nv : "") + " wird geladen …";
     if ("caches" in window) for (const k of await caches.keys()) await caches.delete(k);
     if ("serviceWorker" in navigator) for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
-    await new Promise(r => setTimeout(r, 1100)); location.reload();
-  } catch (e) { lb.classList.remove("busy", "ok", "upd"); v.textContent = "Keine Verbindung, Update nicht möglich."; }
+    await new Promise(r => setTimeout(r, 1600)); location.reload();
+  } catch (e) { fire.level(0); lb.classList.remove("busy", "ok", "upd"); v.textContent = "Keine Verbindung, Update nicht möglich."; }
 }
 
 /* ---------- Suche ---------- */
