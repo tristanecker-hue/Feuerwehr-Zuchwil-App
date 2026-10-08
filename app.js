@@ -1,4 +1,4 @@
-const APP_VERSION = "1.22";
+const APP_VERSION = "1.23";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -62,7 +62,7 @@ function search(q) {
   const res = [];
   MODS.forEach(m => {
     m.sections.forEach((s, i) => {
-      const paras = s.p.filter(p => words.every(w => fold(s.t + " " + p).includes(w)));
+      const paras = s.p.concat((s.bx || []).flatMap(b => b[2])).filter(p => words.every(w => fold(s.t + " " + p).includes(w)));
       const titleHit = words.every(w => fold(s.t).includes(w));
       if (paras.length || titleHit) res.push({ t: "s", m, s, i, paras: paras.length ? paras.slice(0, 2) : [s.p[0]], score: titleHit ? 2 : 1 });
     });
@@ -218,9 +218,12 @@ const CH = {
 };
 const CHS = {basis: CH, einsatz: {"1": {"s": "9–16", "z": [["3 Kompetenzen", "Selbst-, Fach- und Sozialkompetenz bilden die Handlungskompetenz"], ["Sender", "Verantwortlich, dass die Botschaft ankommt und verstanden wird"]]}, "2": {"s": "17–29", "z": [["5 Phasen", "Ereignis, Alarmierung, Anfahrt, Einsatz, Einsatzende"], ["4 Prioritäten", "Menschen, Tiere, Umwelt, Sachwerte"], ["5 Schritte", "Ständiger Auftrag: Sichern, Retten, Halten, Schützen, Bewältigen"], ["3 Ereignisgrössen", "Alltagsereignis, Grossereignis, Katastrophe"], ["Unklar = Dringlichkeit", "Dringlichkeitsfahrt bei zeitkritischen und unklaren Einsätzen"]]}, "3": {"s": "31–44", "z": [["5 Schritte", "Feststellen, Beurteilen, Entscheiden, Handeln, Kontrollieren"], ["OAABS", "Orientierung, Absicht, Auftrag, Besonderes, Standort"], ["1 Auftrag", "Pro Befehlsempfänger auf einmal"], ["5–10 Minuten", "Vorausdenken beim Beurteilen"], ["Gesamtverantwortung", "Beim Einsatzleiter, nicht teilbar"]]}, "4": {"s": "45–57", "z": [["bis 11 m", "Gebäude geringer Höhe"], ["bis 30 m", "Gebäude mittlerer Höhe"], ["über 30 m", "Hochhaus"], ["4 Grundsätze", "Innenangriff, Treppenhaus sichern, Halten von gesunder Seite, Entwicklung voraussehen"], ["5 Fragen", "Chancen- und Risikenanalyse des Einsatzleiters"]]}, "5": {"s": "59–81", "z": [["max. 3", "Ziele je Stufe und Beurteilungskriterien in der Besprechung"], ["6 Punkte", "Übungsvorbereitung"], ["5 Finger", "Ablauf der Übungsbesprechung"], ["Gelb / Grün / Rot / Blau / Orange", "Fanions: Rettung, Unfall, Feuer, Wasser, gefährliche Stoffe"]]}}};
 const CHNS = {basis: CHN, einsatz: {"1": "Allgemeines", "2": "Einsatzphasen", "3": "Führungsrhythmus", "4": "Gebäudebrand", "5": "Ausbildung"}};
+function bxHtml(s) {
+  return (s.bx || []).map(([k, p, l]) => `<div class="bx ${k}"><div class="bxh">${k === "r" ? "⚠ Achtung" : "☞ Hinweis"}<span>S. ${p}</span></div><ul>${l.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>`).join("");
+}
 function secHtml(s, i, open) {
   const imgs = (s.img || []).map(([k, c]) => IMG[k] ? `<figure class="fig"><button class="zoom" data-k="${k}" aria-label="Bild vergrössern"><img src="${IMG[k]}" alt="${esc(c)}" loading="lazy"></button><figcaption>${esc(c)}</figcaption></figure>` : "").join("");
-  return `<details class="sec" id="sec-${i}"${open ? " open" : ""}><summary>${esc(s.t)}</summary><ul>${s.p.map(x => `<li>${esc(x)}</li>`).join("")}</ul>${imgs}</details>`;
+  return `<details class="sec" id="sec-${i}"${open ? " open" : ""}><summary>${esc(s.t)}</summary><ul>${s.p.map(x => `<li>${esc(x)}</li>`).join("")}</ul>${bxHtml(s)}${imgs}</details>`;
 }
 function bindZoom(el) { el.querySelectorAll(".zoom").forEach(b => b.addEventListener("click", () => zoom(b.dataset.k))); }
 function chKey(g) { return /^\d+ /.test(g) ? g.split(" ")[0] : "Neu"; }

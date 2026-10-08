@@ -228,3 +228,12 @@ body.keilprint .kprint{display:block!important;color:#000;font-family:Arial,sans
 .rgpages { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
 .rgpage { background: #fff; border-radius: 6px; box-shadow: 0 1px 6px rgba(0,0,0,.4); flex: none; }
 .rgpage canvas { display: block; }
+
+.bx { margin: 12px 0; padding: 10px 14px 6px; border-radius: 12px; border-left: 5px solid; }
+.bx.r { background: rgba(227, 0, 11, .15); border-color: #e3000b; }
+.bx.b { background: rgba(74, 144, 200, .16); border-color: #4a90c8; }
+.bxh { display: flex; justify-content: space-between; gap: 8px; font-weight: 700; font-size: .82rem; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
+.bx.r .bxh { color: #ff6b6b; }
+.bx.b .bxh { color: #7db8e8; }
+.bxh span { font-weight: 400; color: var(--muted); text-transform: none; letter-spacing: 0; }
+.bx ul { margin: 0; }
