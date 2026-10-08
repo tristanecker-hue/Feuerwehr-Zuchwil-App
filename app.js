@@ -1,4 +1,4 @@
-const APP_VERSION = "1.12";
+const APP_VERSION = "1.13";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -309,7 +309,12 @@ function lesView() {
     if (t && AO_LEK[t.id]) { app.innerHTML = '<section class="hero"><h1>Musterlektion</h1></section>' + aoLekHtml(t); aoLekBind(app); return; }
     state.lc = null;
   }
-  app.innerHTML = '<section class="hero"><h1>Lektionen</h1></section>' + (ml && !state.lc ? '<h3 class="zh">Musterlektionen (50 Min., Anlernstufe)</h3><div class="grid" id="ml">' + AO_T.filter(t => AO_LEK[t.id]).map(t => `<button class="tile chtile" data-m="${t.id}"><span class="num">${t.l.map(n => "L " + n).join(" · ")}</span><h2>${esc(t.t)}</h2></button>`).join("") + '</div><h3 class="zh">Lektionen als PDF</h3>' : "") + '<div id="body"></div>';
+  const loginBox = !FWZ.user && FWZ.enabled ? '<div class="loginbox"><div><b>Nicht angemeldet</b><span>Melde dich an, um PDFs mit allen zu teilen und die Lektionen der anderen zu sehen.</span></div><button class="btn primary" id="lgo">Anmelden</button></div>' : "";
+  const mlTiles = ml ? AO_T.filter(t => AO_LEK[t.id]) : [];
+  const grp = (t, n, inner) => `<details class="lgrp"><summary><span>${t}</span><b>${n}</b></summary><div class="lgbody">${inner}</div></details>`;
+  const mlHtml = ml && !state.lc ? grp("Musterlektionen (50 Min., Anlernstufe)", mlTiles.length, '<div class="grid" id="ml">' + mlTiles.map(t => `<button class="tile chtile" data-m="${t.id}"><span class="num">${t.l.map(n => "L " + n).join(" · ")}</span><h2>${esc(t.t)}</h2></button>`).join("") + "</div>") : "";
+  app.innerHTML = '<section class="hero"><h1>Lektionen</h1></section>' + loginBox + mlHtml + (state.lc ? '<div id="body"></div>' : '<details class="lgrp" id="eig"><summary><span>Eigene Lektionen (PDF)</span><b id="eign">…</b></summary><div class="lgbody" id="body"></div></details>');
+  const lgo0 = document.getElementById("lgo"); if (lgo0) lgo0.onclick = loginView;
   document.querySelectorAll("#ml [data-m]").forEach(b => b.addEventListener("click", () => { state.lc = "m:" + b.dataset.m; lesView(); window.scrollTo(0, 0); }));
   lektionen(getMod("basis"), document.getElementById("body"));
 }
@@ -371,12 +376,12 @@ async function lektionen(m, el) {
     else { el.innerHTML = '<div class="note">Der Speicher im Browser ist nicht verfügbar (z. B. im privaten Modus). Lektionen können hier nicht abgelegt werden.</div>'; return; }
   }
   if (!state.lc) {
-    el.innerHTML = '<div class="note">' + (FWZ.user ? 'Angemeldet als <b>' + esc(FWZ.label()) + '</b>. Lektionen sind für alle angemeldeten Mitglieder sichtbar. <button class="linkbtn" id="lgx">Abmelden</button>' : 'Lege hier PDF-Lektionen pro Kapitel ab. Ohne Anmeldung bleiben sie nur auf diesem Gerät.' + (FWZ.enabled ? ' <button class="linkbtn" id="lgo">Anmelden</button>, um sie mit allen zu teilen.' : '')) + (cloudErr ? '<br><b>' + cloudErr + '</b>' : '') + '</div><div class="grid">' + chs.map(c => {
+    el.innerHTML = '<div class="note">' + (FWZ.user ? 'Angemeldet als <b>' + esc(FWZ.label()) + '</b>. Lektionen sind für alle angemeldeten Mitglieder sichtbar. <button class="linkbtn" id="lgx">Abmelden</button>' : 'Lege hier PDF-Lektionen pro Kapitel ab. Ohne Anmeldung bleiben sie nur auf diesem Gerät.') + (cloudErr ? '<br><b>' + cloudErr + '</b>' : '') + '</div><div class="grid">' + chs.map(c => {
       const n = files.filter(f => f.ch === c.k).length;
       return `<button class="tile chtile" data-k="${c.k}"><span class="num">Kapitel ${c.k}</span><h2>${esc(c.n)}</h2><div class="facts"><span>${n === 0 ? "Noch keine PDFs" : n + (n === 1 ? " PDF" : " PDFs")}</span></div></button>`;
     }).join("") + "</div>";
+    const en = document.getElementById("eign"); if (en) en.textContent = files.length;
     el.querySelectorAll(".chtile").forEach(b => b.addEventListener("click", () => { state.lc = b.dataset.k; lesView(); window.scrollTo(0, 0); }));
-    const lgo = document.getElementById("lgo"); if (lgo) lgo.onclick = loginView;
     const lgx = document.getElementById("lgx"); if (lgx) lgx.onclick = () => FWZ.logout().then(() => lesView());
     return;
   }

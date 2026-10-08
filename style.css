@@ -205,3 +205,17 @@ body.keilprint .kprint{display:block!important;color:#000;font-family:Arial,sans
 .kprint .kn{white-space:pre-wrap;min-height:60pt;font-size:12pt}}
 
 @media print{body.lekprint .hero{display:none!important}}
+
+.loginbox { display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; background:var(--surface); border:1px solid var(--red); border-left-width:5px; border-radius:14px; padding:14px 16px; margin:0 0 14px; }
+.loginbox div { display:flex; flex-direction:column; gap:2px; flex:1 1 200px; min-width:0; }
+.loginbox span { color:var(--muted); font-size:.92rem; line-height:1.4; }
+.loginbox .btn { flex:0 0 auto; padding:12px 26px; font-size:1.05rem; }
+.lgrp { margin:0 0 12px; background:var(--surface); border:1px solid var(--line); border-radius:14px; }
+.lgrp > summary { display:flex; align-items:center; gap:10px; list-style:none; cursor:pointer; padding:14px 16px; font-family:"Oswald",sans-serif; font-size:1.1rem; font-weight:600; letter-spacing:.02em; }
+.lgrp > summary::-webkit-details-marker { display:none; }
+.lgrp > summary > span { flex:1; }
+.lgrp > summary b { background:var(--bg); border:1px solid var(--line); border-radius:99px; padding:1px 10px; font-size:.85rem; color:var(--muted); }
+.lgrp > summary::after { content:"▾"; color:var(--red); transition:transform .15s; }
+.lgrp[open] > summary::after { transform:rotate(180deg); }
+.lgrp[open] > summary { border-bottom:1px solid var(--line); }
+.lgrp > .lgbody { padding:12px; }
