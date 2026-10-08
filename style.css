@@ -316,3 +316,5 @@ body.keilprint .kprint{display:block!important;color:#000;font-family:Arial,sans
 .landing .wxcard { margin-top: 16px; }
 .landing .wxcard { margin-top: 20px; margin-bottom: 4px; }
 .landing .date { margin: 8px 0 14px; }
+.landing .wxcard { margin-top: 4px; }
+.landing .clock { margin-bottom: 0; }
