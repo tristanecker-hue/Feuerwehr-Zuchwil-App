@@ -219,3 +219,12 @@ body.keilprint .kprint{display:block!important;color:#000;font-family:Arial,sans
 .lgrp[open] > summary::after { transform:rotate(180deg); }
 .lgrp[open] > summary { border-bottom:1px solid var(--line); }
 .lgrp > .lgbody { padding:12px; }
+
+.rgbar { display: flex; flex-wrap: nowrap; gap: 6px; align-items: center; position: sticky; top: 62px; z-index: 5; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 8px 10px; margin-bottom: 12px; }
+.rgbar .btn { padding: 6px 8px; min-height: 0; font-size: .8rem; }
+.rgpg input::-webkit-inner-spin-button { display: none; }
+.rgpg { color: var(--muted); display: inline-flex; align-items: center; gap: 4px; flex: 1; white-space: nowrap; min-width: 0; font-size: .85rem; }
+.rgpg input { width: 3.6em; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 6px 8px; font: inherit; text-align: center; }
+.rgpages { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.rgpage { background: #fff; border-radius: 6px; box-shadow: 0 1px 6px rgba(0,0,0,.4); flex: none; }
+.rgpage canvas { display: block; }

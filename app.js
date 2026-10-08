@@ -1,4 +1,4 @@
-const APP_VERSION = "1.20";
+const APP_VERSION = "1.21";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -102,25 +102,21 @@ function home() {
       const k = mp(m.id).known.length, n = m.cards.length, best = mp(m.id).best;
       return `<button class="tile" data-id="${m.id}">
         ${m.id === "basis" ? '<span class="tag">Neu 2026</span>' : '<span class="tag plain">FKS</span>'}
-        <h2>${esc(m.title)}</h2>
+        <h2>${esc(m.id === "basis" ? "Basiswissen Zusammengefassung" : m.title)}</h2>
         <div class="sub">${esc(m.sub)}</div>
         <div class="meter" aria-hidden="true"><i style="width:${Math.round(100 * k / n)}%"></i></div>
         <div class="facts"><span>${k} von ${n} Karten gewusst</span><span>${best === null ? "Quiz offen" : "Quiz-Bestwert " + best + "/" + m.quiz.length}</span></div>
       </button>`;
-    }).join("")}</div>
-    <div class="note" id="rgpdf" style="margin-top:16px"><b>Reglement Basiswissen als PDF</b><br>Das ganze Reglement (296 Seiten, FKS 07/2026, ca. 36 MB). Beim ersten Öffnen wird es einmal geladen und entschlüsselt, das dauert kurz.
-      <div class="row" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn primary" id="rgo">PDF öffnen</button><button class="btn" id="rgs">Teilen</button><button class="btn" id="rgp">Drucken</button></div>
-      <div id="rgm" role="status" style="margin-top:8px;color:var(--muted)"></div>
-      <div style="margin-top:6px;font-size:.85rem;color:var(--muted)">Online-Version: <a class="lnk" href="https://docs.feukos.ch/Basiswissen/ReglementBasiswissenDE/" target="_blank" rel="noopener">docs.feukos.ch</a>. © FKS, nur zur internen Ausbildung in der Feuerwehr, nicht weitergeben.</div></div>
+    }).join("")}
+      <button class="tile" data-id="pdf"><span class="tag">PDF</span><h2>Basiswissen komplett</h2><div class="sub">Das ganze Reglement mit allen 296 Seiten (FKS 07/2026), direkt in der App zum Blättern.</div></button></div>
     <p class="foot">Lernhilfe aus den FKS-Reglementen von feukos.ch. Massgebend ist immer das jeweilige Reglement in der gültigen Fassung.</p>`;
-  app.querySelectorAll(".tile").forEach(b => b.addEventListener("click", () => openMod(b.dataset.id)));
+  app.querySelectorAll(".tile").forEach(b => b.addEventListener("click", () => b.dataset.id === "pdf" ? rgView() : openMod(b.dataset.id)));
   const qi = document.getElementById("q"), sb = document.getElementById("sbox"), mg = document.getElementById("mgrid");
   qi.addEventListener("input", () => {
     const v = qi.value.trim();
     if (v.length < 2) { sb.hidden = true; mg.hidden = false; return; }
     mg.hidden = true; sb.hidden = false; renderSearch(v, sb);
   });
-  rgBind();
   window.scrollTo(0, 0);
 }
 let RGFILE = null;
@@ -136,10 +132,53 @@ async function rgLoad(m) {
   m.textContent = "";
   return RGFILE = new File([pt], "Reglement Basiswissen FKS.pdf", { type: "application/pdf" });
 }
-function rgBind() {
-  const m = document.getElementById("rgm"); if (!m) return;
-  const go = k => async () => { try { const f = await rgLoad(m); aoPdfActs(f, m)[k](); } catch (e) { m.textContent = e.message || "Fehler beim Laden."; } };
-  document.getElementById("rgo").onclick = go("open"); document.getElementById("rgs").onclick = go("share"); document.getElementById("rgp").onclick = go("print");
+let RGDOC = null, RGOBS = null;
+function rgClose() { if (RGOBS) { RGOBS.disconnect(); RGOBS = null; } window.removeEventListener("scroll", rgScroll); }
+let rgScroll = () => {};
+async function rgView() {
+  rgClose();
+  state.mod = null; state.view = "pdf"; backBtn.hidden = false;
+  document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
+  app.innerHTML = `<section class="hero"><h1>Basiswissen komplett</h1><p>Das ganze Reglement Basiswissen, FKS 07/2026. © FKS, nur zur internen Ausbildung. <a class="lnk" href="https://docs.feukos.ch/Basiswissen/ReglementBasiswissenDE/" target="_blank" rel="noopener">Online-Version</a></p></section>
+    <div id="rgm" role="status" class="note">Lade Reglement …</div><div id="rgv"></div>`;
+  window.scrollTo(0, 0);
+  const msg = document.getElementById("rgm");
+  let file;
+  try { file = await rgLoad(msg); msg.textContent = "Öffne …"; if (!RGDOC) { const lib = await import("./pdfjs/pdf.min.mjs"); lib.GlobalWorkerOptions.workerSrc = new URL("./pdfjs/pdf.worker.min.mjs", location.href).href; RGDOC = await lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise; } }
+  catch (e) { msg.textContent = (e && e.message) || "Fehler beim Laden."; return; }
+  if (state.view !== "pdf") return;
+  const N = RGDOC.numPages, host = document.getElementById("rgv"), p1 = await RGDOC.getPage(1), vp1 = p1.getViewport({ scale: 1 }), ratio = vp1.height / vp1.width;
+  let zoom = 1, saved = 1; try { saved = Math.min(N, Math.max(1, +localStorage.getItem("fwz-rgp") || 1)); } catch (e) {}
+  msg.className = "rgbar"; msg.innerHTML = `<button class="btn" id="rgz-">−</button><button class="btn" id="rgz+">+</button><span class="rgpg"><input id="rgn" type="number" min="1" max="${N}" value="${saved}" inputmode="numeric" aria-label="Seite"> / ${N}</span><button class="btn" id="rgs">Teilen</button><button class="btn" id="rgp">Drucken</button>`;
+  const acts = aoPdfActs(file, msg), W = () => Math.min(host.clientWidth || 360, 1000) * zoom;
+  host.className = "rgpages"; host.innerHTML = "";
+  const pages = []; for (let i = 1; i <= N; i++) { const d = document.createElement("div"); d.className = "rgpage"; d.dataset.n = i; const c = document.createElement("canvas"); d.appendChild(c); host.appendChild(d); pages.push(d); }
+  const size = () => { const w = W(); pages.forEach(d => { d.style.width = w + "px"; d.style.height = w * ratio + "px"; d._r = 0; d.firstChild.width = 0; }); };
+  let queue = [], busy = false;
+  async function pump() {
+    if (busy) return; busy = true;
+    while (queue.length) {
+      const d = queue.shift(); if (!d.isConnected || d._r === 1) continue;
+      try {
+        const pg = await RGDOC.getPage(+d.dataset.n), w = parseFloat(d.style.width), dpr = Math.min(window.devicePixelRatio || 1, 2), sc = w * dpr / pg.getViewport({ scale: 1 }).width, vp = pg.getViewport({ scale: sc }), c = d.firstChild;
+        c.width = vp.width; c.height = vp.height; c.style.width = "100%"; c.style.height = "100%"; d._r = 1;
+        await pg.render({ canvasContext: c.getContext("2d"), viewport: vp }).promise;
+      } catch (e) {}
+    }
+    busy = false;
+  }
+  RGOBS = new IntersectionObserver(es => { es.forEach(e => { const d = e.target; if (e.isIntersecting) { if (d._r !== 1) queue.push(d); } else if (d._r === 1) { d._r = 0; d.firstChild.width = 0; } }); queue.sort((a, b) => Math.abs(a.dataset.n - cur) - Math.abs(b.dataset.n - cur)); pump(); }, { rootMargin: "120% 0px" });
+  let cur = saved;
+  size(); pages.forEach(d => RGOBS.observe(d));
+  const goto = n => { n = Math.min(N, Math.max(1, n | 0)); cur = n; pages[n - 1].scrollIntoView({ block: "start" }); window.scrollBy(0, -130); };
+  const inp = document.getElementById("rgn");
+  let tk = 0; rgScroll = () => { if (tk) return; tk = requestAnimationFrame(() => { tk = 0; const mid = window.innerHeight / 3; let lo = 0, hi = N - 1; while (lo < hi) { const m = (lo + hi + 1) >> 1; if (pages[m].getBoundingClientRect().top <= mid) lo = m; else hi = m - 1; } cur = lo + 1; if (document.activeElement !== inp) inp.value = cur; try { localStorage.setItem("fwz-rgp", cur); } catch (e) {} }); };
+  window.addEventListener("scroll", rgScroll, { passive: true });
+  inp.addEventListener("change", () => goto(+inp.value));
+  const setZ = z => { const keep = cur; zoom = Math.min(3, Math.max(1, z)); host.style.overflowX = zoom > 1 ? "auto" : ""; RGOBS.disconnect(); size(); pages.forEach(d => RGOBS.observe(d)); goto(keep); };
+  document.getElementById("rgz+").onclick = () => setZ(zoom + .5); document.getElementById("rgz-").onclick = () => setZ(zoom - .5);
+  document.getElementById("rgs").onclick = () => acts.share(); document.getElementById("rgp").onclick = () => acts.print();
+  if (saved > 1) setTimeout(() => goto(saved), 50);
 }
 
 /* ---------- Reglement ---------- */
@@ -481,7 +520,7 @@ async function lektionen(m, el) {
   });
 }
 
-backBtn.addEventListener("click", () => { if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) home(); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
+backBtn.addEventListener("click", () => { if (state.view === "pdf") { rgClose(); home(); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) home(); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
 start();
 
 if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {
