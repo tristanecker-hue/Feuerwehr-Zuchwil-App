@@ -1,4 +1,4 @@
-const APP_VERSION = "1.39";
+const APP_VERSION = "1.41";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -225,10 +225,10 @@ function home() {
         <div class="meter" aria-hidden="true"><i style="width:${Math.round(100 * k / n)}%"></i></div>
         <div class="facts"><span>${k} von ${n} Karten gewusst</span><span>${best === null ? "Quiz offen" : "Quiz-Bestwert " + best + "/" + m.quiz.length}</span></div>
       </button>
-      <button class="tile" data-id="pdf:${m.id}"><span class="tag">PDF</span><h2>${esc(RGDEF[m.id].short)} komplett</h2><div class="sub">${RGDEF[m.id].tile}</div></button>`;
+      <button class="mbtn main pdfbtn" data-id="pdf:${m.id}"><span>${esc(RGDEF[m.id].short)} komplett</span><small>PDF · ${RGDEF[m.id].pages} S.</small></button>`;
     }).join("")}</div>
     <p class="foot">Lernhilfe aus den FKS-Reglementen von feukos.ch. Massgebend ist immer das jeweilige Reglement in der gültigen Fassung.</p>`;
-  app.querySelectorAll(".tile").forEach(b => b.addEventListener("click", () => b.dataset.id.startsWith("pdf:") ? rgView(b.dataset.id.slice(4)) : openMod(b.dataset.id)));
+  app.querySelectorAll(".tile, .pdfbtn").forEach(b => b.addEventListener("click", () => b.dataset.id.startsWith("pdf:") ? rgView(b.dataset.id.slice(4)) : openMod(b.dataset.id)));
   const qi = document.getElementById("q"), sb = document.getElementById("sbox"), mg = document.getElementById("mgrid");
   qi.addEventListener("input", () => {
     const v = qi.value.trim();
@@ -238,8 +238,8 @@ function home() {
   window.scrollTo(0, 0);
 }
 const RGDEF = {
-  basis: { short: "Basiswissen", enc: "reglement-basiswissen.enc", file: "Reglement Basiswissen FKS.pdf", tile: "Das ganze Reglement mit allen 296 Seiten (FKS 07/2026), direkt in der App zum Blättern.", hero: "Das ganze Reglement Basiswissen, FKS 07/2026.", online: "https://docs.feukos.ch/Basiswissen/ReglementBasiswissenDE/" },
-  einsatz: { short: "Einsatzführung", enc: "reglement-einsatzfuehrung.enc", file: "Reglement Einsatzführung FKS.pdf", tile: "Das ganze Reglement mit allen 84 Seiten, direkt in der App zum Blättern.", hero: "Das ganze Reglement Einsatzführung, FKS.", online: "" }
+  basis: { pages: 296, short: "Basiswissen", enc: "reglement-basiswissen.enc", file: "Reglement Basiswissen FKS.pdf", tile: "Das ganze Reglement mit allen 296 Seiten (FKS 07/2026), direkt in der App zum Blättern.", hero: "Das ganze Reglement Basiswissen, FKS 07/2026.", online: "https://docs.feukos.ch/Basiswissen/ReglementBasiswissenDE/" },
+  einsatz: { pages: 84, short: "Einsatzführung", enc: "reglement-einsatzfuehrung.enc", file: "Reglement Einsatzführung FKS.pdf", tile: "Das ganze Reglement mit allen 84 Seiten, direkt in der App zum Blättern.", hero: "Das ganze Reglement Einsatzführung, FKS.", online: "" }
 };
 const RGFILES = {}, RGDOCS = {};
 async function rgLoad(m, id) {
