@@ -356,10 +356,65 @@ function aoLekHtml(t, fest) {
     <div class="row" id="lekpr" data-t="${esc(t.id)}" data-f="${fest ? 1 : 0}"><button class="btn" data-a="open">PDF öffnen</button><button class="btn" data-a="share">Teilen</button><button class="btn" data-a="print">Drucken</button></div><div class="sinfo" id="lekmsg" role="status"></div>`;
 }
 function aoLekPdf(t, fest) {
-  const m = (fest ? AO_LEKF : AO_LEK)[t.id], stufe = fest ? "Festigungsstufe" : "Anlernstufe", ul = a => a.map(x => "- " + x).join("\n");
-  const blocks = [{ h: "Thema", t: m.thema }, { h: "Ausbildungsstufe", t: stufe + " · Dauer: 50 Min." }, { h: "Ziele", t: ul(m.ziele) }, { h: "Beurteilungskriterien", t: ul(m.krit) }, { h: "Material", t: ul(m.material) }, { h: "Fahrzeuge", t: ul(m.fahrzeuge) }]
-    .concat(m.ablauf.map(b => ({ h: b.min + " Min. · " + b.titel, t: b.zeilen.join("\n") + (b.hinweis ? "\nHinweis: " + b.hinweis : "") })));
-  return aoPdf("Lektion Nr. " + m.nr + " · " + m.thema, "Ausbildung Feuerwehrdienst · Feuerwehr Zuchwil · Musterlektion " + stufe + " (50 Min.)", blocks, "Lektion " + m.nr + " " + stufe + ".pdf");
+  const m = (fest ? AO_LEKF : AO_LEK)[t.id], stufe = fest ? "Festigungsstufe" : "Anlernstufe";
+  const W = 595, H = 842, M = 40, TW = W - 2 * M, cv = document.createElement("canvas").getContext("2d");
+  const fix = s => String(s).replace(/[“”„]/g, '"').replace(/[‘’]/g, "'").replace(/[–—]/g, "-").replace(/…/g, "...").replace(/€/g, "EUR").replace(/→/g, "->").replace(/\t/g, " ").replace(/[^\n\x20-\x7e\xa0-\xff]/g, "?");
+  const e2 = s => fix(s).replace(/[\\()]/g, "\\$&");
+  const mw = (s, sz, b) => { cv.font = (b ? "bold " : "") + sz + "px Helvetica, Arial, sans-serif"; return cv.measureText(fix(s)).width; };
+  const wrap = (txt, w, sz, b) => { const out = []; fix(txt).split("\n").forEach(par => { let line = ""; par.split(" ").forEach(wd => { const x = line ? line + " " + wd : wd; if (mw(x, sz, b) > w && line) { out.push(line); line = wd; } else line = x; }); out.push(line); }); return out; };
+  const pages = [[]]; let y = H - M; const P = () => pages[pages.length - 1];
+  const T = (x, yy, s, sz, b) => P().push(`BT /${b ? "F2" : "F1"} ${sz} Tf 0 g ${x.toFixed(1)} ${yy.toFixed(1)} Td (${e2(s)}) Tj ET`);
+  const L = (x1, y1, x2, y2, w, rgb) => P().push(`${rgb || "0.27 0.27 0.27"} RG ${w} w ${x1.toFixed(1)} ${y1.toFixed(1)} m ${x2.toFixed(1)} ${y2.toFixed(1)} l S`);
+  const R = (x, yy, w, h, fill) => P().push(fill ? `${fill} rg ${x.toFixed(1)} ${yy.toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)} re f 0 g` : `0.27 0.27 0.27 RG 0.7 w ${x.toFixed(1)} ${yy.toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)} re S`);
+  const newPage = () => { pages.push([]); y = H - M; };
+  // Kopf
+  T(M, y - 12, "Ausbildung", 13, true); T(M, y - 27, "Feuerwehrdienst", 13, true);
+  const ln = "Lektion Nr. " + m.nr; T(W - M - mw(ln, 13, true), y - 12, ln, 13, true);
+  y -= 36; L(M, y, W - M, y, 1.6, "0.82 0.13 0.13"); y -= 14;
+  // Metadaten
+  const LW = 118, VX = M + LW, VW = TW - LW, SZ = 10, LH = 13;
+  const meta = (label, items, kind) => {
+    const blocks = items.map(it => wrap(it, VW - (kind ? 14 : 0), SZ, false));
+    const h = blocks.reduce((n, b) => n + b.length * LH, 0);
+    if (y - h < M) newPage();
+    T(M, y - 10, label, SZ, true);
+    blocks.forEach(b => {
+      b.forEach((l, i) => { const yy = y - 10; if (kind && i === 0) { const bx = VX, by = yy - 1;
+          if (kind === "box") R(bx, by, 7, 7);
+          else if (kind === "chk") { L(bx, by + 3, bx + 2.5, by, 1.1, "0 0 0"); L(bx + 2.5, by, bx + 7, by + 8, 1.1, "0 0 0"); }
+          else T(bx, yy, "-", SZ, false); }
+        T(VX + (kind ? 14 : 0), yy, l, SZ, false); y -= LH; });
+    });
+    y -= 4;
+  };
+  meta("Thema:", [m.thema]); meta("Ausbildungsstufe:", [stufe + " · Dauer: 50 Min."]);
+  meta("Ziele:", m.ziele, "dash"); meta("Beurteilungskriterien:", m.krit, "chk"); meta("Material:", m.material, "box"); meta("Fahrzeuge:", m.fahrzeuge, "box");
+  // Tabelle
+  y -= 6;
+  const C0 = 34, C2 = 100, C1 = TW - C0 - C2, PD = 5, X1 = M + C0, X2 = M + C0 + C1, S2 = 9.5, L2 = 12;
+  const head = () => { if (y - 22 < M) newPage(); R(M, y - 20, TW, 20, "0.75 0.75 0.75"); [[M, "Zeit", C0], [X1, "Ablauf der Lektion", C1], [X2, "Hinweise / Hilfen", C2]].forEach(c => { R(c[0], y - 20, c[2], 20); T(c[0] + PD, y - 14, c[1], S2 + .5, true); }); y -= 20; };
+  head();
+  m.ablauf.forEach(b => {
+    const tl = wrap(b.titel, C1 - 2 * PD, S2, true), paras = b.zeilen.map(z => wrap(z, C1 - 2 * PD, S2, false)), hl = wrap(b.hinweis || "", C2 - 2 * PD, S2, false);
+    const hm = PD * 2 + (tl.length + paras.reduce((n, p) => n + p.length, 0)) * L2 + paras.length * 3, hh = PD * 2 + hl.length * L2, h = Math.max(hm, hh, 24);
+    if (y - h < M) { newPage(); head(); }
+    [[M, C0], [X1, C1], [X2, C2]].forEach(c => R(c[0], y - h, c[1], h));
+    T(M + PD - 1, y - PD - 9, b.min + "'", S2 + .5, true);
+    let yy = y - PD - 9; tl.forEach(l => { T(X1 + PD, yy, l, S2, true); L(X1 + PD, yy - 1.6, X1 + PD + mw(l, S2, true), yy - 1.6, .6, "0 0 0"); yy -= L2; });
+    paras.forEach(p => { yy -= 3; p.forEach(l => { T(X1 + PD, yy, l, S2, false); yy -= L2; }); });
+    yy = y - PD - 9; hl.forEach(l => { T(X2 + PD, yy, l, S2, false); yy -= L2; });
+    y -= h;
+  });
+  // PDF zusammenbauen
+  const objs = [null, "<< /Type /Catalog /Pages 2 0 R >>", null, "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>", "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>"], kids = [];
+  pages.forEach(p => { const st = p.join("\n"), ci = objs.length + 1, pi = objs.length;
+    objs.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${ci} 0 R >>`, `<< /Length ${st.length} >>\nstream\n${st}\nendstream`); kids.push(pi); });
+  objs[2] = `<< /Type /Pages /Kids [${kids.map(k => k + " 0 R").join(" ")}] /Count ${kids.length} >>`;
+  let s = "%PDF-1.4\n", off = [];
+  objs.slice(1).forEach((o, i) => { off.push(s.length); s += `${i + 1} 0 obj\n${o}\nendobj\n`; });
+  const xr = s.length; s += `xref\n0 ${objs.length}\n0000000000 65535 f \n` + off.map(o => String(o).padStart(10, "0") + " 00000 n \n").join("") + `trailer\n<< /Size ${objs.length} /Root 1 0 R >>\nstartxref\n${xr}\n%%EOF`;
+  const u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i) & 255;
+  return new File([u], "Lektion " + m.nr + " " + stufe + ".pdf", { type: "application/pdf" });
 }
 function aoLekBind(el) {
   const row = el.querySelector("#lekpr"); if (!row) return; const msg = el.querySelector("#lekmsg");
