@@ -345,3 +345,14 @@ body.keilprint .kprint{display:block!important;color:#000;font-family:Arial,sans
 }
 @keyframes lidle { from { box-shadow: 0 0 14px 1px rgba(232, 172, 82, .28), 0 0 34px 4px rgba(227, 60, 20, .12); } to { box-shadow: 0 0 26px 5px rgba(255, 190, 90, .55), 0 0 60px 12px rgba(227, 60, 20, .28); } }
 @keyframes lshine { 0%, 55% { background-position: 100% 0; } 80%, 100% { background-position: 0 0; } }
+
+/* Startseite: Anordnung Zeit, Datum, Logo, Gruss, Menü, Wetter (Abstände nach Vorlage) */
+.landing > .clock { margin: 0; font-size: 2.6rem; line-height: 1; }
+.landing > .date { margin: -2px 0 21px; font-size: .9rem; line-height: 1.3; }
+.landing .logobtn { margin-top: 0; }
+.landing .logobtn img { width: min(77vw, 340px); height: auto; }
+.landing .greet { margin-top: 26px; }
+.landing .menu { margin-top: 27px; width: min(70vw, 300px); max-width: none; gap: 12px; }
+.landing .mbtn.main { min-height: 50px; padding-top: 11px; padding-bottom: 11px; }
+.landing .wxcard { width: min(77vw, 340px); }
+.landing .bottom .ver-foot { margin-top: 26px; }
