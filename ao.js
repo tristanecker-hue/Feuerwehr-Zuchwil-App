@@ -353,9 +353,21 @@ function aoLekHtml(t, fest) {
         <dt>Fahrzeuge:</dt><dd><ul class="lkb">${ul(m.fahrzeuge)}</ul></dd></dl>
       <div class="ztw"><table class="zt la"><thead><tr><th>Zeit</th><th>Ablauf der Lektion</th><th>Hinweise / Hilfen</th></tr></thead><tbody>${m.ablauf.map(b => `<tr><td><b>${b.min}’</b></td><td><u><b>${esc(b.titel)}</b></u>${b.zeilen.map(z => `<p>${esc(z)}</p>`).join("")}</td><td>${esc(b.hinweis)}</td></tr>`).join("")}</tbody></table></div>
     </article>
-    <div class="row"><button class="btn" id="lekpr">Drucken / als PDF</button></div>`;
+    <div class="row" id="lekpr" data-t="${esc(t.id)}" data-f="${fest ? 1 : 0}"><button class="btn" data-a="open">PDF öffnen</button><button class="btn" data-a="share">Teilen</button><button class="btn" data-a="print">Drucken</button></div><div class="sinfo" id="lekmsg" role="status"></div>`;
 }
-function aoLekBind(el) { const pb = el.querySelector("#lekpr"); if (pb) pb.onclick = () => { document.body.classList.add("lekprint"); window.print(); setTimeout(() => document.body.classList.remove("lekprint"), 500); }; }
+function aoLekPdf(t, fest) {
+  const m = (fest ? AO_LEKF : AO_LEK)[t.id], stufe = fest ? "Festigungsstufe" : "Anlernstufe", ul = a => a.map(x => "- " + x).join("\n");
+  const blocks = [{ h: "Thema", t: m.thema }, { h: "Ausbildungsstufe", t: stufe + " · Dauer: 50 Min." }, { h: "Ziele", t: ul(m.ziele) }, { h: "Beurteilungskriterien", t: ul(m.krit) }, { h: "Material", t: ul(m.material) }, { h: "Fahrzeuge", t: ul(m.fahrzeuge) }]
+    .concat(m.ablauf.map(b => ({ h: b.min + " Min. · " + b.titel, t: b.zeilen.join("\n") + (b.hinweis ? "\nHinweis: " + b.hinweis : "") })));
+  return aoPdf("Lektion Nr. " + m.nr + " · " + m.thema, "Ausbildung Feuerwehrdienst · Feuerwehr Zuchwil · Musterlektion " + stufe + " (50 Min.)", blocks, "Lektion " + m.nr + " " + stufe + ".pdf");
+}
+function aoLekBind(el) {
+  const row = el.querySelector("#lekpr"); if (!row) return; const msg = el.querySelector("#lekmsg");
+  row.querySelectorAll("button").forEach(b => b.onclick = () => {
+    try { const t = AO_T.find(x => x.id === row.dataset.t), acts = aoPdfActs(aoLekPdf(t, row.dataset.f === "1"), msg); msg.textContent = ""; acts[b.dataset.a](); }
+    catch (e) { msg.textContent = "PDF konnte nicht erstellt werden."; }
+  });
+}
 function aoTopic(id) {
   const t = AO_T.find(x => x.id === id); if (!t) return aoTopics();
   const sl = t.l.flatMap(n => aoSlots(n, AOS.k).map(s => Object.assign({ n }, s)));
