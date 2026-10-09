@@ -1,4 +1,4 @@
-const APP_VERSION = "1.43";
+const APP_VERSION = "1.44";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -85,6 +85,7 @@ function start() {
   document.body.classList.add("startpage"); document.querySelector(".top").hidden = true;
   app.innerHTML = `
     <section class="landing">
+      <div class="clock" id="clock"></div>
       <button class="logobtn" id="logoup" aria-label="Nach Update suchen"><img src="logo.jpg" alt="Feuerwehr Zuchwil"></button>
       <div class="greet" id="greet"></div>
       <div class="menu">
@@ -93,7 +94,6 @@ function start() {
         <button class="mbtn main" id="t-ao">Lernen für den Ausbildungsoffizier</button>
       </div>
       <div class="bottom">
-        <div class="clock" id="clock"></div>
         <button class="wxcard" id="wxs" aria-label="Wetter Zuchwil"><span class="wxl">Wetter Zuchwil …</span></button>
         <div class="date" id="date"></div>
         <div class="ver-foot" id="verf">V${APP_VERSION} · Logo antippen zum Aktualisieren</div>
