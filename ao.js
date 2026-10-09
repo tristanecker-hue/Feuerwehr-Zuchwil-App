@@ -238,7 +238,7 @@ function aoHub() {
     ["check", "Vorbereitung", "Checkliste", "Material und Vorbereitung laut Kursaufgebot", dC, nC, dC + " von " + nC + " erledigt"],
     ["keil", "Vorstellung", "KEIL", "Persönliche Vorstellung, 2–3 Minuten: Notizen und Stoppuhr", dK, AO_KEIL.length, dK + " von " + AO_KEIL.length + " Punkten notiert"],
     ["lek", "Fachthemen", "Lektionen", "Alle Kurs-Lektionen mit Selbsttest, Reglement-Suche und eigener Planung", dT, AO_T.length, dT + " von " + AO_T.length + " Themen sitzen"],
-    ["kq", "Quiz", "Kurs-Quiz", "Fragen zum Tagesprogramm und zu den Lektionen jedes Kurstags", 0, 0, ""],
+    ["kq", "Quiz", "Kurs-Quiz", "Fachfragen aus dem Basiswissen zu den Lektionen jedes Kurstags", 0, 0, ""],
     ["meth", "Methodik", "Lektion halten", "Aufbau, Beurteilung, Theorieblöcke und Probelektion", 0, 0, ""],
     ["zahl", "Training", "Zahlen-Trainer", "Wichtige Zahlen aus den Kurs-Kapiteln üben", dZ, pool.length, dZ + " von " + pool.length + " gewusst"],
     ["prog", "Tagesbefehl", "Kursprogramm", "Dienstag bis Freitag, nach Klasse 1 oder 2", 0, 0, ""],
@@ -490,52 +490,30 @@ function aoQuizRun(el, qs) {
   draw();
 }
 
-/* ---------- Kurs-Quiz (Tagesprogramm + Fachfragen aus dem Basiswissen) ---------- */
+/* ---------- Kurs-Quiz (Fachfragen aus dem Basiswissen zu den Lektionen je Kurstag) ---------- */
 function aoKqPool(di, k) {
-  const days = di < 0 ? AO_DAYS : [AO_DAYS[di]], out = [], lessons = new Set();
-  const strip = t => String(t).replace(/^=/, "").split(" · ")[0];
-  const mk = (q, ans, wr, e) => { wr = [...new Set(wr)].filter(x => x && x !== ans); if (wr.length < 3) return; out.push({ q, o: [ans].concat(shuffle(wr).slice(0, 3)), a: 0, e }); };
-  days.forEach(day => {
-    const dn = day.d, rows = day.rows, lsn = [], fix = [];
-    rows.forEach(r => {
-      const c = r[2 + k];
-      if (c && c[0] !== "=") { const [n, ap] = c.split("/"); lsn.push({ n, ap, von: r[0], bis: r[1] }); lessons.add(n); }
-      else { const t = c ? c : r[2]; if (t) fix.push({ t: strip(t), von: r[0], bis: r[1], full: t.replace(/^=/, "") }); }
-    });
-    const src = "Tagesbefehl, " + dn + " (Klasse " + k + ")";
-    lsn.forEach(l => {
-      const tm = l.von + "–" + l.bis, oth = lsn.filter(x => x !== l);
-      mk(dn + ", " + tm + " (Klasse " + k + "): Welche Lektion steht auf dem Programm?", "L " + l.n + " " + AO_L[l.n], oth.map(x => "L " + x.n + " " + AO_L[x.n]), src + ": L " + l.n + ", " + tm + ".");
-      mk("Wann findet L " + l.n + " (" + AO_L[l.n] + ") am " + dn + " für Klasse " + k + " statt?", tm, oth.map(x => x.von + "–" + x.bis), src + ": " + tm + ".");
-      mk("Wo findet L " + l.n + " (" + AO_L[l.n] + ") am " + dn + " für Klasse " + k + " statt?", "Arbeitsplatz " + l.ap + ": " + AO_AP[l.ap], oth.map(x => "Arbeitsplatz " + x.ap + ": " + AO_AP[x.ap]), src + ": Arbeitsplatz " + l.ap + ", " + AO_AP[l.ap] + ".");
-    });
-    fix.filter(f => fix.filter(x => x.t === f.t).length === 1).forEach(f => {
-      const tm = f.von + (f.bis ? "–" + f.bis : "");
-      mk(dn + ", " + tm + ": Was steht auf dem Programm?", f.t, fix.map(x => x.t).concat(AO_DAYS.flatMap(d => d.rows.filter(r => r[2]).map(r => strip(r[2])))), src + ": " + f.full + ".");
-      mk("Um welche Zeit findet am " + dn + " «" + f.t + "» statt?", tm, fix.filter(x => x.t !== f.t).map(x => x.von + (x.bis ? "–" + x.bis : "")), src + ": " + tm + ".");
-    });
-  });
-  const fach = [];
-  AO_T.filter(t => t.l.some(n => lessons.has(n))).forEach(t => aoMatch(t).quiz.forEach(q => fach.push(q)));
-  return { prog: out, fach: [...new Set(fach)] };
+  const days = di < 0 ? AO_DAYS : [AO_DAYS[di]], lessons = new Set();
+  days.forEach(day => day.rows.forEach(r => { const c = r[2 + k]; if (c && c[0] !== "=") lessons.add(c.split("/")[0]); }));
+  const ts = AO_T.filter(t => t.l.some(n => lessons.has(n))), set = new Set(), bm = getMod("basis");
+  ts.forEach(t => { aoMatch(t).quiz.forEach(q => set.add(q)); bm.quiz.forEach(q => { if (t.kap.includes(String(q.c))) set.add(q); }); });
+  return { fach: [...set], topics: ts };
 }
 function aoKq() {
   if (state.kd == null) state.kd = -1;
   const dn = ["Alle Tage"].concat(AO_DAYS.map(d => d.d));
-  const pool = aoKqPool(state.kd, AOS.k), nP = pool.prog.length, nF = pool.fach.length;
-  app.innerHTML = `<section class="hero"><h1>Kurs-Quiz</h1><p>Multiple Choice zum Tagesbefehl (Zeiten, Lektionen, Arbeitsplätze) und zu den Fachthemen der Lektionen, mit Fragen aus dem Reglement Basiswissen.</p></section>
+  const pool = aoKqPool(state.kd, AOS.k), nF = pool.fach.length;
+  app.innerHTML = `<section class="hero"><h1>Kurs-Quiz</h1><p>Multiple Choice zu den Fachthemen der Lektionen, aus dem Reglement Basiswissen. Wähle Klasse und Kurstag.</p></section>
     ${aoKlasse()}
     <div class="chips" role="group" aria-label="Tag">${dn.map((d, i) => `<button class="chip" data-d="${i - 1}" aria-pressed="${state.kd === i - 1}">${d}</button>`).join("")}</div>
-    <div class="note">Für deine Auswahl: ${nP} Fragen zum Programm, ${nF} Fachfragen.</div>
+    <div class="note">${nF} Fragen zu: ${pool.topics.map(t => esc(t.t)).join(", ")}.</div>
     <div class="menu rgmenu" id="kqs">
-      <button class="mbtn main pdfbtn" data-m="mix"><span>Gemischt · 20 Fragen</span><small>Programm + Fach</small></button>
-      <button class="mbtn main pdfbtn" data-m="prog"><span>Tagesprogramm</span><small>${nP} Fragen</small></button>
-      <button class="mbtn main pdfbtn" data-m="fach"><span>Fachfragen</span><small>${nF} Fragen</small></button></div>
+      <button class="mbtn main pdfbtn" data-n="20"><span>Kurz · 20 Fragen</span><small>zufällig</small></button>
+      <button class="mbtn main pdfbtn" data-n="0"><span>Alle Fragen</span><small>${nF} Fragen</small></button></div>
     <div id="dr" style="margin-top:14px"></div>`;
   aoBind(app);
   app.querySelectorAll("[data-d]").forEach(b => b.addEventListener("click", () => { state.kd = +b.dataset.d; aoKq(); }));
   app.querySelectorAll("#kqs button").forEach(b => b.addEventListener("click", () => {
-    const m = b.dataset.m; let qs = m === "prog" ? pool.prog : m === "fach" ? pool.fach : shuffle(pool.prog).slice(0, 10).concat(shuffle(pool.fach).slice(0, 10));
+    const n = +b.dataset.n, qs = n ? shuffle(pool.fach).slice(0, n) : pool.fach;
     if (!qs.length) return;
     document.getElementById("kqs").hidden = true; aoQuizRun(document.getElementById("dr"), qs);
   }));
