@@ -1,4 +1,4 @@
-const APP_VERSION = "1.44";
+const APP_VERSION = "1.45";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -216,19 +216,16 @@ function home() {
     </section>
     <div class="srch"><input type="search" id="q" placeholder="Reglemente durchsuchen (z. B. Atemschutz, OAABS, 118)" aria-label="Suche" autocomplete="off"></div>
     <div id="sbox" hidden></div>
-    <div class="grid" id="mgrid">${MODS.map(m => {
-      const k = mp(m.id).known.length, n = m.cards.length, best = mp(m.id).best;
-      return `<button class="tile" data-id="${m.id}">
-        ${m.id === "basis" ? '<span class="tag">Neu 2026</span>' : '<span class="tag plain">FKS</span>'}
-        <h2>${esc(m.id === "basis" ? "Basiswissen Zusammengefassung" : m.title + " Zusammenfassung")}</h2>
-        <div class="sub">${esc(m.sub)}</div>
-        <div class="meter" aria-hidden="true"><i style="width:${Math.round(100 * k / n)}%"></i></div>
-        <div class="facts"><span>${k} von ${n} Karten gewusst</span><span>${best === null ? "Quiz offen" : "Quiz-Bestwert " + best + "/" + m.quiz.length}</span></div>
-      </button>
-      <button class="mbtn main pdfbtn" data-id="pdf:${m.id}"><span>${esc(RGDEF[m.id].short)} komplett</span><small>PDF · ${RGDEF[m.id].pages} S.</small></button>`;
-    }).join("")}</div>
+    <div class="menu rgmenu" id="mgrid">${(() => {
+      const bt = (id, t, sm) => `<button class="mbtn main pdfbtn" data-id="${id}"><span>${esc(t)}</span><small>${esc(sm)}</small></button>`;
+      const sum = m => { const k = mp(m.id).known.length; return bt(m.id, (m.id === "basis" ? "Basiswissen" : m.title) + " Zusammenfassung", k + " von " + m.cards.length + " Karten gewusst"); };
+      const bm = getMod("basis"), em = getMod("einsatz"), gb = (mp("basis").gbs || {})[bm.quiz.length];
+      return sum(bm) + bt("pdf:basis", "Basiswissen komplett", "PDF · " + RGDEF.basis.pages + " S.") +
+        bt("gq", "Basiswissen Quiz", bm.quiz.length + " Fragen" + (gb != null ? " · Best " + gb : "")) +
+        sum(em) + bt("pdf:einsatz", "Einsatzführung komplett", "PDF · " + RGDEF.einsatz.pages + " S.");
+    })()}</div>
     <p class="foot">Lernhilfe aus den FKS-Reglementen von feukos.ch. Massgebend ist immer das jeweilige Reglement in der gültigen Fassung.</p>`;
-  app.querySelectorAll(".tile, .pdfbtn").forEach(b => b.addEventListener("click", () => b.dataset.id.startsWith("pdf:") ? rgView(b.dataset.id.slice(4)) : openMod(b.dataset.id)));
+  app.querySelectorAll(".pdfbtn").forEach(b => b.addEventListener("click", () => b.dataset.id === "gq" ? gquizView() : b.dataset.id.startsWith("pdf:") ? rgView(b.dataset.id.slice(4)) : openMod(b.dataset.id)));
   const qi = document.getElementById("q"), sb = document.getElementById("sbox"), mg = document.getElementById("mgrid");
   qi.addEventListener("input", () => {
     const v = qi.value.trim();
@@ -510,6 +507,60 @@ function quiz(m, el) {
 }
 
 
+/* ---------- Basiswissen Gesamtquiz ---------- */
+function gquizView() {
+  const m = getMod("basis"), p = mp("basis"); p.gbs = p.gbs || {};
+  state.mod = null; state.view = "gq"; backBtn.hidden = false;
+  document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
+  const N = m.quiz.length, sizes = [20, 40, N];
+  app.innerHTML = `<section class="hero"><h1>Basiswissen Quiz</h1><p>Multiple Choice über das ganze Basiswissen (Kapitel 1–12). Die Fragen werden zufällig und gleichmässig über die Kapitel gemischt.</p></section>
+    <div class="menu rgmenu" id="gqs">${sizes.map(n => `<button class="mbtn main pdfbtn" data-n="${n}"><span>${n === N ? "Alle Fragen" : n === 20 ? "Kurz · 20 Fragen" : "Mittel · 40 Fragen"}</span><small>${p.gbs[n] != null ? "Best " + p.gbs[n] + "/" + n : n + " Fragen"}</small></button>`).join("")}</div>
+    <div id="gqb"></div>`;
+  document.querySelectorAll("#gqs button").forEach(b => b.addEventListener("click", () => gquizRun(m, p, +b.dataset.n)));
+  window.scrollTo(0, 0);
+}
+function gquizRun(m, p, n) {
+  const el = document.getElementById("gqb"); document.getElementById("gqs").hidden = true;
+  const hero = app.querySelector(".hero"); if (hero) hero.hidden = true;
+  const by = {}; shuffle(m.quiz.map((_, i) => i)).forEach(i => (by[m.quiz[i].c] = by[m.quiz[i].c] || []).push(i));
+  let list = [];
+  if (n >= m.quiz.length) list = shuffle(m.quiz.map((_, i) => i));
+  else { const ks = shuffle(Object.keys(by)); while (list.length < n && ks.some(k => by[k].length)) for (const k of ks) { if (list.length < n && by[k].length) list.push(by[k].pop()); } list = shuffle(list); }
+  let pos = 0, score = 0, wrong = [], answered = false, per = {}, first = true;
+  function draw() {
+    if (pos >= list.length) {
+      const total = list.length;
+      if (first && total === n && (p.gbs[n] == null || score > p.gbs[n])) { p.gbs[n] = score; save(); }
+      const rows = Object.keys(per).sort((a, b) => a - b).map(k => `<div class="count"><span>${k} ${esc((CHN || {})[k] || "")}</span><span>${per[k][0]} / ${per[k][1]}</span></div>`).join("");
+      el.innerHTML = `<div class="card-area">
+        <div class="count"><span>Ergebnis</span>${p.gbs[n] != null ? `<span>Bestwert ${p.gbs[n]}/${n}</span>` : ""}</div>
+        <div class="score">${score}<span style="color:var(--muted);font-size:2rem"> / ${total}</span></div>
+        <div>${score === total ? "Alles richtig." : wrong.length + (wrong.length === 1 ? " Frage" : " Fragen") + " zum Wiederholen."}</div>
+        <div style="margin:14px 0">${rows}</div>
+        <div class="row">${wrong.length ? '<button class="btn primary" id="rep">Falsche wiederholen</button>' : ""}<button class="btn" id="new">Neues Quiz</button></div></div>`;
+      if (wrong.length) document.getElementById("rep").onclick = () => { list = shuffle(wrong); pos = 0; score = 0; wrong = []; per = {}; first = false; draw(); };
+      document.getElementById("new").onclick = () => gquizView();
+      return;
+    }
+    const q = m.quiz[list[pos]], order = shuffle(q.o.map((_, i) => i)); answered = false;
+    el.innerHTML = `<div class="card-area">
+      <div class="count"><span>Frage ${pos + 1} von ${list.length}${q.c ? " · Kapitel " + q.c + " " + esc((CHN || {})[q.c] || "") : ""}</span><span>${score} richtig</span></div>
+      <div class="q">${esc(q.q)}</div>
+      <div class="opts">${order.map(i => `<button class="opt" data-i="${i}">${esc(q.o[i])}</button>`).join("")}</div>
+      <div id="fb"></div></div>`;
+    el.querySelectorAll(".opt").forEach(b => b.addEventListener("click", () => {
+      if (answered) return; answered = true;
+      const pick = +b.dataset.i, ok = pick === q.a, c = q.c || "–";
+      per[c] = per[c] || [0, 0]; per[c][1]++; if (ok) { score++; per[c][0]++; } else wrong.push(list[pos]);
+      el.querySelectorAll(".opt").forEach(o => { o.disabled = true; if (+o.dataset.i === q.a) o.classList.add("right"); else if (o === b) o.classList.add("wrong"); });
+      document.getElementById("fb").innerHTML = `<div class="expl"><b>${ok ? "Richtig." : "Nicht ganz."}</b> ${esc(q.e)}</div><div style="margin-top:12px"><button class="btn primary" id="next" style="width:100%">${pos + 1 >= list.length ? "Ergebnis" : "Weiter"}</button></div>`;
+      document.getElementById("next").onclick = () => { pos++; draw(); window.scrollTo(0, 0); };
+      document.getElementById("next").focus();
+    }));
+  }
+  draw(); window.scrollTo(0, 0);
+}
+
 /* ---------- Lektionen-Seite ---------- */
 function lesView() {
   state.mod = null; state.view = "les"; backBtn.hidden = false;
@@ -647,7 +698,7 @@ async function lektionen(m, el) {
   });
 }
 
-backBtn.addEventListener("click", () => { if (state.view === "pdf") { rgClose(); home(); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) home(); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
+backBtn.addEventListener("click", () => { if (state.view === "gq") { home(); return; } if (state.view === "pdf") { rgClose(); home(); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) home(); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
 start();
 
 if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {

@@ -326,3 +326,7 @@ body.keilprint .kprint{display:block!important;color:#000;font-family:Arial,sans
 .landing > .clock { margin: 0 0 14px; font-size: clamp(2rem, 9vw, 2.8rem); }
 .landing .logobtn { margin-top: 0; }
 .landing .wxcard { margin-top: 0; }
+.rgmenu { max-width: 340px; margin: 18px auto 0; gap: 12px; }
+#gqs { margin-bottom: 8px; }
+.rgmenu .pdfbtn { flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; width: 100%; }
+.rgmenu .pdfbtn span { line-height: 1.2; }
