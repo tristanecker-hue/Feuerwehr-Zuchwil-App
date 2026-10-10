@@ -1,4 +1,4 @@
-const APP_VERSION = "1.53";
+const APP_VERSION = "1.54";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -223,7 +223,7 @@ function home() {
       return sum(bm) + bt("pdf:basis", "Basiswissen komplett", "PDF · " + RGDEF.basis.pages + " S.") +
         bt("gq", "Basiswissen Quiz", bm.quiz.length + " Fragen" + (gb != null ? " · Best " + gb : "")) +
         sum(em) + bt("pdf:einsatz", "Einsatzführung komplett", "PDF · " + RGDEF.einsatz.pages + " S.") +
-        bt("sgv", "Kantonale Ergänzungen (SGV)", SGV.length + (SGV.length === 1 ? " Merkschema" : " Merkschemas"));
+        bt("sgv", "Kantonale Ergänzungen (SGV)", SGV.length + " Merkblätter");
     })()}</div>
     <p class="foot">Lernhilfe aus den FKS-Reglementen von feukos.ch. Massgebend ist immer das jeweilige Reglement in der gültigen Fassung.</p>`;
   app.querySelectorAll(".pdfbtn").forEach(b => b.addEventListener("click", () => b.dataset.id === "gq" ? gquizView() : b.dataset.id === "sgv" ? sgvView() : b.dataset.id.startsWith("pdf:") ? rgView(b.dataset.id.slice(4)) : openMod(b.dataset.id)));
@@ -509,22 +509,79 @@ function quiz(m, el) {
 
 
 /* ---------- Kantonale Ergänzungen (SGV) ---------- */
-const SGV = [{ id: "luft", t: "Merkschema L.U.F.T. (Lüften)", kap: "8 Lüften", img: "luft", p: [
-  ["L", "Lüfter einsetzen", "Richtung Zuluftöffnung, mit reduzierter Drehzahl."],
-  ["U", "Überblick verschaffen", "3 Gebäudeseiten, Rettungen, Rauchaustritt, Windrichtung."],
-  ["F", "Front Rückmeldungen", "Rauch im Treppenhaus? Wo brennt es? Aufenthaltsprinzip? Abluftöffnungen?"],
-  ["T", "Taktik festlegen", "Wird durch den Einsatzleiter (EL) angeordnet."]],
-  src: "Merkschema der Solothurnischen Gebäudeversicherung (SGV), Stand 25.11.22. Es ist nicht Teil des FKS-Reglements." }];
-function sgvView() {
-  state.mod = null; state.view = "sgv"; backBtn.hidden = false;
+const SGV = [
+  { id: "luft", t: "Merkschema L.U.F.T.", sub: "Lüften · Kap. 8", b: [
+    ["note", "Gehört zu Kapitel 8 Lüften."], ["img", "luft", "Merkschema L.U.F.T. (SGV)"],
+    ["rows", [["L", "Lüfter einsetzen", "Richtung Zuluftöffnung, mit reduzierter Drehzahl."], ["U", "Überblick verschaffen", "3 Gebäudeseiten, Rettungen, Rauchaustritt, Windrichtung."], ["F", "Front Rückmeldungen", "Rauch im Treppenhaus? Wo brennt es? Aufenthaltsprinzip? Abluftöffnungen?"], ["T", "Taktik festlegen", "Wird durch den Einsatzleiter (EL) angeordnet."]]],
+    ["src", "Merkschema der Solothurnischen Gebäudeversicherung (SGV), Stand 25.11.22. Es ist nicht Teil des FKS-Reglements."]] },
+  { id: "block", t: "Blockierungsknoten", sub: "Knoten · Sicherheit", b: [
+    ["note", "Gehört zu den Knoten und Bindungen (Kapitel 10)."],
+    ["warn", "Muss ein Arbeitsplatz vom AdF verlassen werden, ist der Halbmastwurf zwingend zu blockieren/sichern."],
+    ["img", "sgv_block", "Blockierungsknoten in 4 Schritten"],
+    ["ul", ["Schritt 1–3: Halbmastwurf legen und das Seil wie abgebildet durch die Schlaufe führen.", "Schritt 4: Schlaufe mit doppeltem Spierenstich (siehe «Doppelter Spierenstich») sichern."]],
+    ["src", "Abbildungen: SGV Feuerwehr, Merkblatt Blockierungsknoten (S. 13), Copyright 2020 by SFV."]] },
+  { id: "spier", t: "Doppelter Spierenstich", sub: "Sicherungsknoten", b: [
+    ["note", "Sicherungsknoten, wird zum Sichern der Schlaufe beim Blockierungsknoten verwendet."],
+    ["img", "sgv_spier", "Doppelter Spierenstich in 3 Schritten"],
+    ["src", "Abbildungen: SGV Feuerwehr, Merkblatt Sicherungsknoten (S. 11), Copyright 2020 by SFV."]] },
+  { id: "fenster", t: "Fensterimpuls", sub: "Ausbildungshilfe · Version 04.05.2026", b: [
+    ["p", "Wohnungsbrand in einem Mehrfamilienhaus: Die Flammen schlagen beim Eintreffen bereits aus dem Fenster. Bevor der erste Trupp unter Atemschutz in die Brandwohnung vorrückt, kann mit einer zeitlich begrenzten Wasserabgabe im Vollstrahl von aussen das Feuer eingedämmt werden. Der an der Zimmerdecke abprallende Wasserstrahl entfaltet eine ähnliche Wirkung wie ein Sprinkler. Parallel dazu wird eine Überdruckbelüftung im Treppenhaus eingeleitet, um dieses rauchfrei zu halten und als Flucht- und Angriffsweg zu sichern."],
+    ["p", "Die kombinierte Anwendung von Aussenangriff mit Sprinklereffekt und Überdruckbelüftung kann die Bedingungen für den Innenangriff deutlich verbessern, die Sicherheit der Einsatzkräfte erhöhen und die Ausbreitung des Brandes wirksam begrenzen."],
+    ["warn", "Vor dem Betreten der Brandwohnung durch den Trupp im Innenangriff MUSS die Wasserabgabe über das Fenster (Fensterimpuls) eingestellt werden, um eine Gefährdung durch Wasserdampf oder Druckeffekte zu vermeiden."],
+    ["h", "Vorteile"], ["ul", ["Wärme wird dem Feuer rasch entzogen und die Brandintensität nimmt ab.", "Der entstehende Wasserdampf kann durch das bereits offene Fenster entweichen.", "Die Verhältnisse für den Trupp im Innenangriff werden besser."]],
+    ["h", "Nachteile"], ["ul", ["Koordinationsaufwand mit dem vorrückenden Atemschutztrupp.", "Der Brand wird in der Regel nicht komplett abgelöscht, der Innenangriff bleibt notwendig.", "Die Wurfweite beträgt ungefähr 12 bis 15 Meter, was etwa der Höhe des 3. bis 4. Geschosses entspricht."]],
+    ["h", "Wichtig"], ["ul", ["Es darf sich kein Trupp im Brandraum befinden.", "Lüfter mit reduzierter Drehzahl einsetzen gemäss L.U.F.T.-Schema.", "Fensterimpuls ca. 10–30 Sekunden mit 200 bis 500 L/min.", "Wirksamkeit durch die Entstehung von Dampf und die Abnahme der Intensität des Feuers beobachten.", "Allenfalls Wiederholung aus anderer Position.", "KEIN Sprühstrahl: Er verschliesst die Abluftöffnung, und der Rauch bzw. Wasserdampf sucht sich seinen Weg ins Gebäudeinnere."]],
+    ["img", "sgv_fenst", "Links richtig: Vollstrahl durchs Fenster. Rechts falsch: Sprühstrahl verschliesst die Öffnung."],
+    ["img", "sgv_flip", "Merkblatt: Vollstrahl, steiler Winkel, grosser Durchfluss, L.U.F.T., Koordination mit Angriffstrupp, KEIN Sprühstrahl"],
+    ["link", "https://vimeo.com/336040327", "Video: Realbrandversuche Feuerwehr Kleve"],
+    ["src", "SGV Feuerwehr, Ausbildungshilfe Fensterimpuls, Version 04.05.2026."]] },
+  { id: "asnot", t: "Atemschutz-Notsituationen", sub: "Hinweise zur Ausbildung · 08.05.2017", b: [
+    ["h", "Was ist ein AS-Notfall?"],
+    ["p", "Ein Ereignis im Atemschutzeinsatz, welches die Tätigkeit des eingesetzten Atemschutztrupps einschränkt und eine Gefahr für Leib und Leben darstellt. Der betroffene Trupp ist nicht mehr in der Lage, durch gezielte Massnahmen die Gefahr zu minimieren oder sich selbst aus dem Gefahrenbereich zu retten."],
+    ["h", "Grundsatz"],
+    ["ul", ["Der AS-Notfall ist eine absolute Ausnahmesituation und bedeutet für alle Beteiligten zusätzlichen Stress.", "Für die Vielfalt möglicher Notsituationen gibt es keine standardisierten Vorgehensweisen, und zum Thema ist nichts reglementiert.", "Bei korrektem Vorgehen, Einhaltung aller Sicherheitsbestimmungen und der gültigen Einsatzgrundsätze kommt es nicht zu einem Atemschutznotfall.", "Trainings und Übungen basieren auf den Fähigkeiten der eingesetzten AdF und den verfügbaren Mitteln."]],
+    ["h", "Aufgaben des Sicherungstrupps"],
+    ["p", "Bei Auftrag «Sicherungstrupp»: Atemschutz bereitstellen, Truppüberwachung vorbereiten, situativ Rettungs-/Löschmaterial zurechtlegen."],
+    ["ul", ["Gefahren an der Einsatzstelle beachten", "Suchen und Auffinden von verunglückten Helfern", "Stabilisierung der Lage", "Erkennen der Notfallursache", "Sicherung / Wiederherstellung der Atemluftversorgung", "Erstversorgung", "Ggf. technische Rettung aus einer Zwangslage", "Rettung aus der Gefahrenzone"]],
+    ["h", "Ablaufschema im Notfall: Situationsbeurteilung (LAGE)"],
+    ["rows", [["L", "Lage feststellen", "Überblick, Standort, Situation, sofort Notruf an EL."], ["A", "Atmung vorhanden", "Hören, sehen, fühlen."], ["G", "Genügend Luftvorrat", "Manometer, Flaschenventil, Defekte."], ["E", "Erweiterte Erkundung", "AdF frei, zweiter Rettungsweg, sicherer Bereich."]]],
+    ["note", "Das Merkschema «LAGE» ist eine Metapher, keine Ablaufregel. Es ist immer der Situation bzw. dem Ereignis anzupassen."],
+    ["h", "Notruf an EL"],
+    ["ul", ["«Mayday – Mayday – Mayday»", "Funkrufname oder Trupp-Nr.", "Standort", "Situation", "Flaschendruck", "«Mayday – Antworten»"]],
+    ["warn", "Mit dem Absetzen eines «Mayday» wird der Funkverkehr zugunsten des in Not geratenen Trupps für alle anderen Kräfte unterbrochen. Der Einsatzleiter organisiert die nötigen Massnahmen und definiert allfällige Funkkanaländerungen."],
+    ["note", "Das Schema dient der besseren Verständlichkeit. Können Punkte nicht oder nur ungenau ermittelt werden, entfallen sie: ZEIT vor Präzision."],
+    ["h", "Ausbildung: Welche Elemente trainieren?"],
+    ["rows", [["a", "Funkübung", "Verbale Visualisierung und Entgegennahme der Informationen durch die Gegenstelle."], ["b", "Luftversorgung", "Sichere Herstellung einer stabilen Luftversorgung im Trupp (z. B. Wechsel Lungenautomat in diversen Lagen)."], ["c", "Verhalten im Trupp", "Verhaltensregeln bei einem Notfall (Rettungsmöglichkeiten, Absetzen Notruf)."], ["d", "Suchtechniken", "Orientierungsübung."], ["e", "Sicherheitstrupp", "AS-Trupp komplett bereitstellen: Verbindung, Truppüberwachung und Rettungsmaterial rasch bereit, schnelle Einsatzbereitschaft."], ["f", "AS-Einsatz", "Notsituationen und Unfälle vermeiden durch ständige Ausbildung, sicheres Beherrschen der Atemschutztechnik, Einhalten der Sicherheitsbestimmungen und Einsatzgrundsätze sowie körperliche Fitness."]]],
+    ["src", "SGV Solothurnische Gebäudeversicherung, «Atemschutz Notsituationen: Hinweise zur Ausbildung», 08.05.2017."]] }
+];
+function sgvBlock(x) {
+  const t = x[0];
+  if (t === "note") return `<div class="note">${esc(x[1])}</div>`;
+  if (t === "warn") return `<div class="bx r"><div class="bxh">⚠ Achtung</div><div class="bxt">${esc(x[1])}</div></div>`;
+  if (t === "h") return `<h3 class="zh">${esc(x[1])}</h3>`;
+  if (t === "p") return `<p class="sgvp">${esc(x[1])}</p>`;
+  if (t === "ul") return `<ul class="sgvu">${x[1].map(i => `<li>${esc(i)}</li>`).join("")}</ul>`;
+  if (t === "img") return IMG[x[1]] ? `<figure class="fig" style="margin:8px 0"><button class="zoom" data-k="${x[1]}" aria-label="Bild vergrössern"><img src="${IMG[x[1]]}" alt="${esc(x[2])}"></button><figcaption>${esc(x[2])}</figcaption></figure>` : "";
+  if (t === "rows") return `<div class="sgvl">${x[1].map(r => `<div class="sgvr"><b>${esc(r[0])}</b><div><strong>${esc(r[1])}</strong><span>${esc(r[2])}</span></div></div>`).join("")}</div>`;
+  if (t === "link") return `<p class="sgvp"><a class="lnk" href="${esc(x[1])}" target="_blank" rel="noopener">${esc(x[2])}</a></p>`;
+  if (t === "src") return `<p class="foot">Quelle: ${esc(x[1])}</p>`;
+  return "";
+}
+function sgvView(id) {
+  state.mod = null; backBtn.hidden = false;
   document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
-  app.innerHTML = `<section class="hero"><h1>Kantonale Ergänzungen</h1><p>Ergänzungen der Solothurnischen Gebäudeversicherung (SGV) zum Basiswissen.</p></section>
-    ${SGV.map(x => `<h3 class="zh">${esc(x.t)}</h3>
-      <div class="note">Gehört zu Kapitel ${esc(x.kap)}.</div>
-      ${IMG[x.img] ? `<figure class="fig" style="margin:8px 0"><button class="zoom" data-k="${x.img}" aria-label="Bild vergrössern"><img src="${IMG[x.img]}" alt="${esc(x.t)}"></button></figure>` : ""}
-      <div class="sgvl">${x.p.map(r => `<div class="sgvr"><b>${esc(r[0])}</b><div><strong>${esc(r[1])}</strong><span>${esc(r[2])}</span></div></div>`).join("")}</div>
-      <p class="foot">Quelle: ${esc(x.src)}</p>`).join("")}`;
-  bindZoom(app); window.scrollTo(0, 0);
+  const x = id && SGV.find(i => i.id === id);
+  if (x) {
+    state.view = "sgv-item";
+    app.innerHTML = `<section class="hero"><h1>${esc(x.t)}</h1><p>${esc(x.sub)} · Kantonale Ergänzung (SGV)</p></section>${x.b.map(sgvBlock).join("")}`;
+    bindZoom(app);
+  } else {
+    state.view = "sgv";
+    app.innerHTML = `<section class="hero"><h1>Kantonale Ergänzungen</h1><p>Ergänzungen der Solothurnischen Gebäudeversicherung (SGV) zum Basiswissen.</p></section>
+      <div class="menu rgmenu">${SGV.map(i => `<button class="mbtn main pdfbtn" data-s="${i.id}"><span>${esc(i.t)}</span><small>${esc(i.sub)}</small></button>`).join("")}</div>`;
+    app.querySelectorAll("[data-s]").forEach(b => b.addEventListener("click", () => sgvView(b.dataset.s)));
+  }
+  window.scrollTo(0, 0);
 }
 
 /* ---------- Basiswissen Gesamtquiz ---------- */
@@ -718,7 +775,7 @@ async function lektionen(m, el) {
   });
 }
 
-backBtn.addEventListener("click", () => { if (state.view === "gq" || state.view === "sgv") { home(); return; } if (state.view === "pdf") { rgClose(); home(); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) home(); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
+backBtn.addEventListener("click", () => { if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "gq" || state.view === "sgv") { home(); return; } if (state.view === "pdf") { rgClose(); home(); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) home(); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
 start();
 
 if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {
