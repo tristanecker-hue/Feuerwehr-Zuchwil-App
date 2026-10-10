@@ -1,4 +1,4 @@
-const APP_VERSION = "1.52";
+const APP_VERSION = "1.53";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -222,10 +222,11 @@ function home() {
       const bm = getMod("basis"), em = getMod("einsatz"), gb = (mp("basis").gbs || {})[bm.quiz.length];
       return sum(bm) + bt("pdf:basis", "Basiswissen komplett", "PDF · " + RGDEF.basis.pages + " S.") +
         bt("gq", "Basiswissen Quiz", bm.quiz.length + " Fragen" + (gb != null ? " · Best " + gb : "")) +
-        sum(em) + bt("pdf:einsatz", "Einsatzführung komplett", "PDF · " + RGDEF.einsatz.pages + " S.");
+        sum(em) + bt("pdf:einsatz", "Einsatzführung komplett", "PDF · " + RGDEF.einsatz.pages + " S.") +
+        bt("sgv", "Kantonale Ergänzungen (SGV)", SGV.length + (SGV.length === 1 ? " Merkschema" : " Merkschemas"));
     })()}</div>
     <p class="foot">Lernhilfe aus den FKS-Reglementen von feukos.ch. Massgebend ist immer das jeweilige Reglement in der gültigen Fassung.</p>`;
-  app.querySelectorAll(".pdfbtn").forEach(b => b.addEventListener("click", () => b.dataset.id === "gq" ? gquizView() : b.dataset.id.startsWith("pdf:") ? rgView(b.dataset.id.slice(4)) : openMod(b.dataset.id)));
+  app.querySelectorAll(".pdfbtn").forEach(b => b.addEventListener("click", () => b.dataset.id === "gq" ? gquizView() : b.dataset.id === "sgv" ? sgvView() : b.dataset.id.startsWith("pdf:") ? rgView(b.dataset.id.slice(4)) : openMod(b.dataset.id)));
   const qi = document.getElementById("q"), sb = document.getElementById("sbox"), mg = document.getElementById("mgrid");
   qi.addEventListener("input", () => {
     const v = qi.value.trim();
@@ -507,6 +508,25 @@ function quiz(m, el) {
 }
 
 
+/* ---------- Kantonale Ergänzungen (SGV) ---------- */
+const SGV = [{ id: "luft", t: "Merkschema L.U.F.T. (Lüften)", kap: "8 Lüften", img: "luft", p: [
+  ["L", "Lüfter einsetzen", "Richtung Zuluftöffnung, mit reduzierter Drehzahl."],
+  ["U", "Überblick verschaffen", "3 Gebäudeseiten, Rettungen, Rauchaustritt, Windrichtung."],
+  ["F", "Front Rückmeldungen", "Rauch im Treppenhaus? Wo brennt es? Aufenthaltsprinzip? Abluftöffnungen?"],
+  ["T", "Taktik festlegen", "Wird durch den Einsatzleiter (EL) angeordnet."]],
+  src: "Merkschema der Solothurnischen Gebäudeversicherung (SGV), Stand 25.11.22. Es ist nicht Teil des FKS-Reglements." }];
+function sgvView() {
+  state.mod = null; state.view = "sgv"; backBtn.hidden = false;
+  document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
+  app.innerHTML = `<section class="hero"><h1>Kantonale Ergänzungen</h1><p>Ergänzungen der Solothurnischen Gebäudeversicherung (SGV) zum Basiswissen.</p></section>
+    ${SGV.map(x => `<h3 class="zh">${esc(x.t)}</h3>
+      <div class="note">Gehört zu Kapitel ${esc(x.kap)}.</div>
+      ${IMG[x.img] ? `<figure class="fig" style="margin:8px 0"><button class="zoom" data-k="${x.img}" aria-label="Bild vergrössern"><img src="${IMG[x.img]}" alt="${esc(x.t)}"></button></figure>` : ""}
+      <div class="sgvl">${x.p.map(r => `<div class="sgvr"><b>${esc(r[0])}</b><div><strong>${esc(r[1])}</strong><span>${esc(r[2])}</span></div></div>`).join("")}</div>
+      <p class="foot">Quelle: ${esc(x.src)}</p>`).join("")}`;
+  bindZoom(app); window.scrollTo(0, 0);
+}
+
 /* ---------- Basiswissen Gesamtquiz ---------- */
 function gquizView() {
   const m = getMod("basis"), p = mp("basis"); p.gbs = p.gbs || {};
@@ -698,7 +718,7 @@ async function lektionen(m, el) {
   });
 }
 
-backBtn.addEventListener("click", () => { if (state.view === "gq") { home(); return; } if (state.view === "pdf") { rgClose(); home(); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) home(); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
+backBtn.addEventListener("click", () => { if (state.view === "gq" || state.view === "sgv") { home(); return; } if (state.view === "pdf") { rgClose(); home(); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) home(); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
 start();
 
 if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {
