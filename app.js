@@ -1,4 +1,4 @@
-const APP_VERSION = "1.69";
+const APP_VERSION = "1.70";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");

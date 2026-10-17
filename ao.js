@@ -539,7 +539,7 @@ function aoDrill(el, pool) {
 
 /* ---------- Karten und Fragen zu einem Thema (direkt aus dem Reglement) ---------- */
 function aoMatch(t) {
-  const ws = (t.kw || t.q).map(q => fold(q)), hit = txt => { const f = fold(txt); return ws.some(w => f.includes(w)); };
+  const ws = (t.kw || t.q).map(q => fold(q)), hit = txt => { const f = fold(txt).replace(/[a-z]*(einsatz|gruppen|trupp|abschnitts|zug|kurs|stab|lektions|ausbildungs|angriffs|schadenplatz|fuhrungs|atemschutz|kommando)leiter[a-z]*/g, " "); return ws.some(w => f.includes(w)); };
   const cards = [], quiz = [];
   MODS.forEach(m => {
     m.cards.forEach((c, i) => { if (t.only && String(c[2]) !== t.only) return; if (hit(c[0] + " " + c[1])) cards.push({ id: "k:" + m.id + ":" + i, q: c[0], a: c[1], fl: "Frage", bl: "Antwort", tag: m.title + (c[2] ? " · Kap. " + c[2] : "") }); });
