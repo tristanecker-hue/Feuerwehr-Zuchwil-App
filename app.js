@@ -1,4 +1,4 @@
-const APP_VERSION = "1.62";
+const APP_VERSION = "1.63";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -215,12 +215,14 @@ function subView(g) {
       bt("basis", "Lernkarten", mp("basis").known.length + " von " + bm.cards.length + " gewusst") +
       bt("gq", "Quiz", bm.quiz.length + " Fragen" + (gb != null ? " · Best " + gb : "")) +
       bt("spick", "Spickzettel", "wichtigste Zahlen · PDF");
+  } else if (g === "abc") {
+    h = [1, 2, 3, 4].map(n => bt("pdf:abc" + n, RGDEF["abc" + n].short.replace("ABC-Handbuch ", ""), "Teil " + n + " · PDF · " + RGDEF["abc" + n].pages + " S.")).join("");
   } else {
     const em = getMod("einsatz");
     h = bt("pdf:einsatz", "Einsatzführung komplett", "PDF · " + RGDEF.einsatz.pages + " S.") +
       bt("einsatz", "Karten & Quiz", mp("einsatz").known.length + " von " + em.cards.length + " gewusst");
   }
-  app.innerHTML = `<section class="hero"><h1>${g === "basis" ? "Basiswissen" : "Einsatzführung"}</h1><p>Reglement als PDF, Lernkarten und Quiz.</p></section><div class="menu rgmenu">${h}</div>`;
+  app.innerHTML = `<section class="hero"><h1>${g === "basis" ? "Basiswissen" : g === "abc" ? "ABC-Handbuch" : "Einsatzführung"}</h1><p>${g === "abc" ? "Handbuch für ABC-Einsätze (FKS), 508 Seiten in vier Teilen." : "Reglement als PDF, Lernkarten und Quiz."}</p></section><div class="menu rgmenu">${h}</div>`;
   app.querySelectorAll(".pdfbtn").forEach(b => b.addEventListener("click", () => { const i = b.dataset.id; state.sub = g; i === "gq" ? gquizView() : i === "spick" ? spickView() : i.startsWith("pdf:") ? rgJump(i.slice(4), 0, () => subView(g)) : openMod(i, "cards"); }));
   window.scrollTo(0, 0);
 }
@@ -238,7 +240,9 @@ function home() {
       const bt = (id, t, sm) => `<button class="mbtn main pdfbtn" data-id="${id}"><span>${esc(t)}</span><small>${esc(sm)}</small></button>`;
       return bt("sub:basis", "Basiswissen", "PDF, Lernkarten, Quiz, Spickzettel") +
         bt("sub:einsatz", "Einsatzführung", "PDF, Karten & Quiz") +
-        bt("sgv", "Kantonale Ergänzungen (SGV)", "Original-PDF + " + SGV.length + " Merkblätter");
+        bt("sgv", "Kantonale Ergänzungen (SGV)", "Original-PDF + " + SGV.length + " Merkblätter") +
+        bt("sub:abc", "ABC-Handbuch", "FKS · 508 S. in 4 Teilen") +
+        bt("pdf:veg", "Vegetationsbrände", "Handbuch Spezialwissen · PDF · " + RGDEF.veg.pages + " S.");
     })()}</div>
     <p class="foot">Lernhilfe aus den FKS-Reglementen von feukos.ch. Massgebend ist immer das jeweilige Reglement in der gültigen Fassung.</p>`;
   app.querySelectorAll(".pdfbtn").forEach(b => b.addEventListener("click", () => b.dataset.id.startsWith("sub:") ? subView(b.dataset.id.slice(4)) : b.dataset.id === "gq" ? gquizView() : b.dataset.id === "sgv" ? sgvView() : b.dataset.id === "spick" ? spickView() : b.dataset.id.startsWith("pdf:") ? rgView(b.dataset.id.slice(4)) : openMod(b.dataset.id, "cards")));
@@ -262,6 +266,11 @@ document.addEventListener("click", e => {
 const RGDEF = {
   basis: { pages: 296, short: "Basiswissen", enc: "reglement-basiswissen.enc", file: "Reglement Basiswissen FKS.pdf", tile: "Das ganze Reglement mit allen 296 Seiten (FKS 07/2026), direkt in der App zum Blättern.", hero: "Das ganze Reglement Basiswissen, FKS 07/2026.", online: "https://docs.feukos.ch/Basiswissen/ReglementBasiswissenDE/" },
   sgv: { pages: 10, short: "Kantonale Ergänzungen", enc: "reglement-sgv.enc", file: "Kantonale Ergänzungen SGV 14.10.2026.pdf", c: "© SGV Solothurn", tile: "", hero: "Basiswissen Kantonale Ergänzungen SGV Solothurn, Version 14.10.2026.", online: "" },
+  abc1: { pages: 137, short: "ABC-Handbuch Kap. 1–2 Allgemeines, ABC-Wehr", enc: "reglement-abc1.enc", file: "FKS Handbuch ABC Teil 1.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2019 – Teil 1 von 4 (Kap. 1–2 Allgemeines, ABC-Wehr).", online: "" },
+  abc2: { pages: 76, short: "ABC-Handbuch Kap. 3–4 A-Wehr, B-Wehr", enc: "reglement-abc2.enc", file: "FKS Handbuch ABC Teil 2.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2019 – Teil 2 von 4 (Kap. 3–4 A-Wehr, B-Wehr).", online: "" },
+  abc3: { pages: 158, short: "ABC-Handbuch Kap. 5 C-Wehr", enc: "reglement-abc3.enc", file: "FKS Handbuch ABC Teil 3.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2019 – Teil 3 von 4 (Kap. 5 C-Wehr).", online: "" },
+  abc4: { pages: 137, short: "ABC-Handbuch Kap. 6–9 Tabellen, Spezialeinsatzmittel, Glossar, Register", enc: "reglement-abc4.enc", file: "FKS Handbuch ABC Teil 4.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2019 – Teil 4 von 4 (Kap. 6–9 Tabellen, Spezialeinsatzmittel, Glossar, Register).", online: "" },
+  veg: { pages: 120, short: "Vegetationsbrände", enc: "reglement-veg.enc", file: "FKS Handbuch Vegetationsbrände.pdf", tile: "", hero: "Handbuch Spezialwissen «Vegetationsbrände», FKS.", online: "" },
   einsatz: { pages: 84, short: "Einsatzführung", enc: "reglement-einsatzfuehrung.enc", file: "Reglement Einsatzführung FKS.pdf", tile: "Das ganze Reglement mit allen 84 Seiten, direkt in der App zum Blättern.", hero: "Das ganze Reglement Einsatzführung, FKS.", online: "" }
 };
 const RGFILES = {}, RGDOCS = {};
