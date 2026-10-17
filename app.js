@@ -1,4 +1,4 @@
-const APP_VERSION = "1.58";
+const APP_VERSION = "1.59";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -566,7 +566,63 @@ const SGV = [
     ["note", "Das Schema dient der besseren Verständlichkeit. Können Punkte nicht oder nur ungenau ermittelt werden, entfallen sie: ZEIT vor Präzision."],
     ["h", "Ausbildung: Welche Elemente trainieren?"],
     ["rows", [["a", "Funkübung", "Verbale Visualisierung und Entgegennahme der Informationen durch die Gegenstelle."], ["b", "Luftversorgung", "Sichere Herstellung einer stabilen Luftversorgung im Trupp (z. B. Wechsel Lungenautomat in diversen Lagen)."], ["c", "Verhalten im Trupp", "Verhaltensregeln bei einem Notfall (Rettungsmöglichkeiten, Absetzen Notruf)."], ["d", "Suchtechniken", "Orientierungsübung."], ["e", "Sicherheitstrupp", "AS-Trupp komplett bereitstellen: Verbindung, Truppüberwachung und Rettungsmaterial rasch bereit, schnelle Einsatzbereitschaft."], ["f", "AS-Einsatz", "Notsituationen und Unfälle vermeiden durch ständige Ausbildung, sicheres Beherrschen der Atemschutztechnik, Einhalten der Sicherheitsbestimmungen und Einsatzgrundsätze sowie körperliche Fitness."]]],
-    ["src", "SGV Solothurnische Gebäudeversicherung, «Atemschutz Notsituationen: Hinweise zur Ausbildung», 08.05.2017."]] }
+    ["src", "SGV Solothurnische Gebäudeversicherung, «Atemschutz Notsituationen: Hinweise zur Ausbildung», 08.05.2017."]] },
+  { id: "k04", t: "04 Kommunikation", sub: "Funk · Verbindungskontrolle · Stand 14.10.2026", b: [
+    ["h", "4.3.4 Verbindungskontrolle"],
+    ["p", "Das Basiswissen lässt die Art und Weise der Verbindungskontrolle offen. Bisher wurden «uno, due, tre» ausgebildet (aus älteren Reglementen, nicht falsch). Zur Angleichung an die Partnerorganisationen des Bevölkerungsschutzes wurden im Funk Behelf für die Ausbildung «one, two, three» (Reglement BABS) übernommen."],
+    ["ul", ["«one, two, three»", "«eins, zwei, drei»", "«schlecht, mässig, gut»", "«uno, due, tre» (älter, nicht falsch)"]],
+    ["note", "Entscheidend im Einsatz: Es wird eine Verbindungskontrolle gemacht, damit sich alle Stationen verstehen."],
+    ["p", "Der ganze Funk Behelf ist in der Dateiverwaltung abgelegt."],
+    ["src", "SGV, Basiswissen Kantonale Ergänzungen, Kap. 04, Version 14.10.2026."]] },
+  { id: "k05", t: "05 Rettungsdienst", sub: "Retten · Schiebeleiter · Sicherung · Stand 14.10.2026", b: [
+    ["h", "5.1 / 5.11.8 Retten"],
+    ["warn", "Die alte Rettungsart «Steigunfähige Person über Leitern» wird nicht mehr ausgebildet!"],
+    ["p", "Definition «Retten»: Menschen und Tiere aus unmittelbarer Gefahrenzone bringen. Retten von Personen über Leitern erfolgt dann, wenn sie unmittelbare Gefahrenzonen nicht über reguläre Fluchtwege verlassen können."],
+    ["h", "Unterstützendes taktisches Vorgehen"],
+    ["ul", ["Volumenmethode zur Beurteilung anwenden (Regl. Einsatzführung 4.6), um Entwicklungstendenzen zu erkennen.", "Aufenthaltsprinzip prüfen: Personen in sicheren Bereichen belassen.", "Selbstrettungen ermöglichen: rascher Lüftereinsatz in Treppenhäusern (Fluchtwege).", "Einsatz von Hubrettungsfahrzeugen."]],
+    ["h", "5.11.7 Schiebeleiter mit Stützen"],
+    ["p", "Wird mit 1 Chargierten und 4 AdF eingesetzt. Die Stützen werden beim Verlängern bzw. Verkürzen der Leiter durch die AdF gesichert, welche den Leiterfuss sichern."],
+    ["h", "5.11.8 / 10.2 Indirekte Sicherung"],
+    ["ul", ["Ist beim Sichern von Personen im Objekt kein Anschlagpunkt (12 kN) vorhanden: Leiterkopf als Fixpunkt wählen.", "Die Bandschlinge vorzugsweise um eine oder mehrere Sprossen führen.", "Reduktion der Bruchkraft der Bandschlinge durch ungünstiges Anbringen vermeiden (siehe Kapitel 10.2.6).", "An SGV-Kursen wird bei Rettungen über Leitern ausschliesslich der Fixpunkt am Leiterkopf ausgebildet.", "Immer auf straffe Seilführung achten: ein freier Fall des Patienten muss ausgeschlossen sein."]],
+    ["src", "SGV, Basiswissen Kantonale Ergänzungen, Kap. 05, Version 14.10.2026."]] },
+  { id: "k06", t: "06 Brandbekämpfung", sub: "Hohlstrahlrohr · Leitungen · MS ab Hydrant · Stand 14.10.2026", b: [
+    ["h", "6.6.2 / 6.11.1 Hohlstrahlrohr / Wasser"],
+    ["p", "Es gibt keine fest definierten Einstellungen (z. B. nur Auf/Zu, kleinste Wassermenge bei Beginn, nur Sprühstrahl). Strahlrohreinstellungen sind laufend der Situation anzupassen!"],
+    ["rows", [["K", "Kühlen", "Sprühstrahl führt viel Wärme ab."], ["S", "Sprühstrahl", "Grosse Wasserdampfbildung = Stickeffekt im Raum. Wasserdampf in geschlossenen Räumen = hohe Belastung für Einsatzkräfte."], ["L", "Löschen", "Gezielte Wasserabgabe in geeigneter Form."], ["W", "Wasserschaden vermeiden", "Impulslöschtechnik; Wassermenge und Strahlart (grosse/kleine Tropfen) gezielt anwenden."]]],
+    ["h", "6.8.1 / 6.8.2 Leitungsnummerierung"],
+    ["p", "Im Kanton Solothurn wird die Leitungsnummerierung beibehalten:"],
+    ["ul", ["TL: 10er-Nummerierung (10 / 20 / 30 usw.)", "DL: 11 / 12 / 13 usw.", "DL ab TLF sind «Schnellangriffe» (Nummerierung wenn sinnvoll / nach Situation)"]],
+    ["h", "6.8.5 Leitung über Leitern"],
+    ["p", "Leitern werden mit leerer bzw. gefüllter Druckleitung unterschiedlich bestiegen (siehe Abbildung im Original-Merkblatt)."],
+    ["note", "Begründung: Die Standsicherheit auf der Leiter soll jederzeit gewährleistet sein."],
+    ["h", "6.13.2 MS ab Hydrant"],
+    ["ul", ["Es werden nur die Zubringervarianten 1 × 75 oder 2 × 55 ausgebildet und angewendet.", "Dem dosierten Öffnen der Druckstutzen ist grosse Beachtung zu schenken.", "Bedienung / Handling des Teilstücks gemäss Basiswissen."]],
+    ["h", "MS retablieren"],
+    ["ul", ["Zum Spülen der MS den Eingangsdruck auf kleiner als 2 bar reduzieren, damit die Ansaugvorrichtung anspricht und mitgespült wird.", "Druckreduzierung NICHT am Hydrant vornehmen, sondern mit dem Teilstück am Hydrant.", "Hydrantenbedienung (Schieber) nur «auf» oder «zu»."]],
+    ["warn", "Je nach Hydrantentyp wird bei Druckreduzierung am Hydrant die Entwässerung geöffnet (Ausspülung der Sickerung). Zudem beschädigen hohe Fliessgeschwindigkeiten und verklemmte Verunreinigungen bei Teilöffnung die Dichtungen im Hydrant."],
+    ["h", "Rückflussverhinderer"],
+    ["p", "Für den Einsatz eines Rückflussverhinderers beim Wasserbezug ab Hydrant gilt das technische Informationsblatt «T-03 Löschwasserbezug ab Hydranten» der FKS."],
+    ["link", "https://www.feukos.ch/wp-content/uploads/2022/04/T-03-Ru%CC%88ckflussverhinderer_V1.0_de-NEU.pdf", "FKS T-03 Rückflussverhinderer (PDF)"],
+    ["src", "SGV, Basiswissen Kantonale Ergänzungen, Kap. 06, Version 14.10.2026."]] },
+  { id: "k07", t: "07 Atemschutz", sub: "Führungsleine · Verbindung · Retablierung · Stand 14.10.2026", b: [
+    ["h", "7.6.1 Rückwegsicherung / Führungsleine"],
+    ["p", "Damit der Grundsatz «Die Rückwegsicherung muss jederzeit gewährleistet sein» erfüllt ist: Der letzte AdF fixiert den Sack der Führungsleine sicher (z. B. mit Karabiner am AS-Gerät); die Hände bleiben frei."],
+    ["warn", "Der Sack der Führungsleine darf nicht nur über die AS-Flasche gehängt werden: Er kann abgestreift werden, und Verknotungen im Sack lassen sich auf dem Rücken nicht beheben. Befestigungsringe an Brandschutzjacken sind als Befestigungspunkt ungeeignet: Die Nähte sind nicht für solche Belastungen ausgelegt und können ausreissen."],
+    ["h", "7.6.4 / 7.7 Verbindung sicherstellen"],
+    ["p", "BW 4.3.4: Die Verbindungskontrolle fordert Stationen auf, die hörbare Verständlichkeit (Sprachdurchsage) anzugeben."],
+    ["rows", [["1", "Erst-Einsatzphase", "Verbindung Trupp – Einsatzleiter (der EL ist zugleich Truppüberwacher)."], ["2", "Weiterer Einsatzverlauf", "Der EL kann die Truppüberwachung an einen von ihm definierten Truppüberwacher übergeben. Verbindungskontrolle zwischen EL und Truppüberwacher; danach hört der Truppüberwacher mit."], ["3", "Arbeitsphase", "Der EL definiert mit dem Auftrag an einen Trupp den Truppüberwacher. Der Trupp stellt vor dem Einsatz die Verbindung zu EL und Truppüberwacher sicher."]]],
+    ["h", "7.9 AS-Retablierung / Prüfung"],
+    ["ul", ["Gerätewarte: Ausbildung durch Lieferanten, Beitrag SGV, Bestand geregelt in Kdo-Akten.", "An SGV-Kursen erfolgt eine Funktionskontrolle mittels Checkliste.", "Die Geräteprüfung erfolgt danach gemäss Herstellerangaben durch die Feuerwehr.", "Siehe Kdo-Akten 07-302 «Retablierung Pressluftatmer an Kursen der SGV»."]],
+    ["note", "Atemschutz-Notsituation: Das Thema ist nicht reglementiert; das PowerPoint vom 08.05.2017 dient im Kanton Solothurn als Hilfestellung (siehe «Atemschutz-Notsituationen»)."],
+    ["src", "SGV, Basiswissen Kantonale Ergänzungen, Kap. 07, Version 14.10.2026."]] },
+  { id: "k12", t: "12 ABC-Einsatz", sub: "Absperren · Crash-Rettung · Stand 14.10.2026", b: [
+    ["h", "12.4.4 Absperren"],
+    ["p", "Die Deko-Stelle wird als Anhang an die Gefahrenzone erstellt. Die Gefahrenzone bleibt bis zur vollständigen Erstellung der Deko-Stelle geschlossen (kein Ausgang). Nachher wird die Gefahrenzone um die Deko-Stelle erweitert."],
+    ["h", "Sofortige Dekontamination bei sofortiger Rettung (Crash-Rettung), Stufe Feuerwehr"],
+    ["rows", [["1", "ABC-Einsatzautomatik", "«Feststellen / Erste Massnahmen» anwenden (HB ABC 2.3)."], ["2", "GAMS / 4-A-Regel", "Umsetzung (HB ABC 2.4.1 und 2.4.2)."], ["3", "Dekontamination", "HB ABC 2.15.1."]]],
+    ["note", "Grundsatz: Schnelligkeit vor Perfektion!"],
+    ["src", "SGV, Basiswissen Kantonale Ergänzungen, Kap. 12, Version 14.10.2026."]] }
+
 ];
 function sgvBlock(x) {
   const t = x[0];
