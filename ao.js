@@ -242,12 +242,12 @@ function aoHub() {
     ["meth", "Methodik", "Lektion halten", "Aufbau, Beurteilung, Theorieblöcke und Probelektion", 0, 0, ""],
     ["zahl", "Training", "Zahlen-Trainer", "Wichtige Zahlen aus den Kurs-Kapiteln üben", dZ, pool.length, dZ + " von " + pool.length + " gewusst"],
     ["prog", "Tagesbefehl", "Kursprogramm", "Dienstag bis Freitag, nach Klasse 1 oder 2", 0, 0, ""],
-    ["regl", "Nachschlagen", "Reglement Basiswissen", "Zusammenfassung, Lernkarten und Quiz öffnen", 0, 0, ""]
+    ["regl", "Nachschlagen", "Reglement Basiswissen", "Das ganze Reglement im PDF öffnen", 0, 0, ""]
   ];
   app.innerHTML = `<section class="hero"><h1>Ausbildungsoffizier</h1><p>Ku 70 · Di 20. bis Fr 23.10.2026 · Feuerwehr Grenchen. ${cnt}</p></section>
     <div class="grid">${tiles.map(t => `<button class="tile chtile" data-r="${t[0]}"><span class="num">${t[1]}</span><h2>${t[2]}</h2><div class="sub">${t[3]}</div>${t[5] ? aoMeter(t[4], t[5]) : ""}${t[6] ? `<div class="facts"><span>${t[6]}</span></div>` : ""}</button>`).join("")}</div>
     <p class="foot">Quellen: Kursaufgebot 70/26/1 und Tagesbefehl (Version 02.10.2026). Massgebend sind die Unterlagen des SGV und die Anweisungen im Kurs. Fachinhalte stehen im Reglement Basiswissen (FKS).</p>`;
-  app.querySelectorAll(".tile").forEach(b => b.addEventListener("click", () => { if (b.dataset.r === "regl") { state.from = "ao"; openMod("basis"); } else aoGo(b.dataset.r); }));
+  app.querySelectorAll(".tile").forEach(b => b.addEventListener("click", () => { if (b.dataset.r === "regl") rgJump("basis", 0, () => aoGo("")); else aoGo(b.dataset.r); }));
 }
 
 /* ---------- Checkliste ---------- */
@@ -442,7 +442,7 @@ function aoTopic(id) {
     <div id="dr" style="margin-top:14px"></div>
     <h3 class="zh">Im Reglement nachschlagen</h3>
     ${aoPdfRefs(t)}
-    ${t.kap.length ? `<div class="row3">${t.kap.map(k => `<button class="btn" data-o="sum:${k}">Zusammenfassung ${aoKap(k)}</button><button class="btn" data-o="cards:${k}">Lernkarten ${aoKap(k)}</button><button class="btn" data-o="quiz:${k}">Quiz ${aoKap(k)}</button>`).join("")}</div>` : `<div class="note">Für dieses Thema ist kein Kapitel fest zugeordnet. Nutze die Suche.</div>`}
+    ${t.kap.length ? `<div class="row3">${t.kap.map(k => `<button class="btn" data-o="cards:${k}">Lernkarten ${aoKap(k)}</button><button class="btn" data-o="quiz:${k}">Quiz ${aoKap(k)}</button>`).join("")}</div>` : `<div class="note">Für dieses Thema ist kein Kapitel fest zugeordnet. Nutze die Suche.</div>`}
     <div class="chips" role="group" aria-label="Suchbegriffe">${t.q.map(q => `<button class="chip" data-q="${esc(q)}" aria-pressed="false">${esc(q)}</button>`).join("")}</div>
     <div id="sx"></div>
     <div class="chklist">${aoChkHtml("d:" + t.id, "<b>Dieses Thema sitzt</b>")}</div>`;
@@ -469,12 +469,12 @@ function aoMeth() {
     ${sec("Theorieblöcke vorbereiten", ["<b>Wie lernt der Mensch?</b> Basiswissen Kap. 3 (Lernen und Kompetenzen, Planung und Durchführung, Feedback und Medien).", "<b>FBEHK für Ausbildungsoffiziere:</b> Feststellen, Beurteilen, Entscheiden, Handeln, Kontrollieren, der Führungsablauf (Basiswissen Kap. 2, Einsatzführung Kap. 3). Überlege dir, wie du die fünf Schritte als Ausbilder auf eine Lektion anwendest.", "<b>Kursorganisation / Ausbilderplanung:</b> Dazu passt Einsatzführung Kap. 5 (Ausbildung, Übungsvorbereitung, Besprechung).", "<b>Stunde der Wahrheit, Qualifikation:</b> Rückmeldung geben und annehmen, höchstens 3 Beurteilungskriterien (Kap. 3)."])}
     <h3 class="zh">Lektion vorbereiten</h3><div class="chklist">${lc.map((c, i) => aoChkHtml("m" + i, esc(c))).join("")}</div>
     <h3 class="zh">FBEHK: Führungsablauf</h3>${tab("basis", "2")}${tab("einsatz", "3")}
-    <div class="row3"><button class="btn" data-o="sum:2">Zusammenfassung Kap. 2 Führung</button><button class="btn" data-o="cards:2">Lernkarten Kap. 2</button><button class="btn" data-o="quiz:2">Quiz Kap. 2</button></div>
-    <div class="row3"><button class="btn" data-o="sum:3:einsatz">Einsatzführung Kap. 3</button><button class="btn" data-o="cards:3:einsatz">Lernkarten Kap. 3</button><button class="btn" data-o="quiz:3:einsatz">Quiz Kap. 3</button></div>
+    <div class="row3"><button class="btn" data-o="cards:2">Lernkarten Kap. 2</button><button class="btn" data-o="quiz:2">Quiz Kap. 2</button></div>
+    <div class="row3"><button class="btn" data-o="cards:3:einsatz">Lernkarten Kap. 3</button><button class="btn" data-o="quiz:3:einsatz">Quiz Kap. 3</button></div>
     <h3 class="zh">Zahlen: Ausbildung (Basiswissen Kap. 3)</h3>${tab("basis", "3")}
     <h3 class="zh">Zahlen: Ausbildung (Einsatzführung Kap. 5)</h3>${tab("einsatz", "5")}
-    <div class="row3"><button class="btn" data-o="sum:3">Zusammenfassung Kap. 3</button><button class="btn" data-o="cards:3">Lernkarten Kap. 3</button><button class="btn" data-o="quiz:3">Quiz Kap. 3</button></div>
-    <div class="row3"><button class="btn" data-o="sum:5:einsatz">Einsatzführung Kap. 5</button><button class="btn" data-o="cards:5:einsatz">Lernkarten Kap. 5</button><button class="btn" data-o="quiz:5:einsatz">Quiz Kap. 5</button></div>
+    <div class="row3"><button class="btn" data-o="cards:3">Lernkarten Kap. 3</button><button class="btn" data-o="quiz:3">Quiz Kap. 3</button></div>
+    <div class="row3"><button class="btn" data-o="cards:5:einsatz">Lernkarten Kap. 5</button><button class="btn" data-o="quiz:5:einsatz">Quiz Kap. 5</button></div>
     <label class="fld"><span class="fl">Probelektion</span><span class="fh">Thema, Zeit, Ergebnis, was ich ändere</span><textarea class="ta" rows="4" data-n="probe" placeholder="Notizen …">${esc(AOS.notes.probe || "")}</textarea></label>`;
   aoBind(app);
   app.querySelectorAll("[data-o]").forEach(b => b.addEventListener("click", () => { const [tb, k, mod] = b.dataset.o.split(":"); aoOpen(tb, k, mod); }));

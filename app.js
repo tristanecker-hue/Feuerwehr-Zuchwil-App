@@ -1,9 +1,9 @@
-const APP_VERSION = "1.57";
+const APP_VERSION = "1.58";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
 FWZ.onChange(() => { if (state.view === "les") lesView(); greetUpd(); });
-let state = { mod: null, tab: "sum", ch: null, cf: null, lc: null };
+let state = { mod: null, tab: "cards", ch: null, cf: null, lc: null };
 let prog = {};
 try { prog = JSON.parse(localStorage.getItem("fwz-progress") || "{}"); } catch (e) { prog = {}; }
 if (prog.einsatz && !prog.einsatz.v2) prog.einsatz = { known: [], best: null, v2: 1 };
@@ -182,7 +182,7 @@ function search(q) {
     m.sections.forEach((s, i) => {
       const paras = s.p.concat((s.bx || []).flatMap(b => b[2])).filter(p => words.every(w => fold(s.t + " " + p).includes(w)));
       const titleHit = words.every(w => fold(s.t).includes(w));
-      if (paras.length || titleHit) res.push({ t: "s", m, s, i, paras: paras.length ? paras.slice(0, 2) : [s.p[0]], score: titleHit ? 2 : 1 });
+      if ((paras.length || titleHit) && (s.t.match(/^(\d+(?:\.\d+)*)\s/) && rgNum(m.id, s.t.match(/^(\d+(?:\.\d+)*)\s/)[1]))) res.push({ t: "s", m, s, i, paras: paras.length ? paras.slice(0, 2) : [s.p[0]], score: titleHit ? 2 : 1 });
     });
     m.cards.forEach((c, i) => { if (words.every(w => fold(c[0] + " " + c[1]).includes(w))) res.push({ t: "c", m, c, score: 0 }); });
   });
@@ -195,15 +195,13 @@ function renderSearch(q, box) {
   box.innerHTML = `<p class="sinfo">${res.length} Treffer${res.length > 40 ? " (die ersten 40)" : ""}</p><div class="sres">` + shown.map((r, n) => {
     if (r.t === "s") {
       const k = r.s.g ? "Kap. " + r.s.g.split(" ")[0] + " · " : "";
-      return `<button class="hit" data-n="${n}"><div class="where">${esc(r.m.title)} · ${esc(k)}Zusammenfassung</div><h3>${hl(r.s.t, words)}</h3>${r.paras.map(p => `<p>${hl(snip(p, words), words)}</p>`).join("")}</button>`;
+      return `<button class="hit" data-n="${n}"><div class="where">${esc(r.m.title)} · ${esc(k)}im Reglement (PDF)</div><h3>${hl(r.s.t, words)}</h3>${r.paras.map(p => `<p>${hl(snip(p, words), words)}</p>`).join("")}</button>`;
     }
     return `<div class="hit card"><div class="where">${esc(r.m.title)} · Lernkarte${r.c[2] ? " · Kap. " + esc(r.c[2]) : ""}</div><p>${hl(r.c[0], words)}</p><p class="ans">${hl(r.c[1], words)}</p></div>`;
   }).join("") + "</div>";
   box.querySelectorAll(".hit[data-n]").forEach(b => b.addEventListener("click", () => {
     const r = shown[+b.dataset.n];
-    state.mod = r.m.id; state.tab = "sum"; state.cf = null; state.ch = r.s.g || null;
-    renderMod(); window.scrollTo(0, 0);
-    const d = document.getElementById("sec-" + r.i); if (d) { d.open = true; d.scrollIntoView({ block: "start" }); }
+    const n = (r.s.t.match(/^(\d+(?:\.\d+)*)\s/) || [])[1], t = n && rgNum(r.m.id, n); if (t) rgJump(r.m.id, t.page, () => home());
   }));
 }
 function home() {
@@ -212,21 +210,23 @@ function home() {
   app.innerHTML = `
     <section class="hero">
       <h1>Reglemente</h1>
-      <p>Wähle ein Reglement. Lies die Zusammenfassung, übe mit Lernkarten und teste dich im Quiz.</p>
+      <p>Lies das ganze Reglement im PDF, übe mit Lernkarten und teste dich im Quiz.</p>
     </section>
     <div class="srch"><input type="search" id="q" placeholder="Reglemente durchsuchen (z. B. Atemschutz, OAABS, 118)" aria-label="Suche" autocomplete="off"></div>
     <div id="sbox" hidden></div>
     <div class="menu rgmenu" id="mgrid">${(() => {
       const bt = (id, t, sm) => `<button class="mbtn main pdfbtn" data-id="${id}"><span>${esc(t)}</span><small>${esc(sm)}</small></button>`;
-      const sum = m => { const k = mp(m.id).known.length; return bt(m.id, (m.id === "basis" ? "Basiswissen" : m.title) + " Zusammenfassung", k + " von " + m.cards.length + " Karten gewusst"); };
       const bm = getMod("basis"), em = getMod("einsatz"), gb = (mp("basis").gbs || {})[bm.quiz.length];
-      return sum(bm) + bt("pdf:basis", "Basiswissen komplett", "PDF · " + RGDEF.basis.pages + " S.") +
+      return bt("pdf:basis", "Basiswissen komplett", "PDF · " + RGDEF.basis.pages + " S.") +
+        bt("basis", "Basiswissen Lernkarten", mp("basis").known.length + " von " + bm.cards.length + " gewusst") +
         bt("gq", "Basiswissen Quiz", bm.quiz.length + " Fragen" + (gb != null ? " · Best " + gb : "")) +
-        sum(em) + bt("pdf:einsatz", "Einsatzführung komplett", "PDF · " + RGDEF.einsatz.pages + " S.") +
+        bt("spick", "Basiswissen Spickzettel", "wichtigste Zahlen · PDF") +
+        bt("pdf:einsatz", "Einsatzführung komplett", "PDF · " + RGDEF.einsatz.pages + " S.") +
+        bt("einsatz", "Einsatzführung Karten & Quiz", mp("einsatz").known.length + " von " + em.cards.length + " gewusst") +
         bt("sgv", "Kantonale Ergänzungen (SGV)", SGV.length + " Merkblätter");
     })()}</div>
     <p class="foot">Lernhilfe aus den FKS-Reglementen von feukos.ch. Massgebend ist immer das jeweilige Reglement in der gültigen Fassung.</p>`;
-  app.querySelectorAll(".pdfbtn").forEach(b => b.addEventListener("click", () => b.dataset.id === "gq" ? gquizView() : b.dataset.id === "sgv" ? sgvView() : b.dataset.id.startsWith("pdf:") ? rgView(b.dataset.id.slice(4)) : openMod(b.dataset.id)));
+  app.querySelectorAll(".pdfbtn").forEach(b => b.addEventListener("click", () => b.dataset.id === "gq" ? gquizView() : b.dataset.id === "sgv" ? sgvView() : b.dataset.id === "spick" ? spickView() : b.dataset.id.startsWith("pdf:") ? rgView(b.dataset.id.slice(4)) : openMod(b.dataset.id, "cards")));
   const qi = document.getElementById("q"), sb = document.getElementById("sbox"), mg = document.getElementById("mgrid");
   qi.addEventListener("input", () => {
     const v = qi.value.trim();
@@ -313,19 +313,18 @@ async function rgView(id, page) {
 }
 
 /* ---------- Reglement ---------- */
-function openMod(id, tab) { state.ch = null; state.cf = null; state.lc = null; state.mod = id; state.tab = tab || "sum"; renderMod(); window.scrollTo(0, 0); }
+function openMod(id, tab) { state.ch = null; state.cf = null; state.lc = null; state.mod = id; state.tab = tab || "cards"; renderMod(); window.scrollTo(0, 0); }
 function renderMod() {
   const m = getMod(state.mod); backBtn.hidden = false;
   app.innerHTML = `
     <section class="head"><h1>${esc(m.title)}</h1><div class="ver">${esc(m.ver)}</div></section>
     <div class="tabs" role="tablist">
-      ${[["sum", "Zusammenfassung"], ["cards", "Lernkarten"], ["quiz", "Quiz"]].map(([k, l]) => `<button role="tab" data-tab="${k}" aria-selected="${state.tab === k}">${l}</button>`).join("")}
+      ${[["cards", "Lernkarten"], ["quiz", "Quiz"]].map(([k, l]) => `<button role="tab" data-tab="${k}" aria-selected="${state.tab === k}">${l}</button>`).join("")}
     </div>
     <div id="body"></div>`;
   app.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => { state.tab = b.dataset.tab; state.lc = null; renderMod(); }));
   const body = document.getElementById("body");
-  if (state.tab === "sum") summary(m, body);
-  else if (state.tab === "cards") cards(m, body);
+  if (state.tab === "cards" || state.tab === "sum") cards(m, body);
   else quiz(m, body);
 }
 const CH = {
@@ -599,6 +598,13 @@ function sgvView(id) {
   window.scrollTo(0, 0);
 }
 
+function spickView() {
+  state.mod = null; state.view = "spick"; backBtn.hidden = false;
+  document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
+  app.innerHTML = `<section class="hero"><h1>Spickzettel</h1><p>Die wichtigsten Zahlen aller Kapitel des Basiswissens auf wenigen Seiten, zum Ausdrucken oder Teilen.</p></section>${spickBar("Spickzettel")}`;
+  spickBind(app, getMod("basis"), null); window.scrollTo(0, 0);
+}
+
 /* ---------- Basiswissen Gesamtquiz ---------- */
 function gquizView() {
   const m = getMod("basis"), p = mp("basis"); p.gbs = p.gbs || {};
@@ -790,7 +796,7 @@ async function lektionen(m, el) {
   });
 }
 
-backBtn.addEventListener("click", () => { if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "gq" || state.view === "sgv") { home(); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else home(); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) home(); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
+backBtn.addEventListener("click", () => { if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "gq" || state.view === "sgv" || state.view === "spick") { home(); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else home(); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) home(); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
 start();
 
 if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {
