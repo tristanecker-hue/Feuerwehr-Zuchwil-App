@@ -378,3 +378,9 @@ body.keilprint .kprint{display:block!important;color:#000;font-family:Arial,sans
 .vlrow { display:flex; flex-direction:column; gap:6px; padding:10px; border:1px solid var(--line); border-radius:14px; background:var(--surface); margin-bottom:10px; }
 .vlr1 { display:grid; grid-template-columns:64px 1fr 44px; gap:6px; } .vldel { padding:0; font-size:1.3rem; }
 .vlact { display:flex; flex-wrap:wrap; gap:8px; } .vlact .btn { flex:1 1 140px; }
+.vlr1 { grid-template-columns:26px 64px 1fr 44px !important; align-items:center; }
+.vlh { cursor:grab; touch-action:none; user-select:none; text-align:center; font-weight:700; color:var(--muted); letter-spacing:-2px; }
+.vlrow.drag { opacity:.75; border-color:var(--red); }
+.vlmv { display:flex; gap:6px; } .vlmv .btn { flex:1; padding:4px; min-height:36px; }
+.vlchk { padding:10px 12px; border-radius:12px; font-weight:600; font-size:.95rem; border:1px solid var(--line); }
+.vlchk.ok { color:var(--muted); } .vlchk.bad { color:#fff; background:#b3261e; border-color:#b3261e; }

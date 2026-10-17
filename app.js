@@ -1,4 +1,4 @@
-const APP_VERSION = "1.66";
+const APP_VERSION = "1.67";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -916,9 +916,12 @@ let VL = null;
 function vlLoad() { try { VL = JSON.parse(localStorage.getItem("fwz-vorl") || "null"); } catch (e) {} if (!VL || !Array.isArray(VL.ab)) VL = VL_DEF(); }
 function vlSave() { try { localStorage.setItem("fwz-vorl", JSON.stringify(VL)); } catch (e) {} }
 const vlLines = s => String(s || "").split("\n").map(x => x.trim()).filter(Boolean);
+const vlSum = () => VL.ab.reduce((n, r) => n + (parseInt(r.min, 10) || 0), 0);
+const vlDauer = () => (String(VL.dauer || "").trim() || String(vlSum()));
+function vlCheck() { const d = parseInt(VL.dauer, 10), sm = vlSum(); if (!VL.dauer || isNaN(d)) return { ok: true, t: "Summe Ablauf: " + sm + " Min. (wird als Gesamtdauer verwendet)" }; return d === sm ? { ok: true, t: "Gesamtdauer " + d + " Min. stimmt mit dem Ablauf überein ✓" } : { ok: false, t: "Achtung: Gesamtdauer " + d + " Min., die Zeiten im Ablauf ergeben " + sm + " Min. (" + (sm > d ? "+" : "−") + Math.abs(sm - d) + " Min.). Bitte anpassen." }; }
 function vlModel() {
   return { nr: VL.nr || "", kopf1: "Ausbildung", kopf2: VL.kopf2 || "", version: VL.ver || "", thema: VL.thema || "", ziele: vlLines(VL.ziele), krit: vlLines(VL.krit), material: vlLines(VL.mat), fahrzeuge: vlLines(VL.fz),
-    stufeTxt: VL.stufe + (VL.dauer ? "   |   Dauer: " + VL.dauer + " Min." : ""), logo: window.LOGOJ || null,
+    stufeTxt: VL.stufe + "   |   Dauer: " + vlDauer() + " Min.", logo: window.LOGOJ || null,
     ablauf: VL.ab.map(r => ({ min: r.min || "", titel: r.t || "", zeilen: vlLines(r.z), hinweis: (r.h || "").trim() })), fname: "Lektion " + (VL.nr || "").replace(/[\\/:*?"<>|]/g, "-") + " " + VL.stufe + ".pdf" };
 }
 const CRC_T = (() => { const t = []; for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
@@ -933,7 +936,7 @@ function vlDocx() {
   let b = para(r(m.kopf1, { b: 1, sz: 28 }) + tb({ b: 1, sz: 28 }) + r("Lektion Nr. " + m.nr, { b: 1, sz: 28 }), hdrTabs);
   b += para(r(m.kopf2, { b: 1, sz: 28 }) + tb({ b: 1, sz: 28 }) + r("Version: " + m.version, { sz: 16 }), hdrTabs) + empty() + empty();
   b += para(r("Thema:", { b: 1 }) + tb() + r(m.thema), '<w:tabs><w:tab w:val="left" w:pos="2552"/></w:tabs>') + empty();
-  b += para(r("Ausbildungsstufe:", { b: 1 }) + tb() + r(VL.stufe) + tb() + r("Dauer:", { b: 1 }) + tb() + r(VL.dauer ? VL.dauer + " Min." : ""), '<w:tabs><w:tab w:val="left" w:pos="2552"/><w:tab w:val="left" w:pos="7797"/><w:tab w:val="right" w:pos="9639"/></w:tabs>') + empty();
+  b += para(r("Ausbildungsstufe:", { b: 1 }) + tb() + r(VL.stufe) + tb() + r("Dauer:", { b: 1 }) + tb() + r(vlDauer() + " Min."), '<w:tabs><w:tab w:val="left" w:pos="2552"/><w:tab w:val="left" w:pos="7797"/><w:tab w:val="right" w:pos="9639"/></w:tabs>') + empty();
   const list = (label, items, ch) => { const L = items.length ? items : [""]; return L.map((t, i) => para((i === 0 ? r(label, { b: 1 }) + tb() : "") + r(t ? ch + "  " + t : ""), i === 0 ? '<w:tabs><w:tab w:val="left" w:pos="2552"/></w:tabs><w:ind w:left="2552" w:hanging="2552"/>' : '<w:ind w:left="2552"/>')).join("") + empty(); };
   b += list("Ziele:", m.ziele, "▪") + list("Beurteilungskriterien:", m.krit, "✓") + list("Material:", m.material, "☐") + list("Fahrzeuge:", m.fahrzeuge, "☐");
   const W3 = [700, 6939, 2000], bd = '<w:tblBorders>' + ["top", "left", "bottom", "right", "insideH", "insideV"].map(k => `<w:${k} w:val="single" w:sz="4" w:space="0" w:color="000000"/>`).join("") + '</w:tblBorders>';
@@ -964,14 +967,14 @@ function vorlageView() {
   document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
   const inp = (k, l, ph) => `<label class="vlf"><span>${l}</span><input data-k="${k}" value="${esc(VL[k])}" placeholder="${esc(ph || "")}"></label>`;
   const ta = (k, l, n, ph) => `<label class="vlf"><span>${l}</span><textarea data-k="${k}" rows="${n}" placeholder="${esc(ph || "")}">${esc(VL[k])}</textarea></label>`;
-  const rows = () => VL.ab.map((r, i) => `<div class="vlrow" data-i="${i}"><div class="vlr1"><input data-r="min" inputmode="numeric" value="${esc(r.min)}" aria-label="Minuten" placeholder="Min."><input data-r="t" value="${esc(r.t)}" aria-label="Titel" placeholder="Titel des Abschnitts"><button class="btn vldel" aria-label="Zeile löschen">×</button></div><textarea data-r="z" rows="2" placeholder="Ablauf / Inhalt (eine Zeile pro Absatz)">${esc(r.z)}</textarea><textarea data-r="h" rows="2" placeholder="Hinweise | Hilfen">${esc(r.h)}</textarea></div>`).join("");
+  const rows = () => VL.ab.map((r, i) => `<div class="vlrow" data-i="${i}"><div class="vlr1"><span class="vlh" aria-label="Verschieben" title="Zum Verschieben ziehen">⋮⋮</span><input data-r="min" inputmode="numeric" value="${esc(r.min)}" aria-label="Minuten" placeholder="Min."><input data-r="t" value="${esc(r.t)}" aria-label="Titel" placeholder="Titel des Abschnitts"><button class="btn vldel" aria-label="Zeile löschen">×</button></div><div class="vlmv"><button class="btn vlup" aria-label="Nach oben">▲</button><button class="btn vldn" aria-label="Nach unten">▼</button></div><textarea data-r="z" rows="2" placeholder="Ablauf / Inhalt (eine Zeile pro Absatz)">${esc(r.z)}</textarea><textarea data-r="h" rows="2" placeholder="Hinweise | Hilfen">${esc(r.h)}</textarea></div>`).join("");
   app.innerHTML = `<section class="hero"><h1>Vorlage Lektion</h1><p>Felder ausfüllen, dann als PDF oder Word exportieren. Deine Eingaben bleiben auf diesem Gerät gespeichert.</p></section>
     <div class="vlform">
       <div class="vl2">${inp("kopf2", "Bereich", "Feuerwehrdienst")}${inp("nr", "Lektion Nr.", "gem. Aufgebot")}</div>
       <div class="vl2">${inp("ver", "Version / Datum", "TT.MM.JJJJ")}<label class="vlf"><span>Ausbildungsstufe</span><select data-k="stufe">${["Anlernstufe", "Festigungsstufe", "Anwendungsstufe"].map(s => `<option${VL.stufe === s ? " selected" : ""}>${s}</option>`).join("")}</select></label></div>
-      ${inp("thema", "Thema", "gemäss Ausbildungsauftrag | Aufgebot")}${inp("dauer", "Dauer (Min.)", "z. B. 50")}
+      ${inp("thema", "Thema", "gemäss Ausbildungsauftrag | Aufgebot")}${inp("dauer", "Gesamtdauer (Min.)", "z. B. 50 – muss zur Summe im Ablauf passen")}
       ${ta("ziele", "Ziele (eine pro Zeile)", 3)}${ta("krit", "Beurteilungskriterien (eine pro Zeile)", 3)}${ta("mat", "Material (eine pro Zeile)", 2, "…")}${ta("fz", "Fahrzeuge (eine pro Zeile)", 2, "…")}
-      <h3 class="zh">Ablauf der Lektion</h3><div id="vlrows">${rows()}</div>
+      <h3 class="zh">Ablauf der Lektion</h3><div id="vlchk" class="vlchk" role="status"></div><div id="vlrows">${rows()}</div>
       <button class="btn" id="vladd">+ Zeile hinzufügen</button>
       <div class="vlact"><button class="btn primary" id="vlpdf">PDF öffnen</button><button class="btn" id="vlpsh">PDF teilen</button><button class="btn" id="vlprn">Drucken</button><button class="btn primary" id="vldoc">Word (.docx)</button><button class="btn" id="vldsh">Word teilen</button></div>
       <div id="vlmsg" class="sinfo" role="status"></div>
@@ -979,11 +982,23 @@ function vorlageView() {
     </div>`;
   const msg = document.getElementById("vlmsg");
   app.querySelectorAll("[data-k]").forEach(e => e.addEventListener("input", () => { VL[e.dataset.k] = e.value; vlSave(); }));
-  const bindRows = () => { document.querySelectorAll(".vlrow").forEach(row => { const i = +row.dataset.i; row.querySelectorAll("[data-r]").forEach(e => e.addEventListener("input", () => { VL.ab[i][e.dataset.r] = e.value; vlSave(); })); row.querySelector(".vldel").onclick = () => { VL.ab.splice(i, 1); vlSave(); document.getElementById("vlrows").innerHTML = rows(); bindRows(); }; }); };
-  bindRows();
-  document.getElementById("vladd").onclick = () => { VL.ab.push({ min: "", t: "", z: "", h: "" }); vlSave(); document.getElementById("vlrows").innerHTML = rows(); bindRows(); const l = document.querySelectorAll(".vlrow"); l[l.length - 1].querySelector("input[data-r=t]").focus(); };
+  const chk = () => { const c = vlCheck(), e = document.getElementById("vlchk"); e.textContent = c.t; e.className = "vlchk " + (c.ok ? "ok" : "bad"); };
+  const redraw = () => { document.getElementById("vlrows").innerHTML = rows(); bindRows(); chk(); };
+  const move = (i, j) => { if (j < 0 || j >= VL.ab.length) return; const [x] = VL.ab.splice(i, 1); VL.ab.splice(j, 0, x); vlSave(); redraw(); };
+  const bindRows = () => { document.querySelectorAll(".vlrow").forEach(row => { const i = +row.dataset.i;
+    row.querySelectorAll("[data-r]").forEach(e => e.addEventListener("input", () => { VL.ab[i][e.dataset.r] = e.value; vlSave(); if (e.dataset.r === "min") chk(); }));
+    row.querySelector(".vldel").onclick = () => { VL.ab.splice(i, 1); vlSave(); redraw(); };
+    row.querySelector(".vlup").onclick = () => move(i, i - 1); row.querySelector(".vldn").onclick = () => move(i, i + 1);
+    const h = row.querySelector(".vlh");
+    h.addEventListener("pointerdown", ev => { ev.preventDefault(); h.setPointerCapture(ev.pointerId); row.classList.add("drag"); const host = document.getElementById("vlrows");
+      const mv = e2 => { const rs = [...host.children].filter(r => r !== row); let before = null; for (const r of rs) { const bx = r.getBoundingClientRect(); if (e2.clientY < bx.top + bx.height / 2) { before = r; break; } } if (before !== row.nextSibling) host.insertBefore(row, before); };
+      const up = () => { h.removeEventListener("pointermove", mv); h.removeEventListener("pointerup", up); h.removeEventListener("pointercancel", up); row.classList.remove("drag"); const order = [...host.children].map(r => +r.dataset.i); VL.ab = order.map(k => VL.ab[k]); vlSave(); redraw(); };
+      h.addEventListener("pointermove", mv); h.addEventListener("pointerup", up); h.addEventListener("pointercancel", up); }); }); };
+  bindRows(); chk();
+  app.querySelector("[data-k=dauer]").addEventListener("input", chk);
+  document.getElementById("vladd").onclick = () => { VL.ab.push({ min: "", t: "", z: "", h: "" }); vlSave(); redraw(); const l = document.querySelectorAll(".vlrow"); l[l.length - 1].querySelector("input[data-r=t]").focus(); };
   const pdf = () => aoPdfActs(aoLekPdfBuild(vlModel()), msg), doc = () => aoPdfActs(vlDocx(), msg);
-  const run = (f) => () => { msg.textContent = ""; try { f(); } catch (e) { msg.textContent = (e && e.message) || "Export nicht möglich."; } };
+  const run = (f) => () => { msg.textContent = ""; const c = vlCheck(); if (!c.ok) { msg.textContent = c.t; document.getElementById("vlchk").scrollIntoView({ block: "center" }); return; } try { f(); } catch (e) { msg.textContent = (e && e.message) || "Export nicht möglich."; } };
   document.getElementById("vlpdf").onclick = run(() => pdf().open()); document.getElementById("vlpsh").onclick = run(() => pdf().share()); document.getElementById("vlprn").onclick = run(() => pdf().print());
   document.getElementById("vldoc").onclick = run(() => doc().open()); document.getElementById("vldsh").onclick = run(() => doc().share());
   document.getElementById("vlreset").onclick = () => { if (document.getElementById("vlreset").dataset.c) { VL = VL_DEF(); vlSave(); vorlageView(); } else { document.getElementById("vlreset").dataset.c = 1; document.getElementById("vlreset").textContent = "Wirklich zurücksetzen? Nochmals tippen."; } };
