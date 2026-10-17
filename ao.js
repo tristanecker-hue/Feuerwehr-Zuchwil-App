@@ -99,7 +99,7 @@ const AO_T = [
     "Worauf achtest du beim Standort (Untergrund, Hindernisse, Gefahren aus der Umgebung)?",
     "Welchen Anstellwinkel brauchst du, und wie kontrollierst du ihn?",
     "Was unterscheidet Anlern- und Festigungsstufe? Was machst du in der jeweiligen Stufe anders?"] },
-  { id: "pers", t: "Personenrettung und Transport", l: ["104"], kap: ["5"], q: ["Personenrettung", "Transport", "Rettungsmittel"], fr: [
+  { id: "pers", t: "Personenrettung und Transport", l: ["104"], kap: ["5"], only: "5", q: ["Personenrettung", "Transport", "Rettungskette", "Rautek"], kw: ["Personenrettung", "Transport", "Rettungskette", "Rautek", "Reanimation", "BLS", "Lagerung", "Blutstillung", "Verbrennung", "Schaufeltrage", "Spineboard", "Rettungstuch", "Verletzte", "Schock", "Defibrillator", "Fachspezialist", "Rettungsdienst", "Patient", "bewusstlos", "Herzdruckmassage", "Beatmung", "Retten", "Bergen", "Räumen", "Evakuieren", "Eigenschutz", "Infektion", "Seitenlage", "Hochlagerung"], fr: [
     "In welcher Reihenfolge gehst du bei der Personenrettung vor?",
     "Welche Rettungs- und Transportgriffe gibt es, und wann wendest du welchen an?",
     "Wie schützt du dich selbst und die gerettete Person?",
@@ -522,11 +522,11 @@ function aoDrill(el, pool) {
 
 /* ---------- Karten und Fragen zu einem Thema (direkt aus dem Reglement) ---------- */
 function aoMatch(t) {
-  const ws = t.q.map(q => fold(q)), hit = txt => { const f = fold(txt); return ws.some(w => f.includes(w)); };
+  const ws = (t.kw || t.q).map(q => fold(q)), hit = txt => { const f = fold(txt); return ws.some(w => f.includes(w)); };
   const cards = [], quiz = [];
   MODS.forEach(m => {
-    m.cards.forEach((c, i) => { if (hit(c[0] + " " + c[1])) cards.push({ id: "k:" + m.id + ":" + i, q: c[0], a: c[1], fl: "Frage", bl: "Antwort", tag: m.title + (c[2] ? " · Kap. " + c[2] : "") }); });
-    m.quiz.forEach(q => { if (hit(q.q + " " + q.o.join(" ") + " " + q.e)) quiz.push(q); });
+    m.cards.forEach((c, i) => { if (t.only && String(c[2]) !== t.only) return; if (hit(c[0] + " " + c[1])) cards.push({ id: "k:" + m.id + ":" + i, q: c[0], a: c[1], fl: "Frage", bl: "Antwort", tag: m.title + (c[2] ? " · Kap. " + c[2] : "") }); });
+    m.quiz.forEach(q => { if (t.only && String(q.c) !== t.only) return; if (hit(q.q + " " + q.o.join(" ") + " " + q.e)) quiz.push(q); });
   });
   return { cards, quiz };
 }
@@ -557,7 +557,7 @@ function aoKqPool(di, k) {
   const days = di < 0 ? AO_DAYS : [AO_DAYS[di]], lessons = new Set();
   days.forEach(day => day.rows.forEach(r => { const c = r[2 + k]; if (c && c[0] !== "=") lessons.add(c.split("/")[0]); }));
   const ts = AO_T.filter(t => t.l.some(n => lessons.has(n))), set = new Set(), bm = getMod("basis");
-  ts.forEach(t => { aoMatch(t).quiz.forEach(q => set.add(q)); bm.quiz.forEach(q => { if (t.kap.includes(String(q.c))) set.add(q); }); });
+  ts.forEach(t => { aoMatch(t).quiz.forEach(q => set.add(q)); if (!t.only) bm.quiz.forEach(q => { if (t.kap.includes(String(q.c))) set.add(q); }); });
   return { fach: [...set], topics: ts };
 }
 function aoKq() {
