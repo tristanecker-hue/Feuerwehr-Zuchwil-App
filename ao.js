@@ -87,7 +87,7 @@ const AO_DAYS = [
 
 /* Fachthemen: Lektionen, Reglement-Kapitel (Basiswissen), Suchbegriffe, Selbsttest-Fragen */
 const AO_T = [
-  { id: "ausr", t: "Persönliche Ausrüstung, Sicherheit, Bindungen, Knoten", l: ["101"], kap: ["1", "10"], q: ["Knoten", "Bindung", "Seil", "Ausrüstung"], fr: [
+  { id: "ausr", t: "Persönliche Ausrüstung, Sicherheit, Bindungen, Knoten", l: ["101"], kap: ["1", "10"], q: ["Knoten", "Bindung", "Seil", "Ausrüstung"], kw: ["Knoten", "Bindung", "Absturz", "Fallhöhe", "Fixpunkt", "Anschlagpunkt", "Schutzausrüstung"], ex: ["seilwinde", "zugseil"], fr: [
     "Welche persönliche Ausrüstung trägst du im Einsatz, und was kontrollierst du vor dem Einsatz?",
     "Welche Knoten und Bindungen musst du sicher beherrschen, und wofür setzt du welchen ein?",
     "Wie sicherst du dich und andere bei dieser Tätigkeit? Welche Gefahren und Regeln gibt es?",
@@ -123,7 +123,7 @@ const AO_T = [
     "Was darfst du damit nicht löschen, und welche Gefahren gibt es?",
     "Wie kontrollierst und versorgst du die Geräte nach dem Einsatz?",
     "Wie lässt du üben, ohne Gefahr und ohne unnötigen Verbrauch?"] },
-  { id: "tlf", t: "TLF", l: ["108", "109", "206"], kap: ["6"], q: ["TLF", "Schnellangriff", "Pumpe", "Schaumrohr"], fr: [
+  { id: "tlf", t: "TLF", l: ["108", "109", "206"], kap: ["6"], q: ["TLF", "Schnellangriff", "Pumpe", "Schaumrohr"], ex: ["eingangsdruck"], fr: [
     "Welche Ausrüstung hat das TLF, und wo ist was verlastet?",
     "Wie bringst du das TLF in Stellung, und welche Schritte folgen bis zur Wasserabgabe?",
     "Wie bedienst du die Pumpe, und worauf achtest du dabei?",
@@ -135,7 +135,7 @@ const AO_T = [
     "Wann setzt du die Stützen ein, und wie stellst du sie ein?",
     "Welchen Anstellwinkel brauchst du, und wie kontrollierst du ihn?",
     "Welche Sicherheitsregeln gelten beim Aufstellen, Besteigen und Abbauen?"] },
-  { id: "gew", t: "MS ab Gewässer", l: ["203"], kap: ["6"], q: ["Gewässer", "Seiher", "Saugleitung", "Motorspritze"], fr: [
+  { id: "gew", t: "MS ab Gewässer", l: ["203"], kap: ["6"], q: ["Gewässer", "Seiher", "Saugleitung", "Motorspritze"], ex: ["ab hydrant"], fr: [
     "Wie stellst du die Motorspritze am Gewässer auf (Standort, Zugang, Saughöhe)?",
     "Wie baust du die Saugleitung auf und prüfst sie auf Dichtheit?",
     "Wie überdeckst du den Seiher richtig?",
@@ -146,7 +146,7 @@ const AO_T = [
     "Welchen Eingangsdruck braucht die Motorspritze, und wie überwachst du ihn?",
     "Wie baust du die Zuleitung auf, und was verhinderst du dabei?",
     "Wie gehst du bei Störungen vor?"] },
-  { id: "pl", t: "Personenrettung über Leitern", l: ["205"], kap: ["5"], q: ["Leiter", "Personenrettung", "Anstellwinkel"], fr: [
+  { id: "pl", t: "Personenrettung über Leitern", l: ["205"], kap: ["5"], q: ["Leiter", "Personenrettung", "Anstellwinkel"], ex: ["grundsatze", "ersten massnahmen", "tragarten", "raumen"], fr: [
     "Welche Schritte hat die Rettung über Leitern, und wer übernimmt welche Aufgabe?",
     "Wie sicherst du Retter und gerettete Person auf der Leiter?",
     "Wie stellst du die Leiter für diesen Zweck auf (Anstellwinkel, Standort)?",
@@ -540,10 +540,12 @@ function aoDrill(el, pool) {
 /* ---------- Karten und Fragen zu einem Thema (direkt aus dem Reglement) ---------- */
 function aoMatch(t) {
   const ws = (t.kw || t.q).map(q => fold(q)), hit = txt => { const f = fold(txt).replace(/[a-z]*(einsatz|gruppen|trupp|abschnitts|zug|kurs|stab|lektions|ausbildungs|angriffs|schadenplatz|fuhrungs|atemschutz|kommando)leiter[a-z]*/g, " "); return ws.some(w => f.includes(w)); };
-  const cards = [], quiz = [];
+  const cards = [], quiz = [], exw = (t.ex || []).map(fold), okx = txt => { const f = fold(txt); return !exw.some(w => f.includes(w)); };
   MODS.forEach(m => {
-    m.cards.forEach((c, i) => { if (t.only && String(c[2]) !== t.only) return; if (hit(c[0] + " " + c[1])) cards.push({ id: "k:" + m.id + ":" + i, q: c[0], a: c[1], fl: "Frage", bl: "Antwort", tag: m.title + (c[2] ? " · Kap. " + c[2] : "") }); });
-    m.quiz.forEach(q => { if (t.only && String(q.c) !== t.only) return; if (hit(q.q + " " + q.o.join(" ") + " " + q.e)) quiz.push(q); });
+    if (m.id !== "basis") return;
+    const okc = ch => !t.kap || !m.quiz.length || t.kap.includes(String(ch));
+    m.cards.forEach((c, i) => { if (t.only && String(c[2]) !== t.only) return; if (m.id === "basis" && !okc(c[2])) return; if (okx(c[0]) && hit(c[0] + " " + c[1])) cards.push({ id: "k:" + m.id + ":" + i, q: c[0], a: c[1], fl: "Frage", bl: "Antwort", tag: m.title + (c[2] ? " · Kap. " + c[2] : "") }); });
+    m.quiz.forEach(q => { if (t.only && String(q.c) !== t.only) return; if (m.id === "basis" && !okc(q.c)) return; if (okx(q.q) && hit(q.q + " " + q.e)) quiz.push(q); });
   });
   return { cards, quiz };
 }
