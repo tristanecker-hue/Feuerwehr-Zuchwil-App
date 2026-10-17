@@ -1,4 +1,4 @@
-const APP_VERSION = "1.63";
+const APP_VERSION = "1.64";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -216,14 +216,16 @@ function subView(g) {
       bt("gq", "Quiz", bm.quiz.length + " Fragen" + (gb != null ? " · Best " + gb : "")) +
       bt("spick", "Spickzettel", "wichtigste Zahlen · PDF");
   } else if (g === "abc") {
-    h = [1, 2, 3, 4].map(n => bt("pdf:abc" + n, RGDEF["abc" + n].short.replace("ABC-Handbuch ", ""), "Teil " + n + " · PDF · " + RGDEF["abc" + n].pages + " S.")).join("");
+    h = (((window.QZX || {}).abc || []).length ? bt("gq:abc", "ABC-Handbuch Quiz", window.QZX.abc.length + " Fragen") : "") + [1, 2, 3, 4].map(n => bt("pdf:abc" + n, RGDEF["abc" + n].short.replace("ABC-Handbuch ", ""), "Teil " + n + " · PDF · " + RGDEF["abc" + n].pages + " S.")).join("");
+  } else if (g === "veg") {
+    h = bt("pdf:veg", "Vegetationsbrände komplett", "PDF · " + RGDEF.veg.pages + " S.") + (((window.QZX || {}).veg || []).length ? bt("gq:veg", "Vegetationsbrände Quiz", window.QZX.veg.length + " Fragen") : "");
   } else {
     const em = getMod("einsatz");
     h = bt("pdf:einsatz", "Einsatzführung komplett", "PDF · " + RGDEF.einsatz.pages + " S.") +
       bt("einsatz", "Karten & Quiz", mp("einsatz").known.length + " von " + em.cards.length + " gewusst");
   }
-  app.innerHTML = `<section class="hero"><h1>${g === "basis" ? "Basiswissen" : g === "abc" ? "ABC-Handbuch" : "Einsatzführung"}</h1><p>${g === "abc" ? "Handbuch für ABC-Einsätze (FKS), 508 Seiten in vier Teilen." : "Reglement als PDF, Lernkarten und Quiz."}</p></section><div class="menu rgmenu">${h}</div>`;
-  app.querySelectorAll(".pdfbtn").forEach(b => b.addEventListener("click", () => { const i = b.dataset.id; state.sub = g; i === "gq" ? gquizView() : i === "spick" ? spickView() : i.startsWith("pdf:") ? rgJump(i.slice(4), 0, () => subView(g)) : openMod(i, "cards"); }));
+  app.innerHTML = `<section class="hero"><h1>${g === "basis" ? "Basiswissen" : g === "abc" ? "ABC-Handbuch" : g === "veg" ? "Vegetationsbrände" : "Einsatzführung"}</h1><p>${g === "abc" ? "Handbuch für ABC-Einsätze (FKS), 508 Seiten in vier Teilen." : g === "veg" ? "Handbuch Spezialwissen Vegetationsbrände (FKS) mit Quiz." : "Reglement als PDF, Lernkarten und Quiz."}</p></section><div class="menu rgmenu">${h}</div>`;
+  app.querySelectorAll(".pdfbtn").forEach(b => b.addEventListener("click", () => { const i = b.dataset.id; state.sub = g; i === "gq" ? gquizView() : i.startsWith("gq:") ? gquizView(i.slice(3)) : i === "spick" ? spickView() : i.startsWith("pdf:") ? rgJump(i.slice(4), 0, () => subView(g)) : openMod(i, "cards"); }));
   window.scrollTo(0, 0);
 }
 function home() {
@@ -241,8 +243,8 @@ function home() {
       return bt("sub:basis", "Basiswissen", "PDF, Lernkarten, Quiz, Spickzettel") +
         bt("sub:einsatz", "Einsatzführung", "PDF, Karten & Quiz") +
         bt("sgv", "Kantonale Ergänzungen (SGV)", "Original-PDF + " + SGV.length + " Merkblätter") +
-        bt("sub:abc", "ABC-Handbuch", "FKS · 508 S. in 4 Teilen") +
-        bt("pdf:veg", "Vegetationsbrände", "Handbuch Spezialwissen · PDF · " + RGDEF.veg.pages + " S.");
+        bt("sub:abc", "ABC-Handbuch", "FKS · 508 S. in 4 Teilen + Quiz") +
+        bt("sub:veg", "Vegetationsbrände", "Handbuch Spezialwissen · PDF + Quiz");
     })()}</div>
     <p class="foot">Lernhilfe aus den FKS-Reglementen von feukos.ch. Massgebend ist immer das jeweilige Reglement in der gültigen Fassung.</p>`;
   app.querySelectorAll(".pdfbtn").forEach(b => b.addEventListener("click", () => b.dataset.id.startsWith("sub:") ? subView(b.dataset.id.slice(4)) : b.dataset.id === "gq" ? gquizView() : b.dataset.id === "sgv" ? sgvView() : b.dataset.id === "spick" ? spickView() : b.dataset.id.startsWith("pdf:") ? rgView(b.dataset.id.slice(4)) : openMod(b.dataset.id, "cards")));
@@ -699,12 +701,14 @@ function spickView() {
 }
 
 /* ---------- Basiswissen Gesamtquiz ---------- */
-function gquizView() {
-  const m = getMod("basis"), p = mp("basis"); p.gbs = p.gbs || {};
+const QX = { abc: { t: "ABC-Handbuch", d: "Multiple Choice zum FKS-Handbuch für ABC-Einsätze." }, veg: { t: "Vegetationsbrände", d: "Multiple Choice zum FKS-Handbuch Spezialwissen Vegetationsbrände." } };
+function gquizView(id) {
+  id = typeof id === "string" ? id : "basis"; state.gqid = id;
+  const m = id === "basis" ? getMod("basis") : { quiz: (window.QZX || {})[id] || [] }, p = mp(id === "basis" ? "basis" : "q-" + id); p.gbs = p.gbs || {};
   state.mod = null; state.view = "gq"; backBtn.hidden = false;
   document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
-  const N = m.quiz.length, sizes = [20, 40, N];
-  app.innerHTML = `<section class="hero"><h1>Basiswissen Quiz</h1><p>Multiple Choice über das ganze Basiswissen (Kapitel 1–12). Die Fragen werden zufällig und gleichmässig über die Kapitel gemischt.</p></section>
+  const N = m.quiz.length, sizes = N > 45 ? [20, 40, N] : [20, N];
+  app.innerHTML = `<section class="hero"><h1>${id === "basis" ? "Basiswissen" : QX[id].t} Quiz</h1><p>${id === "basis" ? "Multiple Choice über das ganze Basiswissen (Kapitel 1–12). Die Fragen werden zufällig und gleichmässig über die Kapitel gemischt." : QX[id].d + " Die Fragen werden zufällig und gleichmässig über die Kapitel gemischt."}</p></section>
     <div class="menu rgmenu" id="gqs">${sizes.map(n => `<button class="mbtn main pdfbtn" data-n="${n}"><span>${n === N ? "Alle Fragen" : n === 20 ? "Kurz · 20 Fragen" : "Mittel · 40 Fragen"}</span><small>${p.gbs[n] != null ? "Best " + p.gbs[n] + "/" + n : n + " Fragen"}</small></button>`).join("")}</div>
     <div id="gqb"></div>`;
   document.querySelectorAll("#gqs button").forEach(b => b.addEventListener("click", () => gquizRun(m, p, +b.dataset.n)));
@@ -722,7 +726,7 @@ function gquizRun(m, p, n) {
     if (pos >= list.length) {
       const total = list.length;
       if (first && total === n && (p.gbs[n] == null || score > p.gbs[n])) { p.gbs[n] = score; save(); }
-      const rows = Object.keys(per).sort((a, b) => a - b).map(k => `<div class="count"><span>${k} ${esc((CHN || {})[k] || "")}</span><span>${per[k][0]} / ${per[k][1]}</span></div>`).join("");
+      const rows = Object.keys(per).sort((a, b) => state.gqid === "basis" ? a - b : String(a).localeCompare(b)).map(k => `<div class="count"><span>${k} ${esc(state.gqid === "basis" ? ((CHN || {})[k] || "") : "")}</span><span>${per[k][0]} / ${per[k][1]}</span></div>`).join("");
       el.innerHTML = `<div class="card-area">
         <div class="count"><span>Ergebnis</span>${p.gbs[n] != null ? `<span>Bestwert ${p.gbs[n]}/${n}</span>` : ""}</div>
         <div class="score">${score}<span style="color:var(--muted);font-size:2rem"> / ${total}</span></div>
@@ -730,12 +734,12 @@ function gquizRun(m, p, n) {
         <div style="margin:14px 0">${rows}</div>
         <div class="row">${wrong.length ? '<button class="btn primary" id="rep">Falsche wiederholen</button>' : ""}<button class="btn" id="new">Neues Quiz</button></div></div>`;
       if (wrong.length) document.getElementById("rep").onclick = () => { list = shuffle(wrong); pos = 0; score = 0; wrong = []; per = {}; first = false; draw(); };
-      document.getElementById("new").onclick = () => gquizView();
+      document.getElementById("new").onclick = () => gquizView(state.gqid);
       return;
     }
     const q = m.quiz[list[pos]], order = shuffle(q.o.map((_, i) => i)); answered = false;
     el.innerHTML = `<div class="card-area">
-      <div class="count"><span>Frage ${pos + 1} von ${list.length}${q.c ? " · Kapitel " + q.c + " " + esc((CHN || {})[q.c] || "") : ""}</span><span>${score} richtig</span></div>
+      <div class="count"><span>Frage ${pos + 1} von ${list.length}${q.c ? (state.gqid === "basis" ? " · Kapitel " + q.c + " " + esc((CHN || {})[q.c] || "") : " · " + esc(q.c)) : ""}</span><span>${score} richtig</span></div>
       <div class="q">${esc(q.q)}</div>
       <div class="opts">${order.map(i => `<button class="opt" data-i="${i}">${esc(q.o[i])}</button>`).join("")}</div>
       <div id="fb"></div></div>`;
