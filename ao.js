@@ -365,7 +365,7 @@ function aoLekPdfBuild(m) {
   const e2 = s => fix(s).replace(/[\\()]/g, "\\$&");
   const mw = (s, sz, b) => { cv.font = (b ? "bold " : "") + sz + "px Helvetica, Arial, sans-serif"; return cv.measureText(fix(s)).width; };
   const wrap = (txt, w, sz, b) => { const out = []; fix(txt).split("\n").forEach(par => { let line = ""; par.split(" ").forEach(wd => { const x = line ? line + " " + wd : wd; if (mw(x, sz, b) > w && line) { out.push(line); line = wd; } else line = x; }); out.push(line); }); return out; };
-  const pages = [[]]; let y = H - M; const P = () => pages[pages.length - 1];
+  const imgs = m.logo ? [m.logo] : []; const pages = [[]]; let y = H - M; const P = () => pages[pages.length - 1];
   const T = (x, yy, s, sz, b) => P().push(`BT /${b ? "F2" : "F1"} ${sz} Tf 0 g ${x.toFixed(1)} ${yy.toFixed(1)} Td (${e2(s)}) Tj ET`);
   const L = (x1, y1, x2, y2, w, rgb) => P().push(`${rgb || "0.27 0.27 0.27"} RG ${w} w ${x1.toFixed(1)} ${y1.toFixed(1)} m ${x2.toFixed(1)} ${y2.toFixed(1)} l S`);
   const R = (x, yy, w, h, fill) => P().push(fill ? `${fill} rg ${x.toFixed(1)} ${yy.toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)} re f 0 g` : `0.27 0.27 0.27 RG 0.7 w ${x.toFixed(1)} ${yy.toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)} re S`);
@@ -396,29 +396,30 @@ function aoLekPdfBuild(m) {
     });
     y -= 4;
   };
-  meta("Thema:", [m.thema]); meta("Ausbildungsstufe:", [m.stufeTxt]);
+  meta("Thema:", [m.thema]); if (m.quelle) meta("Quelle:", [m.quelle]); meta("Ausbildungsstufe:", [m.stufeTxt]);
   meta("Ziele:", m.ziele, "dash"); meta("Beurteilungskriterien:", m.krit, "chk"); meta("Material:", m.material, "box"); meta("Fahrzeuge:", m.fahrzeuge, "box");
   // Tabelle
   y -= 6;
-  const C0 = 34, C2 = 100, C1 = TW - C0 - C2, PD = 5, X1 = M + C0, X2 = M + C0 + C1, S2 = 9.5, L2 = 12;
+  const C0 = 34, C2 = m.c2 || 100, C1 = TW - C0 - C2, PD = 5, X1 = M + C0, X2 = M + C0 + C1, S2 = 9.5, L2 = 12;
   const head = () => { if (y - 22 < M) newPage(); R(M, y - 20, TW, 20, "0.75 0.75 0.75"); [[M, "Zeit", C0], [X1, "Ablauf der Lektion", C1], [X2, "Hinweise / Hilfen", C2]].forEach(c => { R(c[0], y - 20, c[2], 20); T(c[0] + PD, y - 14, c[1], S2 + .5, true); }); y -= 20; };
   head();
   m.ablauf.forEach(b => {
-    const tl = wrap(b.titel, C1 - 2 * PD, S2, true), paras = b.zeilen.map(z => wrap(z, C1 - 2 * PD, S2, false)), hl = wrap(b.hinweis || "", C2 - 2 * PD, S2, false);
-    const hm = PD * 2 + (tl.length + paras.reduce((n, p) => n + p.length, 0)) * L2 + paras.length * 3, hh = PD * 2 + hl.length * L2, h = Math.max(hm, hh, 24);
+    const tl = wrap(b.titel, C1 - 2 * PD, S2, true), paras = b.zeilen.map(z => wrap(z, C1 - 2 * PD, S2, false)), hl = wrap(b.hinweis || "", C2 - 2 * PD, S2, false), ims = (b.imgs || []).map(im => { imgs.push(im); const w = C2 - 2 * PD, hh0 = Math.min(w * im.h / im.w, 170); return { k: imgs.length, w: hh0 * im.w / im.h > w ? w : hh0 * im.w / im.h, h: hh0 > w * im.h / im.w ? w * im.h / im.w : hh0 }; });
+    const hm = PD * 2 + (tl.length + paras.reduce((n, p) => n + p.length, 0)) * L2 + paras.length * 3, hh = PD * 2 + hl.length * L2 + ims.reduce((n, im) => n + im.h + 4, hl.length ? 2 : 0), h = Math.max(hm, hh, 24);
     if (y - h < M) { newPage(); head(); }
     [[M, C0], [X1, C1], [X2, C2]].forEach(c => R(c[0], y - h, c[1], h));
     T(M + PD - 1, y - PD - 9, b.min + "'", S2 + .5, true);
     let yy = y - PD - 9; tl.forEach(l => { T(X1 + PD, yy, l, S2, true); L(X1 + PD, yy - 1.6, X1 + PD + mw(l, S2, true), yy - 1.6, .6, "0 0 0"); yy -= L2; });
     paras.forEach(p => { yy -= 3; p.forEach(l => { T(X1 + PD, yy, l, S2, false); yy -= L2; }); });
     yy = y - PD - 9; hl.forEach(l => { T(X2 + PD, yy, l, S2, false); yy -= L2; });
+    yy += 6; ims.forEach(im => { P().push(`q ${im.w.toFixed(1)} 0 0 ${im.h.toFixed(1)} ${(X2 + PD).toFixed(1)} ${(yy - im.h).toFixed(1)} cm /Im${im.k} Do Q`); yy -= im.h + 4; });
     y -= h;
   });
   // PDF zusammenbauen
   const objs = [null, "<< /Type /Catalog /Pages 2 0 R >>", null, "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>", "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>"], kids = [];
-  if (m.logo) { const bin = atob(m.logo.b64); objs.push(`<< /Type /XObject /Subtype /Image /Width ${m.logo.w} /Height ${m.logo.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${bin.length} >>\nstream\n${bin}\nendstream`); }
+  imgs.forEach(im => { const bin = atob(im.b64); objs.push(`<< /Type /XObject /Subtype /Image /Width ${im.w} /Height ${im.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${bin.length} >>\nstream\n${bin}\nendstream`); });
   pages.forEach(p => { const st = p.join("\n"), ci = objs.length + 1, pi = objs.length;
-    objs.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >>${m.logo ? " /XObject << /Im1 5 0 R >>" : ""} >> /Contents ${ci} 0 R >>`, `<< /Length ${st.length} >>\nstream\n${st}\nendstream`); kids.push(pi); });
+    objs.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >>${imgs.length ? " /XObject << " + imgs.map((_, k) => "/Im" + (k + 1) + " " + (5 + k) + " 0 R").join(" ") + " >>" : ""} >> /Contents ${ci} 0 R >>`, `<< /Length ${st.length} >>\nstream\n${st}\nendstream`); kids.push(pi); });
   objs[2] = `<< /Type /Pages /Kids [${kids.map(k => k + " 0 R").join(" ")}] /Count ${kids.length} >>`;
   let s = "%PDF-1.4\n", off = [];
   objs.slice(1).forEach((o, i) => { off.push(s.length); s += `${i + 1} 0 obj\n${o}\nendobj\n`; });
