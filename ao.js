@@ -237,7 +237,7 @@ function aoHub() {
   const tiles = [
     ["check", "Vorbereitung", "Checkliste", "Material und Vorbereitung laut Kursaufgebot", dC, nC, dC + " von " + nC + " erledigt"],
     ["keil", "Vorstellung", "KEIL", "Persönliche Vorstellung, 2–3 Minuten: Notizen und Stoppuhr", dK, AO_KEIL.length, dK + " von " + AO_KEIL.length + " Punkten notiert"],
-    ["lek", "Fachthemen", "Lektionen", "Alle Kurs-Lektionen mit Selbsttest, Reglement-Suche und eigener Planung", dT, AO_T.length, dT + " von " + AO_T.length + " Themen sitzen"],
+    ["lek", "Fachthemen", "Lektionen", "Alle Kurs-Lektionen mit Karten, Quiz und Reglement-Suche", dT, AO_T.length, dT + " von " + AO_T.length + " Themen sitzen"],
     ["kq", "Quiz", "Kurs-Quiz", "Fachfragen aus dem Basiswissen zu den Lektionen jedes Kurstags", 0, 0, ""],
     ["meth", "Methodik", "Lektion halten", "Aufbau, Beurteilung, Theorieblöcke und Probelektion", 0, 0, ""],
     ["zahl", "Training", "Zahlen-Trainer", "Wichtige Zahlen aus den Kurs-Kapiteln üben", dZ, pool.length, dZ + " von " + pool.length + " gewusst"],
@@ -330,7 +330,7 @@ function aoKeil() {
 
 /* ---------- Lektionen ---------- */
 function aoTopics() {
-  app.innerHTML = `<section class="hero"><h1>Lektionen</h1><p>Alle Fachthemen des Kurses in der Reihenfolge des Tagesbefehls. Pro Thema: Selbsttest, Reglement, eigene Planung.</p></section>
+  app.innerHTML = `<section class="hero"><h1>Lektionen</h1><p>Alle Fachthemen des Kurses in der Reihenfolge des Tagesbefehls. Pro Thema: Karten, Quiz und Reglement.</p></section>
     <div class="grid">${AO_T.map(t => {
       const d = t.fr.filter((f, i) => AOS.chk["s:" + t.id + ":" + i]).length, ok = AOS.chk["d:" + t.id];
       return `<button class="tile chtile" data-r="lek:${t.id}"><span class="num">${t.l.map(n => "L " + n).join(" · ")}</span><h2>${esc(t.t)}</h2>${aoMeter(ok ? t.fr.length : d, t.fr.length)}<div class="facts"><span>${ok ? "sitzt" : d + " von " + t.fr.length + " Fragen sicher"}</span></div></button>`;
@@ -427,13 +427,10 @@ function aoTopic(id) {
   const t = AO_T.find(x => x.id === id); if (!t) return aoTopics();
   const sl = t.l.flatMap(n => aoSlots(n, AOS.k).map(s => Object.assign({ n }, s)));
   const mt = aoMatch(t);
-  const fields = [["ziel", "Lernziele (höchstens 3)"], ["einst", "Einstieg"], ["kern", "Ablauf und Kernpunkte"], ["sich", "Sicherheit"], ["kon", "Kontrolle und Abschluss"]];
   app.innerHTML = `<div class="banner"><h2>${esc(t.t)}</h2><p>${t.l.map(n => "L " + n + " · " + AO_L[n]).join("<br>")}</p></div>
     ${aoKlasse()}
     <h3 class="zh">Wann und wo</h3>
     <div class="ztw"><table class="zt sch">${sl.map(s => `<tr><td>${s.day}<br>${s.von}–${s.bis}</td><td>L ${s.n}<br><span class="mu">Arbeitsplatz ${s.ap}: ${esc(AO_AP[s.ap] || "")}</span></td></tr>`).join("")}</table></div>
-    <h3 class="zh">Selbsttest</h3><div class="note">Beantworte jede Frage laut und in eigenen Worten, als würdest du sie einer Gruppe erklären. Hake ab, was sicher sitzt.</div>
-    <div class="chklist">${t.fr.map((f, i) => aoChkHtml("s:" + t.id + ":" + i, esc(f))).join("")}</div>
     <h3 class="zh">Karten und Fragen zum Thema</h3>
     <div class="note">Direkt aus dem Reglement: alle Lernkarten und Quizfragen, in denen ${t.q.map(q => "«" + esc(q) + "»").join(", ")} vorkommt.</div>
     <div class="row"><button class="btn primary" id="mc"${mt.cards.length ? "" : " disabled"}>Lernkarten (${mt.cards.length})</button><button class="btn primary" id="mq"${mt.quiz.length ? "" : " disabled"}>Quiz (${mt.quiz.length})</button></div>
@@ -442,8 +439,6 @@ function aoTopic(id) {
     ${t.kap.length ? `<div class="row3">${t.kap.map(k => `<button class="btn" data-o="sum:${k}">Zusammenfassung ${aoKap(k)}</button><button class="btn" data-o="cards:${k}">Lernkarten ${aoKap(k)}</button><button class="btn" data-o="quiz:${k}">Quiz ${aoKap(k)}</button>`).join("")}</div>` : `<div class="note">Für dieses Thema ist kein Kapitel fest zugeordnet. Nutze die Suche.</div>`}
     <div class="chips" role="group" aria-label="Suchbegriffe">${t.q.map(q => `<button class="chip" data-q="${esc(q)}" aria-pressed="false">${esc(q)}</button>`).join("")}</div>
     <div id="sx"></div>
-    <h3 class="zh">Meine Lektionsplanung</h3>
-    ${fields.map(f => `<label class="fld"><span class="fl">${f[1]}</span><textarea class="ta" rows="3" data-n="${t.id}.${f[0]}" placeholder="Notizen …">${esc(AOS.notes[t.id + "." + f[0]] || "")}</textarea></label>`).join("")}
     <div class="chklist">${aoChkHtml("d:" + t.id, "<b>Dieses Thema sitzt</b>")}</div>`;
   aoBind(app);
   app.querySelectorAll("[data-o]").forEach(b => b.addEventListener("click", () => { const [tab, k] = b.dataset.o.split(":"); aoOpen(tab, k); }));
