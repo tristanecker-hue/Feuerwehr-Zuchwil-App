@@ -1,4 +1,4 @@
-const APP_VERSION = "1.60";
+const APP_VERSION = "1.61";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -204,9 +204,29 @@ function renderSearch(q, box) {
     const n = (r.s.t.match(/^(\d+(?:\.\d+)*)\s/) || [])[1], t = n && rgNum(r.m.id, n); if (t) rgJump(r.m.id, t.page, () => home());
   }));
 }
+function subView(g) {
+  state.sub = g; state.mod = null; state.from = null; state.view = "sub"; backBtn.hidden = false;
+  document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
+  const bt = (id, t, sm) => `<button class="mbtn main pdfbtn" data-id="${id}"><span>${esc(t)}</span><small>${esc(sm)}</small></button>`;
+  let h;
+  if (g === "basis") {
+    const bm = getMod("basis"), gb = (mp("basis").gbs || {})[bm.quiz.length];
+    h = bt("pdf:basis", "Basiswissen komplett", "PDF · " + RGDEF.basis.pages + " S.") +
+      bt("basis", "Lernkarten", mp("basis").known.length + " von " + bm.cards.length + " gewusst") +
+      bt("gq", "Quiz", bm.quiz.length + " Fragen" + (gb != null ? " · Best " + gb : "")) +
+      bt("spick", "Spickzettel", "wichtigste Zahlen · PDF");
+  } else {
+    const em = getMod("einsatz");
+    h = bt("pdf:einsatz", "Einsatzführung komplett", "PDF · " + RGDEF.einsatz.pages + " S.") +
+      bt("einsatz", "Karten & Quiz", mp("einsatz").known.length + " von " + em.cards.length + " gewusst");
+  }
+  app.innerHTML = `<section class="hero"><h1>${g === "basis" ? "Basiswissen" : "Einsatzführung"}</h1><p>Reglement als PDF, Lernkarten und Quiz.</p></section><div class="menu rgmenu">${h}</div>`;
+  app.querySelectorAll(".pdfbtn").forEach(b => b.addEventListener("click", () => { const i = b.dataset.id; state.sub = g; i === "gq" ? gquizView() : i === "spick" ? spickView() : i.startsWith("pdf:") ? rgJump(i.slice(4), 0, () => subView(g)) : openMod(i, "cards"); }));
+  window.scrollTo(0, 0);
+}
 function home() {
   document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
-  state.mod = null; state.from = null; state.view = "list"; backBtn.hidden = false;
+  state.mod = null; state.from = null; state.sub = null; state.view = "list"; backBtn.hidden = false;
   app.innerHTML = `
     <section class="hero">
       <h1>Reglemente</h1>
@@ -216,17 +236,12 @@ function home() {
     <div id="sbox" hidden></div>
     <div class="menu rgmenu" id="mgrid">${(() => {
       const bt = (id, t, sm) => `<button class="mbtn main pdfbtn" data-id="${id}"><span>${esc(t)}</span><small>${esc(sm)}</small></button>`;
-      const bm = getMod("basis"), em = getMod("einsatz"), gb = (mp("basis").gbs || {})[bm.quiz.length];
-      return bt("pdf:basis", "Basiswissen komplett", "PDF · " + RGDEF.basis.pages + " S.") +
-        bt("basis", "Basiswissen Lernkarten", mp("basis").known.length + " von " + bm.cards.length + " gewusst") +
-        bt("gq", "Basiswissen Quiz", bm.quiz.length + " Fragen" + (gb != null ? " · Best " + gb : "")) +
-        bt("spick", "Basiswissen Spickzettel", "wichtigste Zahlen · PDF") +
-        bt("pdf:einsatz", "Einsatzführung komplett", "PDF · " + RGDEF.einsatz.pages + " S.") +
-        bt("einsatz", "Einsatzführung Karten & Quiz", mp("einsatz").known.length + " von " + em.cards.length + " gewusst") +
-        bt("sgv", "Kantonale Ergänzungen (SGV)", SGV.length + " Merkblätter");
+      return bt("sub:basis", "Basiswissen", "PDF, Lernkarten, Quiz, Spickzettel") +
+        bt("sub:einsatz", "Einsatzführung", "PDF, Karten & Quiz") +
+        bt("sgv", "Kantonale Ergänzungen (SGV)", "Original-PDF + " + SGV.length + " Merkblätter");
     })()}</div>
     <p class="foot">Lernhilfe aus den FKS-Reglementen von feukos.ch. Massgebend ist immer das jeweilige Reglement in der gültigen Fassung.</p>`;
-  app.querySelectorAll(".pdfbtn").forEach(b => b.addEventListener("click", () => b.dataset.id === "gq" ? gquizView() : b.dataset.id === "sgv" ? sgvView() : b.dataset.id === "spick" ? spickView() : b.dataset.id.startsWith("pdf:") ? rgView(b.dataset.id.slice(4)) : openMod(b.dataset.id, "cards")));
+  app.querySelectorAll(".pdfbtn").forEach(b => b.addEventListener("click", () => b.dataset.id.startsWith("sub:") ? subView(b.dataset.id.slice(4)) : b.dataset.id === "gq" ? gquizView() : b.dataset.id === "sgv" ? sgvView() : b.dataset.id === "spick" ? spickView() : b.dataset.id.startsWith("pdf:") ? rgView(b.dataset.id.slice(4)) : openMod(b.dataset.id, "cards")));
   const qi = document.getElementById("q"), sb = document.getElementById("sbox"), mg = document.getElementById("mgrid");
   qi.addEventListener("input", () => {
     const v = qi.value.trim();
@@ -865,7 +880,7 @@ async function lektionen(m, el) {
   });
 }
 
-backBtn.addEventListener("click", () => { if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "gq" || state.view === "sgv" || state.view === "spick") { home(); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else home(); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) home(); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
+backBtn.addEventListener("click", () => { if (state.view === "sub" && !state.mod) { home(); return; } if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "gq" || state.view === "sgv" || state.view === "spick") { (state.sub ? subView(state.sub) : home()); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else (state.sub ? subView(state.sub) : home()); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) (state.sub ? subView(state.sub) : home()); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
 start();
 
 if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {
