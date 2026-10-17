@@ -1,4 +1,4 @@
-const APP_VERSION = "1.65";
+const APP_VERSION = "1.66";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -772,7 +772,8 @@ function lesView() {
   const nA = ml ? AO_T.filter(t => AO_LEK[t.id]).length : 0, nF = ml && typeof AO_LEKF !== "undefined" ? AO_T.filter(t => AO_LEKF[t.id]).length : 0;
   const grp = (t, n, inner) => `<details class="lgrp"><summary><span>${t}</span><b>${n}</b></summary><div class="lgbody">${inner}</div></details>`;
   const mlHtml = ml && !state.lc ? grp("Musterlektionen (50 Min.)", nA + nF, '<h3 class="zh">Anlernstufe</h3>' + tiles(AO_LEK, "m") + (nF ? '<h3 class="zh">Festigungsstufe</h3>' + tiles(AO_LEKF, "f") : "")) : "";
-  if (state.lc === "v") { app.innerHTML = '<section class="hero"><h1>Vorlagen</h1><p>Vorlagen der Feuerwehr Zuchwil (PDF / Word), für alle angemeldeten Mitglieder.</p></section><div id="body"></div>'; lektionen(VMOD, document.getElementById("body")); return; }
+  if (state.lc === "vl") { vorlageView(); return; }
+  if (state.lc === "v") { app.innerHTML = '<section class="hero"><h1>Vorlagen</h1><p>Vorlagen der Feuerwehr Zuchwil (PDF / Word), für alle angemeldeten Mitglieder.</p></section><button class="lgrp vlink" id="vlt"><span>Vorlage Lektion (bearbeiten, PDF / Word)</span></button><div id="body"></div>'; document.getElementById("vlt").onclick = () => { state.lc = "vl"; lesView(); }; lektionen(VMOD, document.getElementById("body")); return; }
   app.innerHTML = '<section class="hero"><h1>Lektionen</h1></section>' + loginBox + mlHtml + (state.lc ? '<div id="body"></div>' : '<button class="lgrp vlink" id="vlk"><span>Vorlagen Feuerwehr Zuchwil</span><b id="vn">…</b></button><details class="lgrp" id="eig"><summary><span>Eigene Lektionen (PDF / Word)</span><b id="eign">…</b></summary><div class="lgbody" id="body"></div></details>');
   const lgo0 = document.getElementById("lgo"); if (lgo0) lgo0.onclick = loginView;
   document.querySelectorAll("[data-m]").forEach(b => b.addEventListener("click", () => { state.lc = b.dataset.m; lesView(); window.scrollTo(0, 0); }));
@@ -898,7 +899,7 @@ async function lektionen(m, el) {
   });
 }
 
-backBtn.addEventListener("click", () => { if (state.view === "sub" && !state.mod) { home(); return; } if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "gq" || state.view === "sgv" || state.view === "spick") { (state.sub ? subView(state.sub) : home()); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else (state.sub ? subView(state.sub) : home()); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) (state.sub ? subView(state.sub) : home()); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
+backBtn.addEventListener("click", () => { if (state.view === "les" && state.lc === "vl") { state.lc = "v"; lesView(); window.scrollTo(0, 0); return; } if (state.view === "sub" && !state.mod) { home(); return; } if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "gq" || state.view === "sgv" || state.view === "spick") { (state.sub ? subView(state.sub) : home()); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else (state.sub ? subView(state.sub) : home()); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) (state.sub ? subView(state.sub) : home()); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
 start();
 
 if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {
@@ -908,3 +909,83 @@ if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {
 (() => { const br = document.querySelector(".top .brand"); if (!br) return; br.style.cursor = "pointer"; br.setAttribute("role", "link"); br.tabIndex = 0; br.setAttribute("aria-label", "Zur Startseite");
   const go = () => { try { rgClose(); } catch (e) {} state.sub = null; state.pdfBack = null; start(); window.scrollTo(0, 0); };
   br.addEventListener("click", go); br.addEventListener("keydown", e => { if (e.key === "Enter") go(); }); })();
+
+/* ---------- Vorlage Lektion (bearbeiten, PDF + Word) ---------- */
+const VL_DEF = () => { const d = new Date(); return { kopf2: "Feuerwehrdienst", nr: "gem. Aufgebot", ver: String(d.getDate()).padStart(2, "0") + "." + String(d.getMonth() + 1).padStart(2, "0") + "." + d.getFullYear(), thema: "gemäss Ausbildungsauftrag | Aufgebot", stufe: "Anlernstufe", dauer: "", ziele: "Ziel 1\nZiel 2", krit: "1\n2\n3", mat: "", fz: "", ab: [{ min: "10", t: "Lerngespräch", z: "", h: "" }, { min: "30", t: "Übung 1", z: "", h: "" }, { min: "10", t: "Retablieren | Zusammenfassung | Erfolgskontrolle", z: "", h: "" }] }; };
+let VL = null;
+function vlLoad() { try { VL = JSON.parse(localStorage.getItem("fwz-vorl") || "null"); } catch (e) {} if (!VL || !Array.isArray(VL.ab)) VL = VL_DEF(); }
+function vlSave() { try { localStorage.setItem("fwz-vorl", JSON.stringify(VL)); } catch (e) {} }
+const vlLines = s => String(s || "").split("\n").map(x => x.trim()).filter(Boolean);
+function vlModel() {
+  return { nr: VL.nr || "", kopf1: "Ausbildung", kopf2: VL.kopf2 || "", version: VL.ver || "", thema: VL.thema || "", ziele: vlLines(VL.ziele), krit: vlLines(VL.krit), material: vlLines(VL.mat), fahrzeuge: vlLines(VL.fz),
+    stufeTxt: VL.stufe + (VL.dauer ? "   |   Dauer: " + VL.dauer + " Min." : ""), logo: window.LOGOJ || null,
+    ablauf: VL.ab.map(r => ({ min: r.min || "", titel: r.t || "", zeilen: vlLines(r.z), hinweis: (r.h || "").trim() })), fname: "Lektion " + (VL.nr || "").replace(/[\\/:*?"<>|]/g, "-") + " " + VL.stufe + ".pdf" };
+}
+const CRC_T = (() => { const t = []; for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(u) { let c = 0xFFFFFFFF; for (let i = 0; i < u.length; i++) c = CRC_T[(c ^ u[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+function vlDocx() {
+  const T = window.DOCXT; if (!T) throw new Error("Word-Vorlage nicht geladen.");
+  const m = vlModel(), X = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const rp = o => `<w:rPr><w:rFonts w:cs="Arial"/>${o.b ? "<w:b/>" : ""}${o.u ? '<w:u w:val="single"/>' : ""}${o.sz ? `<w:sz w:val="${o.sz}"/><w:szCs w:val="${o.sz}"/>` : '<w:szCs w:val="22"/>'}</w:rPr>`;
+  const r = (t, o = {}) => `<w:r>${rp(o)}<w:t xml:space="preserve">${X(t)}</w:t></w:r>`, tb = (o = {}) => `<w:r>${rp(o)}<w:tab/></w:r>`;
+  const para = (inner, ppr = "") => `<w:p><w:pPr>${ppr}</w:pPr>${inner}</w:p>`, empty = () => para("");
+  const hdrTabs = '<w:pStyle w:val="Kopfzeile"/><w:tabs><w:tab w:val="clear" w:pos="4536"/><w:tab w:val="clear" w:pos="9072"/><w:tab w:val="right" w:pos="9639"/></w:tabs>';
+  let b = para(r(m.kopf1, { b: 1, sz: 28 }) + tb({ b: 1, sz: 28 }) + r("Lektion Nr. " + m.nr, { b: 1, sz: 28 }), hdrTabs);
+  b += para(r(m.kopf2, { b: 1, sz: 28 }) + tb({ b: 1, sz: 28 }) + r("Version: " + m.version, { sz: 16 }), hdrTabs) + empty() + empty();
+  b += para(r("Thema:", { b: 1 }) + tb() + r(m.thema), '<w:tabs><w:tab w:val="left" w:pos="2552"/></w:tabs>') + empty();
+  b += para(r("Ausbildungsstufe:", { b: 1 }) + tb() + r(VL.stufe) + tb() + r("Dauer:", { b: 1 }) + tb() + r(VL.dauer ? VL.dauer + " Min." : ""), '<w:tabs><w:tab w:val="left" w:pos="2552"/><w:tab w:val="left" w:pos="7797"/><w:tab w:val="right" w:pos="9639"/></w:tabs>') + empty();
+  const list = (label, items, ch) => { const L = items.length ? items : [""]; return L.map((t, i) => para((i === 0 ? r(label, { b: 1 }) + tb() : "") + r(t ? ch + "  " + t : ""), i === 0 ? '<w:tabs><w:tab w:val="left" w:pos="2552"/></w:tabs><w:ind w:left="2552" w:hanging="2552"/>' : '<w:ind w:left="2552"/>')).join("") + empty(); };
+  b += list("Ziele:", m.ziele, "▪") + list("Beurteilungskriterien:", m.krit, "✓") + list("Material:", m.material, "☐") + list("Fahrzeuge:", m.fahrzeuge, "☐");
+  const W3 = [700, 6939, 2000], bd = '<w:tblBorders>' + ["top", "left", "bottom", "right", "insideH", "insideV"].map(k => `<w:${k} w:val="single" w:sz="4" w:space="0" w:color="000000"/>`).join("") + '</w:tblBorders>';
+  const cell = (w, inner, shade) => `<w:tc><w:tcPr><w:tcW w:w="${w}" w:type="dxa"/>${shade ? '<w:shd w:val="clear" w:color="auto" w:fill="BFBFBF"/>' : ""}</w:tcPr>${inner || para("")}</w:tc>`;
+  const sp = '<w:spacing w:before="60" w:after="60"/>';
+  let tbl = `<w:tbl><w:tblPr><w:tblW w:w="9639" w:type="dxa"/><w:tblInd w:w="0" w:type="dxa"/>${bd}<w:tblLayout w:type="fixed"/><w:tblCellMar><w:left w:w="85" w:type="dxa"/><w:right w:w="85" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>${W3.map(w => `<w:gridCol w:w="${w}"/>`).join("")}</w:tblGrid>`;
+  tbl += `<w:tr><w:trPr><w:cantSplit/><w:tblHeader/></w:trPr>${cell(W3[0], para(r("Zeit", { b: 1 }), sp), 1)}${cell(W3[1], para(r("Ablauf der Lektion", { b: 1 }), sp), 1)}${cell(W3[2], para(r("Hinweise | Hilfen", { b: 1 }), sp), 1)}</w:tr>`;
+  m.ablauf.forEach(a => {
+    const mid = para(r(a.titel, { b: 1 }), sp) + a.zeilen.map(z => para(r(z), sp)).join(""), hin = a.hinweis ? a.hinweis.split("\n").map(z => para(r(z), sp)).join("") : "";
+    tbl += `<w:tr><w:trPr><w:cantSplit/><w:trHeight w:val="560"/></w:trPr>${cell(W3[0], para(r(a.min ? a.min + "’" : "", { b: 1 }), sp))}${cell(W3[1], mid)}${cell(W3[2], hin)}</w:tr>`;
+  });
+  tbl += "</w:tbl>";
+  const xml = new TextEncoder().encode(T.pre + b + tbl + para("") + T.sect + "</w:body></w:document>");
+  const parts = [], cd = [], enc = new TextEncoder(); let off = 0;
+  const u16 = n => [n & 255, (n >> 8) & 255], u32 = n => [n & 255, (n >> 8) & 255, (n >> 16) & 255, (n >>> 24) & 255];
+  T.ents.forEach(e => {
+    const nm = enc.encode(e.n); let data, meth, crc, cs, us;
+    if (e.doc) { data = xml; meth = 0; crc = crc32(xml); cs = us = xml.length; } else { const bin = atob(e.d); data = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) data[i] = bin.charCodeAt(i); meth = e.m; crc = e.c; cs = e.cs; us = e.us; }
+    const lh = new Uint8Array([0x50, 0x4b, 3, 4, ...u16(20), ...u16(0), ...u16(meth), ...u16(0), ...u16(0x21), ...u32(crc), ...u32(cs), ...u32(us), ...u16(nm.length), ...u16(0), ...nm]);
+    cd.push(new Uint8Array([0x50, 0x4b, 1, 2, ...u16(20), ...u16(20), ...u16(0), ...u16(meth), ...u16(0), ...u16(0x21), ...u32(crc), ...u32(cs), ...u32(us), ...u16(nm.length), ...u16(0), ...u16(0), ...u16(0), ...u16(0), ...u32(0), ...u32(off), ...nm]));
+    parts.push(lh, data); off += lh.length + data.length;
+  });
+  const cdLen = cd.reduce((n, c) => n + c.length, 0), end = new Uint8Array([0x50, 0x4b, 5, 6, ...u16(0), ...u16(0), ...u16(cd.length), ...u16(cd.length), ...u32(cdLen), ...u32(off), ...u16(0)]);
+  return new File([...parts, ...cd, end], m.fname.replace(/\.pdf$/, ".docx"), { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+}
+function vorlageView() {
+  vlLoad(); state.mod = null; state.view = "les"; backBtn.hidden = false;
+  document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
+  const inp = (k, l, ph) => `<label class="vlf"><span>${l}</span><input data-k="${k}" value="${esc(VL[k])}" placeholder="${esc(ph || "")}"></label>`;
+  const ta = (k, l, n, ph) => `<label class="vlf"><span>${l}</span><textarea data-k="${k}" rows="${n}" placeholder="${esc(ph || "")}">${esc(VL[k])}</textarea></label>`;
+  const rows = () => VL.ab.map((r, i) => `<div class="vlrow" data-i="${i}"><div class="vlr1"><input data-r="min" inputmode="numeric" value="${esc(r.min)}" aria-label="Minuten" placeholder="Min."><input data-r="t" value="${esc(r.t)}" aria-label="Titel" placeholder="Titel des Abschnitts"><button class="btn vldel" aria-label="Zeile löschen">×</button></div><textarea data-r="z" rows="2" placeholder="Ablauf / Inhalt (eine Zeile pro Absatz)">${esc(r.z)}</textarea><textarea data-r="h" rows="2" placeholder="Hinweise | Hilfen">${esc(r.h)}</textarea></div>`).join("");
+  app.innerHTML = `<section class="hero"><h1>Vorlage Lektion</h1><p>Felder ausfüllen, dann als PDF oder Word exportieren. Deine Eingaben bleiben auf diesem Gerät gespeichert.</p></section>
+    <div class="vlform">
+      <div class="vl2">${inp("kopf2", "Bereich", "Feuerwehrdienst")}${inp("nr", "Lektion Nr.", "gem. Aufgebot")}</div>
+      <div class="vl2">${inp("ver", "Version / Datum", "TT.MM.JJJJ")}<label class="vlf"><span>Ausbildungsstufe</span><select data-k="stufe">${["Anlernstufe", "Festigungsstufe", "Anwendungsstufe"].map(s => `<option${VL.stufe === s ? " selected" : ""}>${s}</option>`).join("")}</select></label></div>
+      ${inp("thema", "Thema", "gemäss Ausbildungsauftrag | Aufgebot")}${inp("dauer", "Dauer (Min.)", "z. B. 50")}
+      ${ta("ziele", "Ziele (eine pro Zeile)", 3)}${ta("krit", "Beurteilungskriterien (eine pro Zeile)", 3)}${ta("mat", "Material (eine pro Zeile)", 2, "…")}${ta("fz", "Fahrzeuge (eine pro Zeile)", 2, "…")}
+      <h3 class="zh">Ablauf der Lektion</h3><div id="vlrows">${rows()}</div>
+      <button class="btn" id="vladd">+ Zeile hinzufügen</button>
+      <div class="vlact"><button class="btn primary" id="vlpdf">PDF öffnen</button><button class="btn" id="vlpsh">PDF teilen</button><button class="btn" id="vlprn">Drucken</button><button class="btn primary" id="vldoc">Word (.docx)</button><button class="btn" id="vldsh">Word teilen</button></div>
+      <div id="vlmsg" class="sinfo" role="status"></div>
+      <button class="linkbtn" id="vlreset">Alles zurücksetzen</button>
+    </div>`;
+  const msg = document.getElementById("vlmsg");
+  app.querySelectorAll("[data-k]").forEach(e => e.addEventListener("input", () => { VL[e.dataset.k] = e.value; vlSave(); }));
+  const bindRows = () => { document.querySelectorAll(".vlrow").forEach(row => { const i = +row.dataset.i; row.querySelectorAll("[data-r]").forEach(e => e.addEventListener("input", () => { VL.ab[i][e.dataset.r] = e.value; vlSave(); })); row.querySelector(".vldel").onclick = () => { VL.ab.splice(i, 1); vlSave(); document.getElementById("vlrows").innerHTML = rows(); bindRows(); }; }); };
+  bindRows();
+  document.getElementById("vladd").onclick = () => { VL.ab.push({ min: "", t: "", z: "", h: "" }); vlSave(); document.getElementById("vlrows").innerHTML = rows(); bindRows(); const l = document.querySelectorAll(".vlrow"); l[l.length - 1].querySelector("input[data-r=t]").focus(); };
+  const pdf = () => aoPdfActs(aoLekPdfBuild(vlModel()), msg), doc = () => aoPdfActs(vlDocx(), msg);
+  const run = (f) => () => { msg.textContent = ""; try { f(); } catch (e) { msg.textContent = (e && e.message) || "Export nicht möglich."; } };
+  document.getElementById("vlpdf").onclick = run(() => pdf().open()); document.getElementById("vlpsh").onclick = run(() => pdf().share()); document.getElementById("vlprn").onclick = run(() => pdf().print());
+  document.getElementById("vldoc").onclick = run(() => doc().open()); document.getElementById("vldsh").onclick = run(() => doc().share());
+  document.getElementById("vlreset").onclick = () => { if (document.getElementById("vlreset").dataset.c) { VL = VL_DEF(); vlSave(); vorlageView(); } else { document.getElementById("vlreset").dataset.c = 1; document.getElementById("vlreset").textContent = "Wirklich zurücksetzen? Nochmals tippen."; } };
+  window.scrollTo(0, 0);
+}

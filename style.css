@@ -371,3 +371,10 @@ body.keilprint .kprint{display:block!important;color:#000;font-family:Arial,sans
 .lgrp.vlink > span { flex:1; }
 .lgrp.vlink > b { background:var(--bg); border:1px solid var(--line); border-radius:99px; padding:1px 10px; font-size:.85rem; color:var(--muted); }
 .lgrp.vlink::after { content:"▸"; color:var(--red); }
+.vlform { display:flex; flex-direction:column; gap:12px; }
+.vl2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; } .vl2 > * { min-width:0; }
+.vlf { display:flex; flex-direction:column; gap:4px; min-width:0; } .vlf > span { font-size:.85rem; font-weight:600; color:var(--muted); }
+.vlform input, .vlform textarea, .vlform select { width:100%; box-sizing:border-box; font:inherit; font-size:1rem; padding:10px 12px; border:1px solid var(--line); border-radius:12px; background:var(--surface); color:var(--ink); }
+.vlrow { display:flex; flex-direction:column; gap:6px; padding:10px; border:1px solid var(--line); border-radius:14px; background:var(--surface); margin-bottom:10px; }
+.vlr1 { display:grid; grid-template-columns:64px 1fr 44px; gap:6px; } .vldel { padding:0; font-size:1.3rem; }
+.vlact { display:flex; flex-wrap:wrap; gap:8px; } .vlact .btn { flex:1 1 140px; }

@@ -357,6 +357,9 @@ function aoLekHtml(t, fest) {
 }
 function aoLekPdf(t, fest) {
   const m = (fest ? AO_LEKF : AO_LEK)[t.id], stufe = fest ? "Festigungsstufe" : "Anlernstufe";
+  return aoLekPdfBuild(Object.assign({}, m, { stufeTxt: stufe + " · Dauer: 50 Min.", fname: "Lektion " + m.nr + " " + stufe + ".pdf" }));
+}
+function aoLekPdfBuild(m) {
   const W = 595, H = 842, M = 40, TW = W - 2 * M, cv = document.createElement("canvas").getContext("2d");
   const fix = s => String(s).replace(/[“”„]/g, '"').replace(/[‘’]/g, "'").replace(/[–—]/g, "-").replace(/…/g, "...").replace(/€/g, "EUR").replace(/→/g, "->").replace(/\t/g, " ").replace(/[^\n\x20-\x7e\xa0-\xff]/g, "?");
   const e2 = s => fix(s).replace(/[\\()]/g, "\\$&");
@@ -368,12 +371,18 @@ function aoLekPdf(t, fest) {
   const R = (x, yy, w, h, fill) => P().push(fill ? `${fill} rg ${x.toFixed(1)} ${yy.toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)} re f 0 g` : `0.27 0.27 0.27 RG 0.7 w ${x.toFixed(1)} ${yy.toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)} re S`);
   const newPage = () => { pages.push([]); y = H - M; };
   // Kopf
-  T(M, y - 12, "Ausbildung", 13, true); T(M, y - 27, "Feuerwehrdienst", 13, true);
+  let logoH = 0;
+  if (m.logo) { const lw = 130; logoH = lw * m.logo.h / m.logo.w; P().push(`q ${lw} 0 0 ${logoH.toFixed(1)} ${M} ${(y - logoH).toFixed(1)} cm /Im1 Do Q`);
+    const bt = "BEREICH AUSBILDUNG"; T(W - M - mw(bt, 8.5, true), y - 14, bt, 8.5, true); T(W - M - mw(bt, 8.5, true) - 7, y - 14, "I", 8.5, true);
+    L(M + lw + 8, y - logoH + 4, W - M, y - logoH + 4, .5, "0.5 0.5 0.5"); y -= logoH + 16; }
+  T(M, y - 12, m.kopf1 || "Ausbildung", 13, true); T(M, y - 27, m.kopf2 || "Feuerwehrdienst", 13, true);
   const ln = "Lektion Nr. " + m.nr; T(W - M - mw(ln, 13, true), y - 12, ln, 13, true);
+  if (m.version) { const vt = "Version: " + m.version; T(W - M - mw(vt, 8, false), y - 26, vt, 8, false); }
   y -= 36; L(M, y, W - M, y, 1.6, "0.82 0.13 0.13"); y -= 14;
   // Metadaten
   const LW = 118, VX = M + LW, VW = TW - LW, SZ = 10, LH = 13;
   const meta = (label, items, kind) => {
+    if (!items.length) items = [" "];
     const blocks = items.map(it => wrap(it, VW - (kind ? 14 : 0), SZ, false));
     const h = blocks.reduce((n, b) => n + b.length * LH, 0);
     if (y - h < M) newPage();
@@ -387,7 +396,7 @@ function aoLekPdf(t, fest) {
     });
     y -= 4;
   };
-  meta("Thema:", [m.thema]); meta("Ausbildungsstufe:", [stufe + " · Dauer: 50 Min."]);
+  meta("Thema:", [m.thema]); meta("Ausbildungsstufe:", [m.stufeTxt]);
   meta("Ziele:", m.ziele, "dash"); meta("Beurteilungskriterien:", m.krit, "chk"); meta("Material:", m.material, "box"); meta("Fahrzeuge:", m.fahrzeuge, "box");
   // Tabelle
   y -= 6;
@@ -407,14 +416,15 @@ function aoLekPdf(t, fest) {
   });
   // PDF zusammenbauen
   const objs = [null, "<< /Type /Catalog /Pages 2 0 R >>", null, "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>", "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>"], kids = [];
+  if (m.logo) { const bin = atob(m.logo.b64); objs.push(`<< /Type /XObject /Subtype /Image /Width ${m.logo.w} /Height ${m.logo.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${bin.length} >>\nstream\n${bin}\nendstream`); }
   pages.forEach(p => { const st = p.join("\n"), ci = objs.length + 1, pi = objs.length;
-    objs.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${ci} 0 R >>`, `<< /Length ${st.length} >>\nstream\n${st}\nendstream`); kids.push(pi); });
+    objs.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >>${m.logo ? " /XObject << /Im1 5 0 R >>" : ""} >> /Contents ${ci} 0 R >>`, `<< /Length ${st.length} >>\nstream\n${st}\nendstream`); kids.push(pi); });
   objs[2] = `<< /Type /Pages /Kids [${kids.map(k => k + " 0 R").join(" ")}] /Count ${kids.length} >>`;
   let s = "%PDF-1.4\n", off = [];
   objs.slice(1).forEach((o, i) => { off.push(s.length); s += `${i + 1} 0 obj\n${o}\nendobj\n`; });
   const xr = s.length; s += `xref\n0 ${objs.length}\n0000000000 65535 f \n` + off.map(o => String(o).padStart(10, "0") + " 00000 n \n").join("") + `trailer\n<< /Size ${objs.length} /Root 1 0 R >>\nstartxref\n${xr}\n%%EOF`;
   const u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i) & 255;
-  return new File([u], "Lektion " + m.nr + " " + stufe + ".pdf", { type: "application/pdf" });
+  return new File([u], m.fname || "Lektion.pdf", { type: "application/pdf" });
 }
 function aoLekBind(el) {
   const row = el.querySelector("#lekpr"); if (!row) return; const msg = el.querySelector("#lekmsg");
