@@ -237,7 +237,7 @@ function aoHub() {
   const tiles = [
     ["check", "Vorbereitung", "Checkliste", "Material und Vorbereitung laut Kursaufgebot", dC, nC, dC + " von " + nC + " erledigt"],
     ["keil", "Vorstellung", "KEIL", "Persönliche Vorstellung, 2–3 Minuten: Notizen und Stoppuhr", dK, AO_KEIL.length, dK + " von " + AO_KEIL.length + " Punkten notiert"],
-    ["lek", "Fachthemen", "Lektionen", "Alle Kurs-Lektionen mit Karten, Quiz und Reglement-Suche", dT, AO_T.length, dT + " von " + AO_T.length + " Themen sitzen"],
+    ["lek", "Fachthemen", "Lektionen", "Alle Kurs-Lektionen mit Lernkarten, Quiz und Reglement-Suche", dT, AO_T.length, dT + " von " + AO_T.length + " Themen sitzen"],
     ["kq", "Quiz", "Kurs-Quiz", "Fachfragen aus dem Basiswissen zu den Lektionen jedes Kurstags", 0, 0, ""],
     ["meth", "Methodik", "Lektion halten", "Aufbau, Beurteilung, Theorieblöcke und Probelektion", 0, 0, ""],
     ["zahl", "Training", "Zahlen-Trainer", "Wichtige Zahlen aus den Kurs-Kapiteln üben", dZ, pool.length, dZ + " von " + pool.length + " gewusst"],
@@ -330,10 +330,10 @@ function aoKeil() {
 
 /* ---------- Lektionen ---------- */
 function aoTopics() {
-  app.innerHTML = `<section class="hero"><h1>Lektionen</h1><p>Alle Fachthemen des Kurses in der Reihenfolge des Tagesbefehls. Pro Thema: Karten, Quiz und Reglement.</p></section>
+  app.innerHTML = `<section class="hero"><h1>Lektionen</h1><p>Alle Fachthemen des Kurses in der Reihenfolge des Tagesbefehls. Pro Thema: Wann und wo, Lernkarten, Quiz und Reglement.</p></section>
     <div class="grid">${AO_T.map(t => {
-      const d = t.fr.filter((f, i) => AOS.chk["s:" + t.id + ":" + i]).length, ok = AOS.chk["d:" + t.id];
-      return `<button class="tile chtile" data-r="lek:${t.id}"><span class="num">${t.l.map(n => "L " + n).join(" · ")}</span><h2>${esc(t.t)}</h2>${aoMeter(ok ? t.fr.length : d, t.fr.length)}<div class="facts"><span>${ok ? "sitzt" : d + " von " + t.fr.length + " Fragen sicher"}</span></div></button>`;
+      const ok = AOS.chk["d:" + t.id];
+      return `<button class="tile chtile" data-r="lek:${t.id}"><span class="num">${t.l.map(n => "L " + n).join(" · ")}</span><h2>${esc(t.t)}</h2><div class="facts"><span>${ok ? "sitzt" : "noch offen"}</span></div></button>`;
     }).join("")}</div>`;
   aoBind(app);
 }
