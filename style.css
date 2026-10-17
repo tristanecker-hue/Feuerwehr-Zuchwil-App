@@ -367,3 +367,7 @@ body.keilprint .kprint{display:block!important;color:#000;font-family:Arial,sans
 .rgjl { display: grid; gap: 8px; margin: 8px 0 14px; }
 .rgjl .btn { text-align: left; }
 #rgt { max-width: 150px; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 12px; padding: 8px; font: inherit; font-size: .9rem; }
+.lgrp.vlink { display:flex; align-items:center; gap:10px; width:100%; text-align:left; cursor:pointer; padding:14px 16px; font-family:"Oswald",sans-serif; font-size:1.1rem; font-weight:600; letter-spacing:.02em; color:var(--ink); }
+.lgrp.vlink > span { flex:1; }
+.lgrp.vlink > b { background:var(--bg); border:1px solid var(--line); border-radius:99px; padding:1px 10px; font-size:.85rem; color:var(--muted); }
+.lgrp.vlink::after { content:"▸"; color:var(--red); }
