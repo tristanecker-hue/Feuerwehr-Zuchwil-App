@@ -363,3 +363,7 @@ body.keilprint .kprint{display:block!important;color:#000;font-family:Arial,sans
 .sgvp { margin: 8px 0; line-height: 1.55; }
 .sgvu { margin: 6px 0 10px; padding-left: 20px; display: grid; gap: 4px; line-height: 1.5; }
 .fig figcaption { padding: 0 2px; }
+.rgjrow { margin: 10px 0 2px; }
+.rgjl { display: grid; gap: 8px; margin: 8px 0 14px; }
+.rgjl .btn { text-align: left; }
+#rgt { max-width: 150px; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 12px; padding: 8px; font: inherit; font-size: .9rem; }

@@ -423,6 +423,11 @@ function aoLekBind(el) {
     catch (e) { msg.textContent = "PDF konnte nicht erstellt werden."; }
   });
 }
+const AO_REF = { ausr: ["1.2", "1.3", "10.2.1", "10.2.2", "10.2.3", "10.2.4", "10.2.5"], leiter: ["5.11.1", "5.11.2", "5.11.3", "5.11.4", "5.11.5"], pers: ["5.1", "5.6", "5.9", "5.10"], lbau: ["6.8", "6.8.1", "6.8.2", "6.8.3", "6.8.4", "6.8.5"], verbr: ["6.6", "6.6.1", "6.6.2", "6.6.3"], kl: ["6.5", "6.5.1", "6.5.2", "6.5.3"], tlf: ["6.12", "6.12.1", "6.12.2"], sl: ["5.11.6", "5.11.7"], gew: ["6.7.2", "6.13", "6.13.3"], hyd: ["6.7.1", "6.13", "6.13.2"], pl: ["5.11.8"], lueft: ["8.1", "8.2", "8.3"], ort: ["1.5", "1.5.1", "1.5.2"] };
+function aoPdfRefs(t) {
+  const rs = (AO_REF[t.id] || []).map(n => rgNum("basis", n)).filter(Boolean); if (!rs.length) return "";
+  return `<div class="note">Direkt im Reglement Basiswissen (PDF) an die passende Stelle springen:</div><div class="rgjl">${rs.map(r => `<button class="btn rgjump" data-id="basis" data-p="${r.page}">${esc(r.t)} · S. ${r.page}</button>`).join("")}</div>`;
+}
 function aoTopic(id) {
   const t = AO_T.find(x => x.id === id); if (!t) return aoTopics();
   const sl = t.l.flatMap(n => aoSlots(n, AOS.k).map(s => Object.assign({ n }, s)));
@@ -436,6 +441,7 @@ function aoTopic(id) {
     <div class="row"><button class="btn primary" id="mc"${mt.cards.length ? "" : " disabled"}>Lernkarten (${mt.cards.length})</button><button class="btn primary" id="mq"${mt.quiz.length ? "" : " disabled"}>Quiz (${mt.quiz.length})</button></div>
     <div id="dr" style="margin-top:14px"></div>
     <h3 class="zh">Im Reglement nachschlagen</h3>
+    ${aoPdfRefs(t)}
     ${t.kap.length ? `<div class="row3">${t.kap.map(k => `<button class="btn" data-o="sum:${k}">Zusammenfassung ${aoKap(k)}</button><button class="btn" data-o="cards:${k}">Lernkarten ${aoKap(k)}</button><button class="btn" data-o="quiz:${k}">Quiz ${aoKap(k)}</button>`).join("")}</div>` : `<div class="note">Für dieses Thema ist kein Kapitel fest zugeordnet. Nutze die Suche.</div>`}
     <div class="chips" role="group" aria-label="Suchbegriffe">${t.q.map(q => `<button class="chip" data-q="${esc(q)}" aria-pressed="false">${esc(q)}</button>`).join("")}</div>
     <div id="sx"></div>

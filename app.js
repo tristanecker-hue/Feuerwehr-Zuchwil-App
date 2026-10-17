@@ -1,4 +1,4 @@
-const APP_VERSION = "1.56";
+const APP_VERSION = "1.57";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -235,6 +235,15 @@ function home() {
   });
   window.scrollTo(0, 0);
 }
+/* ---------- Sprung ins Reglement (PDF) ---------- */
+function rgNum(id, num) { const r = ((window.RGTOC || {})[id] || []).find(x => x[0] === num); return r ? { page: r[2], t: r[0] + " " + r[1] } : null; }
+function rgJump(id, page, back) { state.pdfBack = back || null; rgView(id, page); }
+document.addEventListener("click", e => {
+  const b = e.target.closest && e.target.closest(".rgjump"); if (!b) return;
+  const id = b.dataset.id, p = +b.dataset.p, ch = state.ch, sec = b.dataset.sec, ar = state.aoR;
+  if (sec == null) return rgJump(id, p, () => { if (ar != null) aoGo(ar); else home(); });
+  rgJump(id, p, () => { state.mod = id; state.tab = "sum"; state.ch = ch; renderMod(); window.scrollTo(0, 0); if (sec != null) { const d = document.getElementById("sec-" + sec); if (d) { d.open = true; d.scrollIntoView({ block: "start" }); } } });
+});
 const RGDEF = {
   basis: { pages: 296, short: "Basiswissen", enc: "reglement-basiswissen.enc", file: "Reglement Basiswissen FKS.pdf", tile: "Das ganze Reglement mit allen 296 Seiten (FKS 07/2026), direkt in der App zum Blättern.", hero: "Das ganze Reglement Basiswissen, FKS 07/2026.", online: "https://docs.feukos.ch/Basiswissen/ReglementBasiswissenDE/" },
   einsatz: { pages: 84, short: "Einsatzführung", enc: "reglement-einsatzfuehrung.enc", file: "Reglement Einsatzführung FKS.pdf", tile: "Das ganze Reglement mit allen 84 Seiten, direkt in der App zum Blättern.", hero: "Das ganze Reglement Einsatzführung, FKS.", online: "" }
@@ -255,7 +264,7 @@ async function rgLoad(m, id) {
 let RGOBS = null;
 function rgClose() { if (RGOBS) { RGOBS.disconnect(); RGOBS = null; } window.removeEventListener("scroll", rgScroll); }
 let rgScroll = () => {};
-async function rgView(id) {
+async function rgView(id, page) {
   rgClose(); const D = RGDEF[id]; let RGDOC = RGDOCS[id];
   state.mod = null; state.view = "pdf"; backBtn.hidden = false;
   document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
@@ -269,7 +278,8 @@ async function rgView(id) {
   if (state.view !== "pdf") return;
   const N = RGDOC.numPages, host = document.getElementById("rgv"), p1 = await RGDOC.getPage(1), vp1 = p1.getViewport({ scale: 1 }), ratio = vp1.height / vp1.width;
   let zoom = 1, saved = 1; try { saved = Math.min(N, Math.max(1, +localStorage.getItem("fwz-rgp-" + id) || 1)); } catch (e) {}
-  msg.className = "rgbar"; msg.innerHTML = `<button class="btn" id="rgz-">−</button><button class="btn" id="rgz+">+</button><span class="rgpg"><input id="rgn" type="number" min="1" max="${N}" value="${saved}" inputmode="numeric" aria-label="Seite"> / ${N}</span><button class="btn" id="rgs">Teilen</button><button class="btn" id="rgp">Drucken</button>`;
+  if (page) saved = Math.min(N, Math.max(1, page | 0));
+  msg.className = "rgbar"; msg.innerHTML = `<button class="btn" id="rgz-">−</button><button class="btn" id="rgz+">+</button><span class="rgpg"><input id="rgn" type="number" min="1" max="${N}" value="${saved}" inputmode="numeric" aria-label="Seite"> / ${N}</span><button class="btn" id="rgs">Teilen</button><button class="btn" id="rgp">Drucken</button>${(window.RGTOC && RGTOC[id]) ? `<select id="rgt" aria-label="Inhaltsverzeichnis"><option value="">Inhalt …</option>${RGTOC[id].map(r => `<option value="${r[2]}">${esc(r[0] + " " + r[1])} · S. ${r[2]}</option>`).join("")}</select>` : ""}`;
   const acts = aoPdfActs(file, msg), W = () => Math.min(host.clientWidth || 360, 1000) * zoom;
   host.className = "rgpages"; host.innerHTML = "";
   const pages = []; for (let i = 1; i <= N; i++) { const d = document.createElement("div"); d.className = "rgpage"; d.dataset.n = i; const c = document.createElement("canvas"); d.appendChild(c); host.appendChild(d); pages.push(d); }
@@ -295,10 +305,11 @@ async function rgView(id) {
   let tk = 0; rgScroll = () => { if (tk) return; tk = requestAnimationFrame(() => { tk = 0; const mid = window.innerHeight / 3; let lo = 0, hi = N - 1; while (lo < hi) { const m = (lo + hi + 1) >> 1; if (pages[m].getBoundingClientRect().top <= mid) lo = m; else hi = m - 1; } cur = lo + 1; if (document.activeElement !== inp) inp.value = cur; try { localStorage.setItem("fwz-rgp-" + id, cur); } catch (e) {} }); };
   window.addEventListener("scroll", rgScroll, { passive: true });
   inp.addEventListener("change", () => goto(+inp.value));
+  const sel = document.getElementById("rgt"); if (sel) sel.addEventListener("change", () => { if (sel.value) goto(+sel.value); inp.value = sel.value; sel.value = ""; });
   const setZ = z => { const keep = cur; zoom = Math.min(3, Math.max(1, z)); host.style.overflowX = zoom > 1 ? "auto" : ""; RGOBS.disconnect(); size(); pages.forEach(d => RGOBS.observe(d)); goto(keep); };
   document.getElementById("rgz+").onclick = () => setZ(zoom + .5); document.getElementById("rgz-").onclick = () => setZ(zoom - .5);
   document.getElementById("rgs").onclick = () => acts.share(); document.getElementById("rgp").onclick = () => acts.print();
-  if (saved > 1) setTimeout(() => goto(saved), 50);
+  if (saved > 1) { setTimeout(() => goto(saved), 50); setTimeout(() => goto(saved), 600); }
 }
 
 /* ---------- Reglement ---------- */
@@ -337,9 +348,13 @@ const CHNS = {basis: CHN, einsatz: {"1": "Allgemeines", "2": "Einsatzphasen", "3
 function bxHtml(s) {
   return (s.bx || []).map(([k, p, l, t]) => `<div class="bx ${k}"><div class="bxh">${k === "r" ? "⚠ Achtung" : "☞ Hinweis"}<span>S. ${p}</span></div>${t ? `<div class="bxt">Thema: ${esc(t)}</div>` : ""}<ul>${l.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>`).join("");
 }
-function secHtml(s, i, open) {
+function secHtml(s, i, open, mid) {
   const imgs = (s.img || []).map(([k, c]) => IMG[k] ? `<figure class="fig"><button class="zoom" data-k="${k}" aria-label="Bild vergrössern"><img src="${IMG[k]}" alt="${esc(c)}" loading="lazy"></button><figcaption>${esc(c)}</figcaption></figure>` : "").join("");
-  return `<details class="sec" id="sec-${i}"${open ? " open" : ""}><summary>${esc(s.t)}</summary><ul>${s.p.map(x => `<li>${esc(x)}</li>`).join("")}</ul>${bxHtml(s)}${imgs}</details>`;
+  return `<details class="sec" id="sec-${i}"${open ? " open" : ""}><summary>${esc(s.t)}</summary><ul>${s.p.map(x => `<li>${esc(x)}</li>`).join("")}</ul>${bxHtml(s)}${imgs}${rgBtn(mid || "basis", s, i)}</details>`;
+}
+function rgBtn(mid, s, i) {
+  const n = (s.t.match(/^(\d+(?:\.\d+)*)\s/) || [])[1], r = n && rgNum(mid, n); if (!r) return "";
+  return `<div class="rgjrow"><button class="btn rgjump" data-id="${mid}" data-p="${r.page}" data-sec="${i}">Im Reglement lesen · S. ${r.page}</button></div>`;
 }
 function bindZoom(el) { el.querySelectorAll(".zoom").forEach(b => b.addEventListener("click", () => zoom(b.dataset.k))); }
 function chKey(g) { return /^\d+ /.test(g) ? g.split(" ")[0] : "Neu"; }
@@ -367,7 +382,7 @@ function spickBind(el, m, only) {
 }
 function summary(m, el) {
   if (!m.sections.some(s => s.g)) {
-    el.innerHTML = (m.note ? `<div class="note">${esc(m.note)}</div>` : "") + m.sections.map((s, i) => secHtml(s, i, i === 0)).join("");
+    el.innerHTML = (m.note ? `<div class="note">${esc(m.note)}</div>` : "") + m.sections.map((s, i) => secHtml(s, i, i === 0, m.id)).join("");
     return bindZoom(el);
   }
   const groups = [];
@@ -390,7 +405,7 @@ function summary(m, el) {
   const prev = groups[idx - 1], next = groups[idx + 1];
   el.innerHTML = `<div class="banner"><h2>${esc(title)}</h2><p>${esc(sub)}</p></div>
     <div class="chips">${g.items.map(([s, i]) => `<button class="chip" data-i="${i}">${esc(s.t)}</button>`).join("")}</div>
-    ${z}${g.items.map(([s, i]) => secHtml(s, i, true)).join("")}
+    ${z}${g.items.map(([s, i]) => secHtml(s, i, true, m.id)).join("")}
     <div class="chnav">${prev ? `<button class="btn" data-g="${esc(prev.g)}">← ${esc(chName(prev.g))}</button>` : "<span></span>"}${next ? `<button class="btn primary" data-g="${esc(next.g)}">${esc(chName(next.g))} →</button>` : "<span></span>"}</div>`;
   if (info.z.length) { el.querySelector(".zh").insertAdjacentHTML("beforebegin", spickBar("Spickzettel")); spickBind(el, m, k); }
   el.querySelectorAll(".chip").forEach(b => b.addEventListener("click", () => { const d = document.getElementById("sec-" + b.dataset.i); d.open = true; d.scrollIntoView({ behavior: "smooth", block: "start" }); }));
@@ -775,7 +790,7 @@ async function lektionen(m, el) {
   });
 }
 
-backBtn.addEventListener("click", () => { if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "gq" || state.view === "sgv") { home(); return; } if (state.view === "pdf") { rgClose(); home(); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) home(); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
+backBtn.addEventListener("click", () => { if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "gq" || state.view === "sgv") { home(); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else home(); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) home(); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
 start();
 
 if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {
