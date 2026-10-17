@@ -1,4 +1,4 @@
-const APP_VERSION = "1.61";
+const APP_VERSION = "1.62";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -886,3 +886,7 @@ start();
 if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {
   window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
 }
+
+(() => { const br = document.querySelector(".top .brand"); if (!br) return; br.style.cursor = "pointer"; br.setAttribute("role", "link"); br.tabIndex = 0; br.setAttribute("aria-label", "Zur Startseite");
+  const go = () => { try { rgClose(); } catch (e) {} state.sub = null; state.pdfBack = null; start(); window.scrollTo(0, 0); };
+  br.addEventListener("click", go); br.addEventListener("keydown", e => { if (e.key === "Enter") go(); }); })();
