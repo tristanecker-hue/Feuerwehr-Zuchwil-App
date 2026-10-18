@@ -1,4 +1,4 @@
-const APP_VERSION = "1.77";
+const APP_VERSION = "1.78";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -79,6 +79,15 @@ function greetUpd() {
   const t = hi + (n ? ", " + n : "");
   if (el.textContent !== t) el.textContent = t;
   const L = document.querySelector(".landing"); if (L && L.dataset.tod !== tod) L.dataset.tod = tod;
+  const tb = document.getElementById("t-bud"); if (tb) tb.hidden = !budOk();
+}
+/* Budget Logistik Stunden: Kachel nur mit dem freigegebenen Konto (der eigentliche Schutz sind die Firestore-Regeln). */
+function budOk() { try { return !!(FWZ.user && FWZ.label() === "tristan"); } catch (e) { return false; } }
+function budOpen() {
+  if (!budOk()) return;
+  if (window.budgetView) return window.budgetView();
+  const s = document.createElement("script"); s.src = "budget.js?v=1.78"; s.onload = () => window.budgetView(); s.onerror = () => { alert("Budget konnte nicht geladen werden (offline?)."); };
+  document.body.appendChild(s);
 }
 function start() {
   state.mod = null; state.from = null; state.view = "start"; backBtn.hidden = true;
@@ -93,6 +102,7 @@ function start() {
         <button class="mbtn main" id="t-reg">Reglemente</button>
         <button class="mbtn main" id="t-les">Lektionen</button>
         <button class="mbtn main" id="t-ao">Lernen für den Ausbildungsoffizier</button>
+        <button class="mbtn main" id="t-bud" hidden>Budget Logistik Stunden</button>
       </div>
       <div class="bottom">
         <button class="wxcard" id="wxs" aria-label="Wetter Zuchwil"><span class="wxl">Wetter Zuchwil …</span></button>
@@ -108,6 +118,7 @@ function start() {
   document.getElementById("t-reg").onclick = home;
   document.getElementById("t-les").onclick = () => { state.lc = null; lesView(); };
   document.getElementById("t-ao").onclick = aoView;
+  document.getElementById("t-bud").onclick = budOpen; greetUpd();
   window.scrollTo(0, 0);
 }
 

@@ -10,6 +10,7 @@ Webbasierte Lern-App für die FKS-Reglemente (Basiswissen, Einsatzführung): Zus
 | `style.css` | Design |
 | `app.js` | Programmlogik (Ansichten, Suche, Lernkarten, Quiz) |
 | `ao.js` | Lernseite Ausbildungsoffizier (Kursprogramm, Lektionen, Selbsttest, KEIL, Zahlen-Trainer) |
+| `budget.js` | Kachel «Budget Logistik Stunden» (nur für das freigegebene Konto, Daten in Firestore `fwz_budget`) |
 | `lock.js` | PIN-Abfrage, entschlüsselt die Inhalte im Browser |
 | `data.enc` | Alle Inhalte und Bilder, verschlüsselt (AES-256, nur mit Code lesbar) |
 | `logo.jpg`, `icon-512.png` | Logo und App-Symbol |
