@@ -656,6 +656,7 @@ function aoBilPdf(blank, zw) {
   [[93, 287, "Lektion/Übung"], [459, 287, "Ausbildner"], [93, 323, "Dauer"], [459, 323, "Datum"]].forEach(a => T(X(a[0]), Y(a[1] + 6), a[2], 9.5, false));
   [[219, 287, "f_l", 225], [545, 287, "f_a", 270], [219, 323, "f_d", 225], [545, 323, "f_t", 270]].forEach(a => {
     let s = g(a[2]).replace(/\s+/g, " "); if (!s) return;
+    if (a[2] === "f_t") s = s.replace(/^(\d{4})-(\d\d)-(\d\d)$/, "$3.$2.$1");
     while (s.length > 1 && mw(s, 9.5) > a[3] * S) s = s.slice(0, -1);
     T(X(a[0]), Y(a[1] + 6), s, 9.5, false);
   });
@@ -706,7 +707,7 @@ function aoBil() {
   const ta = a => `<label class="vlf"><span>${esc(a[1])}</span><textarea data-b="${a[0]}" rows="${a[2] + 1}" placeholder="${esc(a[3])}">${esc(aoBilGet(a[0]))}</textarea></label>`;
   app.innerHTML = `<section class="hero"><h1>Erfolgsauswertung / Bilanz</h1><p>Formular 3.17.1 zum Ausfüllen nach der Handmethode (Ich, Beurteilungskriterien, Fakten, Verbinden, Kurz). Deine Eingaben bleiben gespeichert.</p></section>
     <div class="vlform">
-      <div class="vl2">${fld("l", "Lektion / Übung")}${fld("a", "Ausbilder")}</div><div class="vl2">${fld("d", "Dauer", "z. B. 50 Min.")}${fld("t", "Datum", "TT.MM.JJJJ")}</div>
+      <div class="vl2">${fld("l", "Lektion / Übung")}${fld("a", "Ausbilder")}</div><div class="vl2">${fld("d", "Dauer", "z. B. 50 Min.")}<label class="vlf"><span>Datum</span><input type="date" data-b="f_t" value="${esc(/^\d{4}-\d\d-\d\d$/.test(aoBilGet("f_t")) ? aoBilGet("f_t") : "")}"></label></div>
       ${ta(AO_BIL[0])}${ta(AO_BIL[1])}<div class="vl2">${ta(AO_BIL[2])}${ta(AO_BIL[3])}</div>${ta(AO_BIL[4])}${ta(AO_BIL[5])}
       <label class="vlf"><span>Design</span><select id="bdz"><option value="0">FKS-Original</option><option value="1"${AOS.notes.bil_zw === "1" ? " selected" : ""}>Feuerwehr Zuchwil</option></select></label>
       <div class="vlact"><button class="btn primary" id="bpdf">PDF öffnen</button><button class="btn" id="bsh">PDF teilen</button><button class="btn" id="bpr">Drucken</button><button class="btn" id="bbl">Leeres Formular</button></div>
