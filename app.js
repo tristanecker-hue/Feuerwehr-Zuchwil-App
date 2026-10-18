@@ -1,4 +1,4 @@
-const APP_VERSION = "1.78";
+const APP_VERSION = "1.79";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -86,7 +86,7 @@ function budOk() { try { return !!(FWZ.user && FWZ.label() === "tristan"); } cat
 function budOpen() {
   if (!budOk()) return;
   if (window.budgetView) return window.budgetView();
-  const s = document.createElement("script"); s.src = "budget.js?v=1.78"; s.onload = () => window.budgetView(); s.onerror = () => { alert("Budget konnte nicht geladen werden (offline?)."); };
+  const s = document.createElement("script"); s.src = "budget.js?v=1.79"; s.onload = () => window.budgetView(); s.onerror = () => { alert("Budget konnte nicht geladen werden (offline?)."); };
   document.body.appendChild(s);
 }
 function start() {

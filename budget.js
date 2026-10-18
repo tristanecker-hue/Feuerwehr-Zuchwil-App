@@ -191,7 +191,7 @@ function viewSettings(){
   h+='<section class="panel"><h2>Personen</h2><div class="pchips">'+allPersons().map(function(p){var used=BS.entries.some(function(e){return e.person===p});return '<button type="button" '+(used?'disabled title="Hat Rapporte"':'data-rmperson="'+esc(p)+'" title="Entfernen"')+'>'+esc(p)+(used?'':' ×')+'</button>'}).join('')+'</div>'+
     '<div class="row"><input id="new-person" placeholder="Nachname Vorname" style="flex:1;min-width:180px"><button class="btn" type="button" id="add-person">Hinzufügen</button></div></section>';
   h+='<section class="panel"><h2>Synchronisation</h2><span id="b-sync">'+esc(syncMsg)+'</span><div><button class="btn" type="button" id="b-resync">Jetzt abgleichen</button></div><span class="muted">Die Rapporte werden in deinem Konto der Feuerwehr Zuchwil App gespeichert, auf allen Geräten gleich.</span></section>';
-  h+='<section class="panel"><h2>Excel und Sicherung</h2><div class="row"><button class="btn" type="button" id="b-import">Excel importieren</button><button class="btn" type="button" id="b-export">Als Excel exportieren</button><button class="btn" type="button" id="b-json">Sicherung (JSON)</button><button class="btn" type="button" id="b-restore">Sicherung laden</button></div>';
+  h+='<section class="panel"><h2>Excel und Sicherung</h2><div class="row"><button class="btn" type="button" id="b-import">Excel importieren</button><button class="btn" type="button" id="b-export">Als Excel exportieren</button><button class="btn" type="button" id="b-json">Sicherung (JSON)</button><button class="btn" type="button" id="b-restore">Sicherung laden</button><button class="btn" type="button" id="b-merge">Sicherung ergänzen</button></div>';
   if(ui.pending){var p=ui.pending;h+='<div class="panel" style="background:var(--surface2)"><b>Gefunden: '+p.entries.length+' Rapporte, '+p.accounts.length+' Konten, '+p.persons.length+' Personen</b><div class="row"><button class="btn primary" type="button" data-imp="replace">Alles ersetzen</button><button class="btn" type="button" data-imp="merge">Nur neue Rapporte ergänzen</button><button class="btn" type="button" data-imp="cancel">Abbrechen</button></div></div>'}
   h+='<span class="muted">Die Daten liegen nur in diesem Browser. Exportiere regelmässig, vor allem bevor du das Gerät wechselst oder Browserdaten löschst.</span></section>';
   h+='<section class="panel"><h2>Zurücksetzen</h2>'+(ui.confirm==='all'?'<div class="row"><button class="btn danger" type="button" id="wipe-yes">Ja, alle Rapporte löschen</button><button class="btn" type="button" data-cancel="1">Abbrechen</button></div>':'<div><button class="btn danger" type="button" id="wipe">Alle Rapporte löschen</button></div>')+'</section>';
@@ -355,6 +355,7 @@ root.addEventListener('click',function(ev){
   if(id==='b-import'){$('#file-excel').click();return}
   if(id==='b-export'){needX().then(exportExcel,function(){toast('Excel-Modul konnte nicht geladen werden (offline?)')});return}
   if(id==='b-json'){saveFile('Sicherung_Logistik_'+today()+'.json',new Blob([JSON.stringify(BS)],{type:'application/json'}));return}
+  if(id==='b-merge'){$('#file-json-merge').click();return}
   if(id==='b-restore'){$('#file-json').click();return}
   if(d.imp){if(d.imp==='cancel'){ui.pending=null;render()}else applyImport(d.imp);return}
   if(id==='wipe'){ui.confirm='all';render();return}
@@ -373,6 +374,7 @@ root.addEventListener('change',function(ev){
   else if(t.dataset.accBud!=null){BS.accounts[+t.dataset.accBud].budget=parseFloat(t.value)||0;save()}
   else if(t.dataset.accName!=null){var i=+t.dataset.accName,old=BS.accounts[i].name,nw=t.value.trim();if(nw&&nw!==old){yearEntries().forEach(function(e){if(e.account===old)e.account=nw});BS.accounts[i].name=nw;save()}}
   else if(id==='file-excel'){var f=t.files[0];if(!f)return;needX().then(function(){return f.arrayBuffer()}).then(function(b){try{ui.pending=parseWorkbook(b);render()}catch(e){toast('Import fehlgeschlagen: '+e.message)}},function(){toast('Excel-Modul konnte nicht geladen werden (offline?)')});t.value=''}
+  else if(id==='file-json-merge'){var f3=t.files[0];if(!f3)return;f3.text().then(function(s){try{var o=JSON.parse(s);if(!o.entries)throw new Error('Datei passt nicht');var have={};BS.entries.forEach(function(e){have[entryKey(e)]=1});var n=0;o.entries.forEach(function(e){if(!have[entryKey(e)]){have[entryKey(e)]=1;BS.entries.push({id:uid(),date:e.date||'',start:e.start||'',end:e.end||'',text:e.text||'',account:e.account||'',person:e.person||'',rate:e.rate==null?BS.rate:e.rate});n++}});(o.persons||[]).forEach(function(p){if(allPersons().indexOf(p)<0)BS.persons.push(p)});save();render();toast(n+' neue Rapporte übernommen')}catch(e){toast('Übernehmen fehlgeschlagen: '+e.message)}});t.value=''}
   else if(id==='file-json'){var f2=t.files[0];if(!f2)return;f2.text().then(function(s){try{var o=JSON.parse(s);if(!o.entries||!o.accounts)throw new Error('Datei passt nicht');BS=o;BS.budgets=BS.budgets||{};save();render();toast('Sicherung geladen')}catch(e){toast('Laden fehlgeschlagen: '+e.message)}});t.value=''}
 });
 root.addEventListener('input',function(ev){
@@ -387,7 +389,7 @@ root.addEventListener('mousedown',function(ev){if(ev.target.id==='scrim'){form=n
 window.budgetView=function(){
   var app=document.getElementById('app'),back=document.getElementById('back'),top=document.querySelector('.top');
   state.mod=null;state.from=null;state.view='bud';back.hidden=false;top.hidden=false;document.body.classList.remove('startpage');
-  app.innerHTML='<div class="bud" id="bud-root"><div id="b-app"></div><nav class="tabs" id="b-tabs"></nav><div class="fabs"><button class="btn primary fab" id="b-fab" type="button">+ Rapport</button></div><div id="b-modal"></div><div id="b-toast" class="toast" hidden></div><input type="file" id="file-excel" accept=".xlsx,.xlsm,.xls" hidden><input type="file" id="file-json" accept=".json" hidden></div>';
+  app.innerHTML='<div class="bud" id="bud-root"><div id="b-app"></div><nav class="tabs" id="b-tabs"></nav><div class="fabs"><button class="btn primary fab" id="b-fab" type="button">+ Rapport</button></div><div id="b-modal"></div><div id="b-toast" class="toast" hidden></div><input type="file" id="file-excel" accept=".xlsx,.xlsm,.xls" hidden><input type="file" id="file-json" accept=".json" hidden><input type="file" id="file-json-merge" accept=".json" hidden></div>';
   bindAll(document.getElementById('bud-root'));
   render();syncDown();window.scrollTo(0,0);
 };
