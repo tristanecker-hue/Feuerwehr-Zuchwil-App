@@ -1,4 +1,4 @@
-const APP_VERSION = "1.74";
+const APP_VERSION = "1.75";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -97,8 +97,10 @@ function start() {
       <div class="bottom">
         <button class="wxcard" id="wxs" aria-label="Wetter Zuchwil"><span class="wxl">Wetter Zuchwil …</span></button>
         <div class="ver-foot" id="verf">V${APP_VERSION} · Logo antippen zum Aktualisieren</div>
+        <button class="thm" id="thm">Design: ${document.documentElement.classList.contains("zw") ? "Zuchwil hell · auf Dunkel wechseln" : "Dunkel · auf Zuchwil hell wechseln"}</button>
       </div>
     </section>`;
+  document.getElementById("thm").onclick = () => { const h = document.documentElement.classList, z = h.toggle("zw"); try { localStorage.setItem("fwz-theme", z ? "zw" : "dark"); } catch (e) {} const m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = z ? "#c8161d" : "#121419"; document.getElementById("thm").textContent = z ? "Design: Zuchwil hell · auf Dunkel wechseln" : "Design: Dunkel · auf Zuchwil hell wechseln"; };
   const tick = () => { const c = document.getElementById("clock"); if (!c) return clearInterval(clk); c.textContent = new Date().toLocaleTimeString("de-CH", { hour12: false }); const dt = document.getElementById("date"); if (dt) dt.textContent = new Date().toLocaleDateString("de-CH", { weekday: "long", day: "numeric", month: "long", year: "numeric" }); greetUpd(); };
   clearInterval(window.clk); tick(); window.clk = setInterval(tick, 1000); var clk = window.clk;
   document.getElementById("logoup").onclick = appUpdate;

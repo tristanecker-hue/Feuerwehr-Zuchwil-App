@@ -389,3 +389,15 @@ body.keilprint .kprint{display:block!important;color:#000;font-family:Arial,sans
 .vlth { position:relative; } .vlth img { width:72px; height:72px; object-fit:cover; border-radius:10px; border:1px solid var(--line); display:block; }
 .vlx { position:absolute; top:-6px; right:-6px; width:24px; height:24px; border-radius:50%; border:1px solid var(--line); background:var(--surface); color:var(--ink); font-size:1rem; line-height:1; padding:0; }
 .vladdimg { padding:8px 14px; min-height:40px; cursor:pointer; }
+
+/* Design «Feuerwehr Zuchwil» (hell, rot); Dunkel bleibt wählbar (Schalter auf der Startseite) */
+html.zw, html.zw body.startpage { --bg:#f4f1ee; --surface:#fff; --ink:#23262b; --muted:#6b6f76; --line:#ddd6d0; --red:#c8161d; --red-ink:#fff; --ok:#2f7d4f; --ok-bg:#e3f2e8; --bad:#b3261e; --bad-bg:#fbe7e5; color-scheme: light; }
+html.zw body { background:var(--bg); color:var(--ink); }
+html.zw .top { background:#c8161d; border-bottom:4px solid #23262b; color:#fff; }
+html.zw .top .brand, html.zw .top .brand b { color:#fff; }
+html.zw .top .back { background:rgba(255,255,255,.15); border-color:rgba(255,255,255,.4); color:#fff; }
+html.zw .hit, html.zw .lgrp, html.zw .wxcard { box-shadow:0 1px 0 rgba(0,0,0,.05), 0 4px 14px rgba(60,30,20,.07); }
+html.zw .hero { border-left:6px solid #c8161d; padding-left:14px; }
+html.zw .mbtn.main, html.zw .sgvr > b, html.zw .btn.primary { background:#c8161d; border-color:#c8161d; color:#fff; }
+html.zw mark { background:rgba(200,22,29,.18); }
+.thm { background:none; border:0; color:var(--muted); font-size:.85rem; letter-spacing:.06em; text-decoration:underline; padding:6px; margin-top:6px; }
