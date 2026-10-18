@@ -66,6 +66,32 @@ const FWZ = (function () {
     await db().collection("fwz_lessons").doc(f.id).delete();
     for (let i = 0; i < f.parts; i++) await db().collection("fwz_parts").doc(f.id + "_" + i).delete();
   };
+  /* Persönliche Dateiablage: gehört dem Konto (Feld uid); Regeln in Firestore müssen Lesen/Schreiben nur für die eigene uid erlauben. */
+  api.myFiles = async () => { const s = await db().collection("fwz_files").where("uid", "==", api.user.uid).get(); return s.docs.map(d => Object.assign({ id: d.id, cloud: true }, d.data())); };
+  api.addFile = async (file, progress) => {
+    if (file.size > MAXSIZE) throw new Error("«" + file.name + "» ist grösser als 8 MB.");
+    const n = Math.max(1, Math.ceil(file.size / PART)), uid = api.user.uid, ref = db().collection("fwz_files").doc();
+    for (let i = 0; i < n; i++) {
+      await db().collection("fwz_fparts").doc(ref.id + "_" + i).set({ uid, file: ref.id, i, d: await readB64(file.slice(i * PART, (i + 1) * PART)) });
+      if (progress) progress(i + 1, n);
+    }
+    await ref.set({ uid, name: file.name, size: file.size, type: file.type || "", added: Date.now(), parts: n });
+  };
+  api.getFile = async f => {
+    const bytes = [];
+    for (let i = 0; i < f.parts; i++) {
+      const s = await db().collection("fwz_fparts").doc(f.id + "_" + i).get();
+      if (!s.exists) throw new Error("Datei unvollständig.");
+      const bin = atob(s.data().d), a = new Uint8Array(bin.length);
+      for (let k = 0; k < bin.length; k++) a[k] = bin.charCodeAt(k);
+      bytes.push(a);
+    }
+    return new Blob(bytes, { type: f.type || "application/octet-stream" });
+  };
+  api.delFile = async f => {
+    await db().collection("fwz_files").doc(f.id).delete();
+    for (let i = 0; i < f.parts; i++) await db().collection("fwz_fparts").doc(f.id + "_" + i).delete();
+  };
   if (!api.enabled) { api.init = () => Promise.reject(new Error("Synchronisation nicht eingerichtet.")); return api; }
   try { if (localStorage.getItem(FLAG) === "1" && navigator.onLine) init().catch(() => {}); } catch (e) {}
   return api;

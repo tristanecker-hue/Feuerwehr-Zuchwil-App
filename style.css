@@ -401,3 +401,13 @@ html.zw .hero { border-left:6px solid #c8161d; padding-left:14px; }
 html.zw .mbtn.main, html.zw .sgvr > b, html.zw .btn.primary { background:#c8161d; border-color:#c8161d; color:#fff; }
 html.zw mark { background:rgba(200,22,29,.18); }
 .thm { background:none; border:0; color:var(--muted); font-size:.85rem; letter-spacing:.06em; text-decoration:underline; padding:6px; margin-top:6px; }
+
+.aomenu { max-width: 340px; }
+.aomenu .pdfbtn small { white-space: normal; }
+.dflist { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+.dfact { margin: 10px 0 4px; }
+.dfrow { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+.dfn { min-width: 0; display: flex; flex-direction: column; }
+.dfn b { overflow-wrap: anywhere; }
+.dfn small { color: var(--muted); }
+.dfb { display: flex; gap: 8px; flex-wrap: wrap; }

@@ -246,9 +246,9 @@ function aoHub() {
     ["regl", "Nachschlagen", "Reglement Basiswissen", "Das ganze Reglement im PDF öffnen", 0, 0, ""]
   ];
   app.innerHTML = `<section class="hero"><h1>Ausbildungsoffizier</h1><p>Ku 70 · Di 20. bis Fr 23.10.2026 · Feuerwehr Grenchen. ${cnt}</p></section>
-    <div class="grid">${tiles.map(t => `<button class="tile chtile" data-r="${t[0]}"><span class="num">${t[1]}</span><h2>${t[2]}</h2><div class="sub">${t[3]}</div>${t[5] ? aoMeter(t[4], t[5]) : ""}${t[6] ? `<div class="facts"><span>${t[6]}</span></div>` : ""}</button>`).join("")}</div>
+    <div class="menu rgmenu aomenu">${tiles.map(t => `<button class="mbtn main pdfbtn aotile" data-r="${t[0]}"><span>${t[2]}</span><small>${t[6] || t[3]}</small></button>`).join("")}</div>
     <p class="foot">Quellen: Kursaufgebot 70/26/1 und Tagesbefehl (Version 02.10.2026). Massgebend sind die Unterlagen des SGV und die Anweisungen im Kurs. Fachinhalte stehen im Reglement Basiswissen (FKS).</p>`;
-  app.querySelectorAll(".tile").forEach(b => b.addEventListener("click", () => { if (b.dataset.r === "regl") rgJump("basis", 0, () => aoGo("")); else aoGo(b.dataset.r); }));
+  app.querySelectorAll(".aotile").forEach(b => b.addEventListener("click", () => { if (b.dataset.r === "regl") rgJump("basis", 0, () => aoGo("")); else aoGo(b.dataset.r); }));
 }
 
 /* ---------- Checkliste ---------- */
@@ -319,6 +319,7 @@ function aoKeil() {
     ${AO_KEIL.map((k, i) => `<label class="fld"><span class="fl">${i + 1}. ${k[0]}</span><span class="fh">${k[1]}</span><textarea class="ta" rows="3" data-n="keil${i}" placeholder="Stichworte …">${esc(AOS.notes["keil" + i] || "")}</textarea></label>`).join("")}
     <h3 class="zh">Checkliste</h3><div class="chklist">${[["Alle 5 Punkte haben ein Bild, einen Gegenstand oder eine Geste", "k1"], ["Hilfsmittel passen in die Tasche und stehen in unter einer Minute", "k2"], ["Laut geübt und gestoppt, mindestens dreimal", "k3"], ["Anfang und Schluss auswendig", "k4"]].map(c => aoChkHtml(c[1], esc(c[0]))).join("")}</div>`;
   aoBind(app);
+  app.insertAdjacentHTML("beforeend", '<div id="dfab"></div>'); aoFiles(document.getElementById("dfab"));
   const klg = document.getElementById("klg"); if (klg) klg.onclick = () => { state.after = () => aoGo("keil"); loginView(); };
   const kmsg = document.getElementById("kmsg");
   const kact = f => () => { try { const acts = aoPdfActs(aoPdf("KEIL-Vorstellung · Ausbildungsoffizier Ku 70", "Feuerwehr Zuchwil" + (typeof FWZ !== "undefined" && FWZ.user ? " · " + FWZ.label() : "") + " · Ziel: 2–3 Minuten", AO_KEIL.map((k, i) => ({ h: (i + 1) + ". " + k[0], s: k[1], t: (AOS.notes["keil" + i] || "").trim() }))), kmsg); kmsg.textContent = ""; acts[f](); } catch (e) { kmsg.textContent = "PDF konnte nicht erstellt werden."; } };
@@ -718,4 +719,47 @@ function aoBil() {
   document.getElementById("bpdf").onclick = run(() => aoPdfActs(aoBilPdf(false, zwv()), msg).open()); document.getElementById("bsh").onclick = run(() => aoPdfActs(aoBilPdf(false, zwv()), msg).share());
   document.getElementById("bpr").onclick = run(() => aoPdfActs(aoBilPdf(false, zwv()), msg).print()); document.getElementById("bbl").onclick = run(() => aoPdfActs(aoBilPdf(true, zwv()), msg).open());
   const rs = document.getElementById("brs"); rs.onclick = () => { if (rs.dataset.c) { Object.keys(AOS.notes).filter(k => k.indexOf("bil_") === 0).forEach(k => delete AOS.notes[k]); aoSave(); aoBil(); } else { rs.dataset.c = 1; rs.textContent = "Wirklich leeren? Nochmals tippen."; } };
+}
+
+/* ---------- Persönliche Dateiablage (bei KEIL) ---------- */
+const aoFOwner = () => (typeof FWZ !== "undefined" && FWZ.user) ? FWZ.user.uid : "gast";
+const aoIdb = () => new Promise((res, rej) => { const r = indexedDB.open("fwz-dateien", 1); r.onupgradeneeded = () => r.result.createObjectStore("f", { keyPath: "id" }); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+const aoIdbRun = (mode, fn) => aoIdb().then(db => new Promise((res, rej) => { const t = db.transaction("f", mode); const q = fn(t.objectStore("f")); t.oncomplete = () => res(q && q.result); t.onerror = () => rej(t.error); }));
+const aoFSize = n => n >= 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB";
+async function aoFiles(host) {
+  if (!host) return;
+  const cloud = typeof FWZ !== "undefined" && FWZ.enabled && FWZ.user;
+  host.innerHTML = `<h3 class="zh">Meine Dateiablage</h3>
+    <div class="note">${cloud ? "<b>Persönlich:</b> Diese Dateien gehören <b>" + esc(FWZ.label()) + "</b> und sind nur für dich sichtbar, auf allen deinen Geräten, wenn du angemeldet bist." : "<b>Nicht angemeldet:</b> Dateien bleiben nur auf diesem Gerät und sind nur hier sichtbar. Melde dich an, damit sie dir gehören und auf allen Geräten da sind."} Pro Datei bis 8 MB.</div>
+    <div class="dfact"><button class="btn primary" id="dfadd">Datei hinzufügen</button><input type="file" id="dfin" multiple hidden></div>
+    <div class="dfmsg sinfo" id="dfmsg" role="status"></div><div id="dflist" class="dflist"><div class="note">Lade …</div></div>`;
+  const msg = host.querySelector("#dfmsg"), list = host.querySelector("#dflist"), say = t => { msg.textContent = t || ""; };
+  const load = async () => {
+    let items = [];
+    try { const all = await aoIdbRun("readonly", s => s.getAll()); items = all.filter(f => f.owner === aoFOwner()).map(f => Object.assign(f, { local: true })); } catch (e) {}
+    if (cloud) { try { items = items.concat(await FWZ.myFiles()); } catch (e) { say("Konto-Dateien konnten nicht geladen werden (" + ((e && e.code) || (e && e.message) || "Fehler") + ")."); } }
+    items.sort((a, b) => b.added - a.added);
+    list.innerHTML = items.length ? items.map((f, i) => `<div class="dfrow"><div class="dfn"><b>${esc(f.name)}</b><small>${aoFSize(f.size)} · ${new Date(f.added).toLocaleDateString("de-CH")} · ${f.local ? "nur dieses Gerät" : "Konto"}</small></div><div class="dfb"><button class="btn" data-o="${i}">Öffnen</button><button class="btn" data-s="${i}">Teilen</button><button class="btn ghost" data-d="${i}">Löschen</button></div></div>`).join("") : '<div class="note">Noch keine Dateien. Füge Notizen, Fotos oder Unterlagen für deine Vorstellung hinzu.</div>';
+    const blobOf = async f => f.local ? new File([f.blob], f.name, { type: f.type }) : new File([await FWZ.getFile(f)], f.name, { type: f.type });
+    const act = (attr, fn) => list.querySelectorAll("[" + attr + "]").forEach(b => b.onclick = async () => { say(""); try { await fn(items[+b.getAttribute(attr)], b); } catch (e) { say((e && e.message) || "Das hat nicht geklappt."); } });
+    act("data-o", async f => { const file = await blobOf(f); aoPdfActs(file, msg).open(); });
+    act("data-s", async f => { const file = await blobOf(f); if (navigator.canShare && navigator.canShare({ files: [file] })) await navigator.share({ files: [file], title: file.name }); else say("Teilen wird von diesem Gerät nicht unterstützt. Nutze «Öffnen»."); });
+    act("data-d", async (f, b) => { if (!b.dataset.c) { b.dataset.c = 1; b.textContent = "Wirklich?"; return; } if (f.local) await aoIdbRun("readwrite", s => s.delete(f.id)); else await FWZ.delFile(f); load(); });
+  };
+  host.querySelector("#dfadd").onclick = () => host.querySelector("#dfin").click();
+  host.querySelector("#dfin").onchange = async e => {
+    const files = [...e.target.files]; e.target.value = "";
+    for (const file of files) {
+      say("Speichere «" + file.name + "» …");
+      try {
+        if (file.size > 8 * 1024 * 1024) throw new Error("«" + file.name + "» ist grösser als 8 MB.");
+        let done = false;
+        if (cloud) { try { await FWZ.addFile(file); done = true; } catch (er) { say("Im Konto speichern ging nicht (" + ((er && er.code) || (er && er.message) || "Fehler") + "). Gespeichert auf diesem Gerät."); } }
+        if (!done) await aoIdbRun("readwrite", s => s.put({ id: "f" + Date.now() + Math.random().toString(36).slice(2, 7), owner: aoFOwner(), name: file.name, size: file.size, type: file.type || "", added: Date.now(), blob: file }));
+        if (done || !cloud) say("");
+      } catch (er) { say((er && er.message) || "Das hat nicht geklappt."); }
+    }
+    load();
+  };
+  load();
 }
