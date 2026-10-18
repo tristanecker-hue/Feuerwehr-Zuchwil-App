@@ -221,7 +221,7 @@ function aoBack() { const r = state.aoR || ""; if (!r) return start(); aoGo(r.in
 function aoGo(r) {
   state.aoR = r; state.from = null; state.direct = false; state.mod = null; state.view = r ? "ao-sub" : "ao"; backBtn.hidden = false;
   document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
-  const f = { "": aoHub, check: aoCheck, keil: aoKeil, lek: aoTopics, meth: aoMeth, zahl: aoZahl, prog: aoProg, kq: aoKq }[r];
+  const f = { "": aoHub, check: aoCheck, keil: aoKeil, lek: aoTopics, meth: aoMeth, zahl: aoZahl, prog: aoProg, kq: aoKq, bil: aoBil }[r];
   if (f) f(); else if (r.indexOf("lek:") === 0) aoTopic(r.slice(4)); else aoHub();
   window.scrollTo(0, 0);
 }
@@ -241,6 +241,7 @@ function aoHub() {
     ["kq", "Quiz", "Kurs-Quiz", "Fachfragen aus dem Basiswissen zu den Lektionen jedes Kurstags", 0, 0, ""],
     ["meth", "Methodik", "Lektion halten", "Aufbau, Beurteilung, Theorieblöcke und Probelektion", 0, 0, ""],
     ["zahl", "Training", "Zahlen-Trainer", "Wichtige Zahlen aus den Kurs-Kapiteln üben", dZ, pool.length, dZ + " von " + pool.length + " gewusst"],
+    ["bil", "Methodik", "Erfolgsauswertung / Bilanz", "Formular 3.17.1 zum Ausfüllen, mit PDF-Export", 0, 0, ""],
     ["prog", "Tagesbefehl", "Kursprogramm", "Dienstag bis Freitag, nach Klasse 1 oder 2", 0, 0, ""],
     ["regl", "Nachschlagen", "Reglement Basiswissen", "Das ganze Reglement im PDF öffnen", 0, 0, ""]
   ];
@@ -611,4 +612,71 @@ function aoProg() {
       return `<tr><td>${r[0]}–${r[1]}</td><td><b>L ${n}</b> ${esc(AO_L[n] || "")}<br><span class="mu">Arbeitsplatz ${ap}: ${esc(AO_AP[ap] || "")}</span></td></tr>`;
     }).join("")}</table></div>`).join("")}`;
   aoBind(app);
+}
+
+/* ---------- Erfolgsauswertung / Bilanz (Formular 3.17.1, Handmethode) ---------- */
+const AO_BIL = [
+  ["ich", "Ich (positiv und in der Ich-Form)", 3, "Wie habe ich mich gefühlt? Was ist mir gelungen?"],
+  ["krit", "Max. 3 Beurteilungskriterien / Soll (z. B. Methodik, Ausbildungshilfen, Verhalten als Instruktor usw.)", 3, "1.\n2.\n3."],
+  ["pos", "Fakten (das habe ich festgestellt) / Ist: positiv", 5, "Das war gut …"],
+  ["neg", "Fakten (das habe ich festgestellt) / Ist: negativ", 5, "Das war weniger gut …"],
+  ["verb", "Verbinden (Tipps) / Konsequenz", 4, "Tipp: … Konsequenz: …"],
+  ["kurz", "Kurz (aufbauender Schluss)", 3, "Aufbauender Schlusssatz"]
+];
+const aoBilGet = k => (AOS.notes["bil_" + k] || "");
+function aoBilPdf(blank) {
+  const W = 595, H = 842, M = 48, TW = W - 2 * M, cv = document.createElement("canvas").getContext("2d");
+  const fix = s => String(s).replace(/[“”„]/g, '"').replace(/[‘’]/g, "'").replace(/[–—]/g, "-").replace(/…/g, "...").replace(/\t/g, " ").replace(/[^\n\x20-\x7e\xa0-\xff]/g, "?");
+  const e2 = s => fix(s).replace(/[\\()]/g, "\\$&");
+  const mw = (s, sz, b) => { cv.font = (b ? "bold " : "") + sz + "px Helvetica, Arial, sans-serif"; return cv.measureText(fix(s)).width; };
+  const wrap = (txt, w, sz) => { const out = []; fix(txt).split("\n").forEach(par => { let line = ""; par.split(" ").forEach(wd => { const x = line ? line + " " + wd : wd; if (mw(x, sz) > w && line) { out.push(line); line = wd; } else line = x; }); out.push(line); }); return out; };
+  const pages = [[]]; let y = H - M; const P = () => pages[pages.length - 1];
+  const T = (x, yy, s, sz, b) => P().push(`BT /${b ? "F2" : "F1"} ${sz} Tf 0 g ${x.toFixed(1)} ${yy.toFixed(1)} Td (${e2(s)}) Tj ET`);
+  const L = (x1, y1, x2, y2, w, rgb) => P().push(`${rgb || "0.45 0.45 0.45"} RG ${w} w ${x1.toFixed(1)} ${y1.toFixed(1)} m ${x2.toFixed(1)} ${y2.toFixed(1)} l S`);
+  const R = (x, yy, w, h, fill, stroke) => P().push(`${fill ? fill + " rg " : ""}${stroke ? "0.45 0.45 0.45 RG 0.7 w " : ""}${x.toFixed(1)} ${yy.toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)} re ${fill && stroke ? "B" : fill ? "f" : "S"} 0 g`);
+  const newPage = () => { pages.push([]); y = H - M; };
+  T(M, y - 16, "3.17.1  Erfolgsauswertung / Bilanz", 17, true);
+  const hm = "Handmethode: Ich - Beurteilungskriterien - Fakten - Verbinden - Kurz"; T(W - M - mw(hm, 7.5), y - 30, hm, 7.5, false);
+  y -= 44;
+  const g = k => blank ? "" : aoBilGet(k), cw = [92, 168, 70, TW - 330], rh = 24, cells = [[["Lektion/Übung", "l"], ["Ausbilder", "a"]], [["Dauer", "d"], ["Datum", "t"]]];
+  cells.forEach(row => { let x = M; row.forEach((c, i) => { R(x, y - rh, cw[i * 2], rh, "0.91 0.93 0.95", true); T(x + 5, y - 16, c[0], 9.5, false); x += cw[i * 2]; R(x, y - rh, cw[i * 2 + 1], rh, null, true); T(x + 5, y - 16, g("f_" + c[1]), 10, false); x += cw[i * 2 + 1]; }); y -= rh; });
+  y -= 16;
+  const LH = 19, sec = (title, key, n, x0, w, head) => {
+    const lines = wrap(g(key), w - 4, 10.5), cnt = Math.max(n, lines.length);
+    if (head) { if (y - 20 - cnt * LH < M) newPage(); R(M, y - 17, TW, 17, "0.91 0.93 0.95"); T(M + 6, y - 12, title, 9.5, false); y -= 17; }
+    for (let i = 0; i < cnt; i++) { const yy = y - (i + 1) * LH; if (lines[i]) T(x0 + 2, yy + 5, lines[i], 10.5, false); L(x0, yy, x0 + w, yy, .6); }
+    return cnt * LH;
+  };
+  sec(AO_BIL[0][1], "ich", 3, M, TW, true); y -= 3 * LH + 14;
+  { const h = AO_BIL[1][1]; const hl = wrap(h, TW - 12, 9.5); sec(hl[0], "krit", 3, M, TW, true); y -= Math.max(3, wrap(g("krit"), TW - 4, 10.5).length) * LH + 14; }
+  { const n = Math.max(5, wrap(g("pos"), TW / 2 - 14, 10.5).length, wrap(g("neg"), TW / 2 - 14, 10.5).length);
+    if (y - 20 - n * LH < M) newPage();
+    R(M, y - 17, TW, 17, "0.91 0.93 0.95"); T(M + 6, y - 12, "Fakten (das habe ich festgestellt) / Ist", 9.5, false); y -= 17;
+    const hw = TW / 2 - 14, y0 = y; T(M + 2, y - 14, "+ positiv", 9, true); T(M + hw + 28 + 2, y - 14, "- negativ", 9, true); y -= 12;
+    const save = y; sec("", "pos", n, M, hw, false); y = save; sec("", "neg", n, M + hw + 28, hw, false); y = save - n * LH - 14; }
+  sec(AO_BIL[4][1], "verb", 4, M, TW, true); y -= Math.max(4, wrap(g("verb"), TW - 4, 10.5).length) * LH + 14;
+  sec(AO_BIL[5][1], "kurz", 3, M, TW, true);
+  const objs = [null, "<< /Type /Catalog /Pages 2 0 R >>", null, "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>", "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>"], kids = [];
+  pages.forEach(p => { const st = p.join("\n"), ci = objs.length + 1, pi = objs.length; objs.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${ci} 0 R >>`, `<< /Length ${st.length} >>\nstream\n${st}\nendstream`); kids.push(pi); });
+  objs[2] = `<< /Type /Pages /Kids [${kids.map(k => k + " 0 R").join(" ")}] /Count ${kids.length} >>`;
+  let s = "%PDF-1.4\n", off = [];
+  objs.slice(1).forEach((o, i) => { off.push(s.length); s += `${i + 1} 0 obj\n${o}\nendobj\n`; });
+  const xr = s.length; s += `xref\n0 ${objs.length}\n0000000000 65535 f \n` + off.map(o => String(o).padStart(10, "0") + " 00000 n \n").join("") + `trailer\n<< /Size ${objs.length} /Root 1 0 R >>\nstartxref\n${xr}\n%%EOF`;
+  const u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i) & 255;
+  return new File([u], blank ? "Erfolgsauswertung Bilanz leer.pdf" : "Erfolgsauswertung Bilanz.pdf", { type: "application/pdf" });
+}
+function aoBil() {
+  const fld = (k, l, ph) => `<label class="vlf"><span>${l}</span><input data-b="f_${k}" value="${esc(aoBilGet("f_" + k))}" placeholder="${esc(ph || "")}"></label>`;
+  const ta = a => `<label class="vlf"><span>${esc(a[1])}</span><textarea data-b="${a[0]}" rows="${a[2] + 1}" placeholder="${esc(a[3])}">${esc(aoBilGet(a[0]))}</textarea></label>`;
+  app.innerHTML = `<section class="hero"><h1>Erfolgsauswertung / Bilanz</h1><p>Formular 3.17.1 zum Ausfüllen nach der Handmethode (Ich, Beurteilungskriterien, Fakten, Verbinden, Kurz). Deine Eingaben bleiben gespeichert.</p></section>
+    <div class="vlform">
+      <div class="vl2">${fld("l", "Lektion / Übung")}${fld("a", "Ausbilder")}</div><div class="vl2">${fld("d", "Dauer", "z. B. 50 Min.")}${fld("t", "Datum", "TT.MM.JJJJ")}</div>
+      ${ta(AO_BIL[0])}${ta(AO_BIL[1])}<div class="vl2">${ta(AO_BIL[2])}${ta(AO_BIL[3])}</div>${ta(AO_BIL[4])}${ta(AO_BIL[5])}
+      <div class="vlact"><button class="btn primary" id="bpdf">PDF öffnen</button><button class="btn" id="bsh">PDF teilen</button><button class="btn" id="bpr">Drucken</button><button class="btn" id="bbl">Leeres Formular</button></div>
+      <div id="bmsg" class="sinfo" role="status"></div><button class="linkbtn" id="brs">Alles leeren</button></div>`;
+  app.querySelectorAll("[data-b]").forEach(e => e.addEventListener("input", () => { AOS.notes["bil_" + e.dataset.b] = e.value; aoSave(); }));
+  const msg = document.getElementById("bmsg"), run = f => () => { msg.textContent = ""; try { f(); } catch (e) { msg.textContent = (e && e.message) || "Export nicht möglich."; } };
+  document.getElementById("bpdf").onclick = run(() => aoPdfActs(aoBilPdf(false), msg).open()); document.getElementById("bsh").onclick = run(() => aoPdfActs(aoBilPdf(false), msg).share());
+  document.getElementById("bpr").onclick = run(() => aoPdfActs(aoBilPdf(false), msg).print()); document.getElementById("bbl").onclick = run(() => aoPdfActs(aoBilPdf(true), msg).open());
+  const rs = document.getElementById("brs"); rs.onclick = () => { if (rs.dataset.c) { Object.keys(AOS.notes).filter(k => k.indexOf("bil_") === 0).forEach(k => delete AOS.notes[k]); aoSave(); aoBil(); } else { rs.dataset.c = 1; rs.textContent = "Wirklich leeren? Nochmals tippen."; } };
 }
