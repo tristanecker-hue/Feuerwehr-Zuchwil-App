@@ -1,4 +1,4 @@
-const APP_VERSION = "1.77";
+const APP_VERSION = "1.78";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -988,6 +988,7 @@ function vorlageView(neutral) {
       <h3 class="zh">Ablauf der Lektion</h3><div id="vlchk" class="vlchk" role="status"></div><div id="vlrows">${rows()}</div>
       <button class="btn" id="vladd">+ Zeile hinzufügen</button>
       <div class="vlact"><button class="btn primary" id="vlpdf">PDF öffnen</button><button class="btn" id="vlpsh">PDF teilen</button><button class="btn" id="vlprn">Drucken</button><button class="btn primary" id="vldoc">Word (.docx)</button><button class="btn" id="vldsh">Word teilen</button></div>
+      <div class="vlsave"><label class="vlf"><span>In «Eigene Lektionen» speichern (PDF und Word)</span><select id="vlch">${chaptersOf(getMod("basis")).map(c => `<option value="${esc(c.k)}">Kapitel ${esc(c.k)} – ${esc(c.n)}</option>`).join("")}</select></label><button class="btn primary" id="vlsv">Speichern in Meine Lektionen</button></div>
       <div id="vlmsg" class="sinfo" role="status"></div>
       <button class="linkbtn" id="vlreset">Alles zurücksetzen</button>
     </div>`;
@@ -1016,6 +1017,15 @@ function vorlageView(neutral) {
   const pdf = () => aoPdfActs(aoLekPdfBuild(vlModel()), msg), doc = () => aoPdfActs(vlDocx(), msg);
   const run = (f) => () => { msg.textContent = ""; const c = vlCheck(); if (!c.ok) { msg.textContent = c.t; document.getElementById("vlchk").scrollIntoView({ block: "center" }); return; } try { f(); } catch (e) { msg.textContent = (e && e.message) || "Export nicht möglich."; } };
   document.getElementById("vlpdf").onclick = run(() => pdf().open()); document.getElementById("vlpsh").onclick = run(() => pdf().share()); document.getElementById("vlprn").onclick = run(() => pdf().print());
+  document.getElementById("vlsv").onclick = async () => {
+    msg.textContent = ""; const c = vlCheck(); if (!c.ok) { msg.textContent = c.t; document.getElementById("vlchk").scrollIntoView({ block: "center" }); return; }
+    const ch = document.getElementById("vlch").value;
+    try {
+      const files = [aoLekPdfBuild(vlModel()), vlDocx()];
+      for (const f of files) { if (FWZ.user) await FWZ.addLesson(f, "basis", ch, () => { msg.textContent = "Speichere «" + f.name + "» …"; }); else await LDB.add({ mod: "basis", ch, name: f.name, size: f.size, added: Date.now(), blob: f }); }
+      msg.textContent = "Gespeichert in «Eigene Lektionen», Kapitel " + ch + ": " + files.map(f => f.name).join(" und ");
+    } catch (e) { msg.textContent = /permission|insufficient/i.test((e && e.message) || "") ? "Keine Berechtigung (Firestore-Regeln fehlen)." : ((e && e.message) || "Speichern nicht möglich."); }
+  };
   document.getElementById("vldoc").onclick = run(() => doc().open()); document.getElementById("vldsh").onclick = run(() => doc().share());
   document.getElementById("vlreset").onclick = () => { if (document.getElementById("vlreset").dataset.c) { VL = VL_DEF(); vlSave(); vorlageView(VLN); } else { document.getElementById("vlreset").dataset.c = 1; document.getElementById("vlreset").textContent = "Wirklich zurücksetzen? Nochmals tippen."; } };
   window.scrollTo(0, 0);
