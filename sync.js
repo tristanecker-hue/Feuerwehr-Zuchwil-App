@@ -66,9 +66,6 @@ const FWZ = (function () {
     await db().collection("fwz_lessons").doc(f.id).delete();
     for (let i = 0; i < f.parts; i++) await db().collection("fwz_parts").doc(f.id + "_" + i).delete();
   };
-  /* Budget Logistik Stunden: ein Dokument pro Konto (fwz_budget/<uid>), Firestore-Regel nur für das eigene Konto. */
-  api.pullBudget = async () => { const s = await db().collection("fwz_budget").doc(api.user.uid).get(); return s.exists ? s.data() : null; };
-  api.pushBudget = o => db().collection("fwz_budget").doc(api.user.uid).set({ data: JSON.stringify(o), updatedAt: o.updatedAt || Date.now() });
   /* Persönliche Dateiablage: gehört dem Konto (Feld uid); Regeln in Firestore müssen Lesen/Schreiben nur für die eigene uid erlauben. */
   api.myFiles = async () => { const s = await db().collection("fwz_files").where("uid", "==", api.user.uid).get(); return s.docs.map(d => Object.assign({ id: d.id, cloud: true }, d.data())); };
   api.addFile = async (file, progress) => {
