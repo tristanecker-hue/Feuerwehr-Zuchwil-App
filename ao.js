@@ -240,7 +240,7 @@ function aoHub() {
     ["lek", "Fachthemen", "Lektionen", "Alle Kurs-Lektionen mit Lernkarten, Quiz und Reglement-Suche", dT, AO_T.length, dT + " von " + AO_T.length + " Themen sitzen"],
     ["kq", "Quiz", "Kurs-Quiz", "Fachfragen aus dem Basiswissen zu den Lektionen jedes Kurstags", 0, 0, ""],
     ["meth", "Methodik", "Lektion halten", "Aufbau, Beurteilung, Theorieblöcke und Probelektion", 0, 0, ""],
-    ["zahl", "Training", "Zahlen-Trainer", "Wichtige Zahlen aus den Kurs-Kapiteln üben", dZ, pool.length, dZ + " von " + pool.length + " gewusst"],
+    ["zahl", "Training", "Zahlen-Trainer", "Wichtige Zahlen aus den Kurs-Kapiteln nachschlagen", 0, 0, ""],
     ["bil", "Methodik", "Erfolgsauswertung / Bilanz", "Formular 3.17.1 zum Ausfüllen, mit PDF-Export", 0, 0, ""],
     ["prog", "Tagesbefehl", "Kursprogramm", "Dienstag bis Freitag, nach Klasse 1 oder 2", 0, 0, ""],
     ["regl", "Nachschlagen", "Reglement Basiswissen", "Das ganze Reglement im PDF öffnen", 0, 0, ""]
@@ -500,18 +500,14 @@ function aoZahl() {
   all.forEach(r => { if (!srcs.some(s => s.src === r.src)) srcs.push(r); });
   const pool = all.filter(r => !aoZsrc || r.src === aoZsrc);
   app.innerHTML = `<section class="hero"><h1>Zahlen-Trainer</h1><p>Die wichtigsten Zahlen aus den Kapiteln, die für den Kurs gebraucht werden.</p></section>
-    <div class="tabs t2" role="tablist">${[["drill", "Üben"], ["table", "Tabelle"]].map(([k, l]) => `<button role="tab" data-v="${k}" aria-selected="${aoZview === k}">${l}</button>`).join("")}</div>
     <div class="chips fbar" role="group" aria-label="Kapitel"><button class="chip" data-s="" aria-pressed="${!aoZsrc}">Alle (${all.length})</button>${srcs.map(s => `<button class="chip" data-s="${s.src}" aria-pressed="${aoZsrc === s.src}">${esc(s.tag)} (${all.filter(r => r.src === s.src).length})</button>`).join("")}</div>
     <div id="zb"></div>`;
-  app.querySelectorAll("[data-v]").forEach(b => b.addEventListener("click", () => { aoZview = b.dataset.v; aoZahl(); }));
   app.querySelectorAll("[data-s]").forEach(b => b.addEventListener("click", () => { aoZsrc = b.dataset.s; aoZahl(); }));
   const el = document.getElementById("zb");
-  if (aoZview === "table") {
+  {
     const groups = []; pool.forEach(r => { let g = groups.find(x => x.src === r.src); if (!g) groups.push(g = { src: r.src, tag: r.tag, rows: [] }); g.rows.push(r); });
     el.innerHTML = groups.map(g => `<h3 class="zh">${esc(g.tag)}</h3><div class="ztw"><table class="zt">${g.rows.map(r => `<tr><td>${esc(r.a)}</td><td>${esc(r.q)}</td></tr>`).join("")}</table></div>`).join("");
-    return;
   }
-  aoDrill(el, pool);
 }
 function aoDrill(el, pool) {
   let queue = [], pos = 0, flipped = false;
