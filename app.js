@@ -1,4 +1,4 @@
-const APP_VERSION = "1.86";
+const APP_VERSION = "1.87";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -775,7 +775,7 @@ function lesView() {
   const grp = (t, n, inner) => `<details class="lgrp"><summary><span>${t}</span><b>${n}</b></summary><div class="lgbody">${inner}</div></details>`;
   const mlHtml = ml && !state.lc ? grp("Musterlektionen (50 Min.)", nA + nF, '<h3 class="zh">Anlernstufe</h3>' + tiles(AO_LEK, "m") + (nF ? '<h3 class="zh">Festigungsstufe</h3>' + tiles(AO_LEKF, "f") : "")) : "";
   if (state.lc === "vl" || state.lc === "vn") { vorlageView(state.lc === "vn"); return; }
-  if (state.lc === "v") { app.innerHTML = '<section class="hero"><h1>Vorlagen</h1><p>Vorlagen der Feuerwehr Zuchwil (PDF / Word), für alle angemeldeten Mitglieder.</p></section><button class="lgrp vlink" id="vlt"><span>Vorlage Lektion (bearbeiten, PDF / Word)</span></button><button class="lgrp vlink" id="vln"><span>Lektion Vorlage Neutral (ohne Kopfzeile)</span></button><div id="body"></div>'; document.getElementById("vlt").onclick = () => { state.lc = "vl"; lesView(); }; document.getElementById("vln").onclick = () => { state.lc = "vn"; lesView(); }; lektionen(VMOD, document.getElementById("body")); return; }
+  if (state.lc === "v") { app.innerHTML = '<section class="hero"><h1>Vorlagen</h1><p>Vorlagen der Feuerwehr Zuchwil (PDF / Word), für alle angemeldeten Mitglieder.</p></section><button class="lgrp vlink" id="vlt"><span>Vorlage Lektion (bearbeiten, PDF / Word)</span></button><button class="lgrp vlink" id="vln"><span>Lektion Vorlage Neutral (ohne Kopfzeile)</span></button><button class="lgrp vlink" id="vb1"><span>Leeres Blatt Word (mit Kopfzeile)</span></button><button class="lgrp vlink" id="vb2"><span>Leeres Blatt Word (neutral, ohne Kopfzeile)</span></button><div id="vbm" class="sinfo" role="status"></div><div id="body"></div>'; [["vb1", false], ["vb2", true]].forEach(([id, n]) => { document.getElementById(id).onclick = () => { const keep = VLN; VLN = n; try { aoPdfActs(vlDocx(true), document.getElementById("vbm")).open(); } catch (e) { document.getElementById("vbm").textContent = e.message || "Word-Datei konnte nicht erstellt werden."; } VLN = keep; }; }); document.getElementById("vlt").onclick = () => { state.lc = "vl"; lesView(); }; document.getElementById("vln").onclick = () => { state.lc = "vn"; lesView(); }; lektionen(VMOD, document.getElementById("body")); return; }
   app.innerHTML = '<section class="hero"><h1>Lektionen</h1></section>' + loginBox + mlHtml + (state.lc ? '<div id="body"></div>' : '<button class="lgrp vlink" id="vlk"><span>Vorlagen Feuerwehr Zuchwil</span><b id="vn">…</b></button><details class="lgrp" id="eig"><summary><span>Eigene Lektionen (PDF / Word)</span><b id="eign">…</b></summary><div class="lgbody" id="body"></div></details>');
   const lgo0 = document.getElementById("lgo"); if (lgo0) lgo0.onclick = loginView;
   document.querySelectorAll("[data-m]").forEach(b => b.addEventListener("click", () => { state.lc = b.dataset.m; lesView(); window.scrollTo(0, 0); }));
@@ -942,7 +942,8 @@ function vlModel() {
 }
 const CRC_T = (() => { const t = []; for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
 function crc32(u) { let c = 0xFFFFFFFF; for (let i = 0; i < u.length; i++) c = CRC_T[(c ^ u[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
-function vlDocx() {
+function vlDocx(blank) {
+  if (!VL) vlLoad();
   const T = window.DOCXT; if (!T) throw new Error("Word-Vorlage nicht geladen.");
   const m = vlModel(), X = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   const rp = o => `<w:rPr><w:rFonts w:cs="Arial"/>${o.b ? "<w:b/>" : ""}${o.u ? '<w:u w:val="single"/>' : ""}${o.sz ? `<w:sz w:val="${o.sz}"/><w:szCs w:val="${o.sz}"/>` : '<w:szCs w:val="22"/>'}</w:rPr>`;
@@ -967,6 +968,7 @@ function vlDocx() {
     tbl += `<w:tr><w:trPr><w:cantSplit/><w:trHeight w:val="560"/></w:trPr>${cell(W3[0], para(r(a.min ? a.min + "’" : "", { b: 1 }), sp))}${cell(W3[1], mid)}${cell(W3[2], hin)}</w:tr>`;
   });
   tbl += "</w:tbl>";
+  if (blank) { b = para(""); tbl = ""; media.length = 0; }
   const xml = new TextEncoder().encode(T.pre + b + tbl + para("") + (VLN ? T.sect.replace(/<w:headerReference[^>]*\/>/g, "").replace('w:top="1666"', 'w:top="1134"') : T.sect) + "</w:body></w:document>");
   const parts = [], cd = [], enc = new TextEncoder(); let off = 0;
   const u16 = n => [n & 255, (n >> 8) & 255], u32 = n => [n & 255, (n >> 8) & 255, (n >> 16) & 255, (n >>> 24) & 255];
@@ -979,7 +981,7 @@ function vlDocx() {
     parts.push(lh, data); off += lh.length + data.length;
   });
   const cdLen = cd.reduce((n, c) => n + c.length, 0), end = new Uint8Array([0x50, 0x4b, 5, 6, ...u16(0), ...u16(0), ...u16(cd.length), ...u16(cd.length), ...u32(cdLen), ...u32(off), ...u16(0)]);
-  return new File([...parts, ...cd, end], m.fname.replace(/\.pdf$/, ".docx"), { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+  return new File([...parts, ...cd, end], blank ? (VLN ? "Leeres Blatt neutral.docx" : "Leeres Blatt Feuerwehr Zuchwil.docx") : m.fname.replace(/\.pdf$/, ".docx"), { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
 }
 function vorlageView(neutral) {
   VLN = !!neutral; vlLoad(); state.mod = null; state.view = "les"; backBtn.hidden = false;
