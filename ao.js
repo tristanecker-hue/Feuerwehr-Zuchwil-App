@@ -240,7 +240,7 @@ function aoHub() {
     ["lek", "Fachthemen", "Lektionen", "Alle Kurs-Lektionen mit Lernkarten, Quiz und Reglement-Suche", dT, AO_T.length, dT + " von " + AO_T.length + " Themen sitzen"],
     ["kq", "Quiz", "Kurs-Quiz", "Fachfragen aus dem Basiswissen zu den Lektionen jedes Kurstags", 0, 0, ""],
     ["fach", "Kursauftrag", "Fachlektionen", "Auftrag, Ziel und Rahmenbedingungen der Fachlektionen", 0, 0, ""],
-    ["meth", "Methodik", "Lektion halten", "Aufbau, Beurteilung, Theorieblöcke und Probelektion", 0, 0, ""],
+    ["meth", "Methodik", "Lektion halten", "Führungsablauf und Zahlen zur Ausbildung, direkt im Reglement", 0, 0, ""],
     ["zahl", "Training", "Zahlen-Trainer", "Wichtige Zahlen aus den Kurs-Kapiteln nachschlagen", 0, 0, ""],
     ["bil", "Methodik", "Erfolgsauswertung / Bilanz", "Formular 3.17.1 zum Ausfüllen, mit PDF-Export", 0, 0, ""],
     ["prog", "Tagesbefehl", "Kursprogramm", "Dienstag bis Freitag, nach Klasse 1 oder 2", 0, 0, ""],
@@ -488,25 +488,22 @@ function aoTopic(id) {
 }
 
 /* ---------- Methodik ---------- */
+const AO_JUMP = {
+  basis2: { "5 Schritte": "2.3", "WAS, WO, WOMIT, BESONDERS": "2.6", "OAABS": "2.6", "1 Auftrag": "2.6", "5 Phasen": "2.2" },
+  einsatz3: { "5 Schritte": "3.1", "OAABS": "3.6.2", "1 Auftrag": "3.6.2", "5–10 Minuten": "3.4", "Gesamtverantwortung": "3.5" },
+  basis3: { "3 Kompetenzen": "3.2", "ca. 30 Sekunden": "3.1.1", "max. 3": "3.15.1", "Schriftgrösse cm = Abstand m": "3.18" },
+  einsatz5: { "max. 3": "5.6", "6 Punkte": "5.5", "5 Finger": "5.6.1", "Gelb / Grün / Rot / Blau / Orange": "5.7" }
+};
 function aoMeth() {
-  const tab = (mod, k) => { const z = ((CHS[mod] || {})[k] || { z: [] }).z; return z.length ? `<div class="ztw"><table class="zt">${z.map(([a, b]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td></tr>`).join("")}</table></div>` : ""; };
-  const sec = (t, items, open) => `<details class="sec"${open ? " open" : ""}><summary>${t}</summary><ul>${items.map(i => `<li>${i}</li>`).join("")}</ul></details>`;
-  const lc = ["Thema und Lernziele festlegen (höchstens 3 Ziele je Stufe)", "Stufe klären: Anlern- oder Festigungsstufe", "Einstieg planen: Bezug zum Einsatz, Motivation", "Ablauf mit Zeit pro Schritt: vormachen, erklären, üben lassen", "Material und Arbeitsplatz bereitstellen, Sicherheit klären", "Kontrolle: Woran merke ich, dass es sitzt?", "Rückmeldung geben (höchstens 3 Beurteilungskriterien)", "Abschluss: zusammenfassen, Fragen klären, retablieren"];
-  app.innerHTML = `<section class="hero"><h1>Lektion halten</h1><p>Was im Kurs beurteilt wird und wie du dich auf die Theorieblöcke und die Qualifikation vorbereitest.</p></section>
-    ${sec("Was im Kurs zählt", ["Laut Kursaufgebot wird anhand von Fachlektionen im Rettungsdienst und in der Brandbekämpfung beurteilt, ob du genügend Kenntnisse hast, um die Lektion sicher zu halten.", "Dazu gehört, dass du die methodischen Hilfsmittel zweckmässig einsetzt.", "Vorbereitung laut Aufgebot: Reglement Basiswissen intensiv durcharbeiten, dazu die kantonalen Ergänzungen (LODUR → Info SGV)."], true)}
-    ${sec("Die Woche im Überblick", ["<b>Di:</b> KEIL, Lektionszuteilung (L 2), Fachlektionen 101–104", "<b>Mi:</b> Theorie «Wie lernt der Mensch?», Fachlektionen 105–109, Zuteilung 2. Staffel (L 3), Verhaltensübung «Grenchen LSZG / ICAO 1.0» um 19.00", "<b>Do:</b> Theorie «FBEHK für Ausbildungsoffiziere», Fachlektionen 201–205, «Stunde der Wahrheit», Kleideranprobe und Lektionsvorbereitung", "<b>Fr:</b> Fachlektionen 206–209, Theorie «Kursorganisation / Ausbilderplanung», Qualifikation 15.45, Schlussbesprechung, Entlassung 17.00"])}
-    ${sec("Theorieblöcke vorbereiten", ["<b>Wie lernt der Mensch?</b> Basiswissen Kap. 3 (Lernen und Kompetenzen, Planung und Durchführung, Feedback und Medien).", "<b>FBEHK für Ausbildungsoffiziere:</b> Feststellen, Beurteilen, Entscheiden, Handeln, Kontrollieren, der Führungsablauf (Basiswissen Kap. 2, Einsatzführung Kap. 3). Überlege dir, wie du die fünf Schritte als Ausbilder auf eine Lektion anwendest.", "<b>Kursorganisation / Ausbilderplanung:</b> Dazu passt Einsatzführung Kap. 5 (Ausbildung, Übungsvorbereitung, Besprechung).", "<b>Stunde der Wahrheit, Qualifikation:</b> Rückmeldung geben und annehmen, höchstens 3 Beurteilungskriterien (Kap. 3)."])}
-    <h3 class="zh">Lektion vorbereiten</h3><div class="chklist">${lc.map((c, i) => aoChkHtml("m" + i, esc(c))).join("")}</div>
+  const tab = (mod, k) => {
+    const z = ((CHS[mod] || {})[k] || { z: [] }).z, map = AO_JUMP[mod + k] || {};
+    return z.length ? `<div class="ztw"><table class="zt jmp">${z.map(([a, b]) => { const n = map[a] || k, r = rgNum(mod, n) || rgNum(mod, k); return `<tr${r ? ` data-m="${mod}" data-p="${r.page}"` : ""}><td>${esc(a)}</td><td>${esc(b)}</td></tr>`; }).join("")}</table></div>` : "";
+  };
+  app.innerHTML = `<section class="hero"><h1>Lektion halten</h1><p>Zeile antippen: das Reglement öffnet an der passenden Seite.</p></section>
     <h3 class="zh">FBEHK: Führungsablauf</h3>${tab("basis", "2")}${tab("einsatz", "3")}
-    <div class="row3"><button class="btn" data-o="cards:2">Lernkarten Kap. 2</button><button class="btn" data-o="quiz:2">Quiz Kap. 2</button></div>
-    <div class="row3"><button class="btn" data-o="cards:3:einsatz">Lernkarten Kap. 3</button><button class="btn" data-o="quiz:3:einsatz">Quiz Kap. 3</button></div>
     <h3 class="zh">Zahlen: Ausbildung (Basiswissen Kap. 3)</h3>${tab("basis", "3")}
-    <h3 class="zh">Zahlen: Ausbildung (Einsatzführung Kap. 5)</h3>${tab("einsatz", "5")}
-    <div class="row3"><button class="btn" data-o="cards:3">Lernkarten Kap. 3</button><button class="btn" data-o="quiz:3">Quiz Kap. 3</button></div>
-    <div class="row3"><button class="btn" data-o="cards:5:einsatz">Lernkarten Kap. 5</button><button class="btn" data-o="quiz:5:einsatz">Quiz Kap. 5</button></div>
-    <label class="fld"><span class="fl">Probelektion</span><span class="fh">Thema, Zeit, Ergebnis, was ich ändere</span><textarea class="ta" rows="4" data-n="probe" placeholder="Notizen …">${esc(AOS.notes.probe || "")}</textarea></label>`;
-  aoBind(app);
-  app.querySelectorAll("[data-o]").forEach(b => b.addEventListener("click", () => { const [tb, k, mod] = b.dataset.o.split(":"); aoOpen(tb, k, mod); }));
+    <h3 class="zh">Zahlen: Ausbildung (Einsatzführung Kap. 5)</h3>${tab("einsatz", "5")}`;
+  app.querySelectorAll("tr[data-p]").forEach(r => r.addEventListener("click", () => rgJump(r.dataset.m, +r.dataset.p, () => aoGo("meth"))));
 }
 
 /* ---------- Zahlen-Trainer ---------- */

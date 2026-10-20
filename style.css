@@ -427,3 +427,5 @@ html.zw mark { background:rgba(200,22,29,.18); }
 .lek.fach small{font-weight:400;font-size:.75rem}
 @media print{body.lekprint .lek.fach{font-size:11.5pt}}
 @media print{body.lekprint .lek.fach{font-family:Arial,Helvetica,sans-serif;font-size:10.5pt}body.lekprint .lek.fach li{margin-bottom:5px}body.lekprint .lek.fach h2{margin-top:12px}}
+
+.zt.jmp tr[data-p]{cursor:pointer}.zt.jmp tr[data-p]:active td{background:rgba(255,255,255,.07)}.zt.jmp tr[data-p] td:last-child:after{content:" ›";color:var(--accent,#dfae62)}
