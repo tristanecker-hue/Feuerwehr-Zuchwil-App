@@ -221,7 +221,7 @@ function aoBack() { const r = state.aoR || ""; if (!r) return start(); aoGo(r.in
 function aoGo(r) {
   state.aoR = r; state.from = null; state.direct = false; state.mod = null; state.view = r ? "ao-sub" : "ao"; backBtn.hidden = false;
   document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
-  const f = { "": aoHub, check: aoCheck, keil: aoKeil, lek: aoTopics, meth: aoMeth, zahl: aoZahl, prog: aoProg, kq: aoKq, bil: aoBil }[r];
+  const f = { "": aoHub, check: aoCheck, keil: aoKeil, lek: aoTopics, fach: aoFach, meth: aoMeth, zahl: aoZahl, prog: aoProg, kq: aoKq, bil: aoBil }[r];
   if (f) f(); else if (r.indexOf("lek:") === 0) aoTopic(r.slice(4)); else aoHub();
   window.scrollTo(0, 0);
 }
@@ -239,6 +239,7 @@ function aoHub() {
     ["keil", "Vorstellung", "KEIL", "Persönliche Vorstellung, 2–3 Minuten: Notizen und Stoppuhr", dK, AO_KEIL.length, dK + " von " + AO_KEIL.length + " Punkten notiert"],
     ["lek", "Fachthemen", "Lektionen", "Alle Kurs-Lektionen mit Lernkarten, Quiz und Reglement-Suche", dT, AO_T.length, dT + " von " + AO_T.length + " Themen sitzen"],
     ["kq", "Quiz", "Kurs-Quiz", "Fachfragen aus dem Basiswissen zu den Lektionen jedes Kurstags", 0, 0, ""],
+    ["fach", "Kursauftrag", "Fachlektionen", "Auftrag, Ziel und Rahmenbedingungen der Fachlektionen", 0, 0, ""],
     ["meth", "Methodik", "Lektion halten", "Aufbau, Beurteilung, Theorieblöcke und Probelektion", 0, 0, ""],
     ["zahl", "Training", "Zahlen-Trainer", "Wichtige Zahlen aus den Kurs-Kapiteln nachschlagen", 0, 0, ""],
     ["bil", "Methodik", "Erfolgsauswertung / Bilanz", "Formular 3.17.1 zum Ausfüllen, mit PDF-Export", 0, 0, ""],
@@ -328,6 +329,21 @@ function aoKeil() {
   const show = () => { out.textContent = String(Math.floor(sec / 60)).padStart(2, "0") + ":" + String(sec % 60).padStart(2, "0"); out.className = "ktime" + (sec > 180 ? " bad" : sec >= 120 ? " ok" : ""); };
   b.onclick = () => { if (iv) { clearInterval(iv); iv = null; b.textContent = "Weiter"; } else { iv = setInterval(() => { if (!document.body.contains(out)) return clearInterval(iv); sec++; show(); }, 1000); b.textContent = "Stopp"; } };
   r.onclick = () => { clearInterval(iv); iv = null; sec = 0; b.textContent = "Start"; show(); };
+}
+
+/* ---------- Fachlektionen (Ausbildungsauftrag, Version 28.09.2026) ---------- */
+const AO_FACH = [
+  ["Auftrag", ["Alle Teilnehmenden haben während des Ausbildungs- und Auswahlkurses zum Ausbildungsoffizier mindestens 2 Lektionen selber zu halten. Der zu trainierende Ausbildungsstoff wird in Form von schriftlichen Ausbildungsaufträgen abgegeben."]],
+  ["Ziel", ["Die Fachlektionen in Rettungsdienst und Brandbekämpfung sollen aufzeigen, ob die Anwärter/innen genügend Kenntnisse über das vorgegebene Fachthema besitzen. Weiter sollen sie mit ihrer Sozial- und Methodenkompetenz überzeugen, um Gruppen motivierend zu Ausbildungszielen zu führen."]],
+  ["Rahmenbedingungen", ["Aufbau der Lektionen gemäss Reglement Basiswissen Kapitel 3.9.", "Die Lektionsvorbereitung hat strukturiert zu erfolgen. Es ist ein persönlicher Merkzettel (Gestaltung Sache des Lektionshalters/in) zu erstellen.", "Die geleistete Arbeit ist durch den Lektionshalter/in zu beurteilen und gemäss dem Besprechungsablauf Reglement Basiswissen Kapitel 3.17 mit der Klasse zu bilanzieren.", "Es steht ein geeigneter Arbeitsplatz, inklusive allem Material (Materialliste) zur Verfügung. Dieser ist gegebenenfalls den persönlichen Ausbildungsbedürfnissen anzupassen.", "Hörerschaft der Fachlektionen sind <u>neu</u> eingeteilte AdF (Stufe BA 10 / FA 20).", "Die Lektionen werden am Kurs zugeteilt und vorbereitet."]],
+  ["Hinweis", ["Nebst der persönlichen Lektionsvorbereitung wird das fundierte Fachwissen aller Funktionsstufen geprüft. In der Rolle als Klassenlehrer/in wird primär die Funktion als Gruppenführer/in, oder Spezialist/in (z.B. MS-Maschinist / Einsatzleiter) wahrgenommen.", "Es wird eine sehr gute Vorbereitung in allen zu absolvierenden Lektionen erwartet, um die erlebten Situationen durch alle Teilnehmende fundiert zu analysieren, zu bewerten und persönlich zu reflektieren.", "Die Klassengrösse beträgt 7 – 9 Teilnehmende. Falls nötig werden die Klassen bei einem Minderbestand mit Hilfspersonal aufgefüllt, um realitätsnahe Verhältnisse zu schaffen."]]
+];
+function aoFach() {
+  app.innerHTML = `<section class="hero"><h1>Fachlektionen</h1><p>Der Ausbildungsauftrag zum Kurs: Was verlangt wird und wie du dich vorbereitest.</p></section>
+    <article class="lek fach"><div class="lh"><b>Ausbilderkurs 70<br>Ausbildungsoffizier</b><span class="ln"><b>Fachlektionen</b><br><small>Version: 28.09.2026</small></span></div>
+    ${AO_FACH.map(([h, l]) => `<h2>${h}</h2>` + (l.length === 1 ? `<p>${l[0]}</p>` : `<ul>${l.map(x => `<li>${x}</li>`).join("")}</ul>`)).join("")}</article>
+    <div class="row"><button class="btn" id="lekpr">Drucken / als PDF</button></div>`;
+  aoLekBind(app);
 }
 
 /* ---------- Lektionen ---------- */
