@@ -1,4 +1,4 @@
-const APP_VERSION = "1.82";
+const APP_VERSION = "1.83";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -881,7 +881,7 @@ async function lektionen(m, el) {
       if (a !== "del") { msg.textContent = f.cloud ? "Lade Datei …" : ""; }
       let file = null;
       if (a !== "del") { try { file = new File([f.cloud ? await FWZ.getLesson(f) : f.blob], f.name, { type: fileMime(f.name) }); msg.textContent = ""; } catch (err) { msg.textContent = err.message || "Datei konnte nicht geladen werden."; return; } }
-      if (a === "open") { const u = URL.createObjectURL(file); const w = window.open(u, "_blank"); if (!w) location.href = u; setTimeout(() => URL.revokeObjectURL(u), 60000); }
+      if (a === "open") { if (isWord(f.name)) aoPdfActs(file, msg).open(); else { const u = URL.createObjectURL(file); const w = window.open(u, "_blank"); if (!w) location.href = u; setTimeout(() => URL.revokeObjectURL(u), 60000); } }
       else if (a === "share") {
         try { if (navigator.canShare && navigator.canShare({ files: [file] })) await navigator.share({ files: [file], title: f.name }); else msg.textContent = "Teilen wird von diesem Gerät nicht unterstützt. Nutze «Öffnen» und dort das Teilen-Symbol."; }
         catch (err) { if (err && err.name !== "AbortError") msg.textContent = "Teilen nicht möglich."; }

@@ -298,7 +298,7 @@ function aoPdf(title, sub, blocks, fname) {
 }
 function aoPdfActs(file, msg) {
   return {
-    open() { const u = URL.createObjectURL(file); const w = window.open(u, "_blank"); if (!w) location.href = u; setTimeout(() => URL.revokeObjectURL(u), 60000); },
+    open() { const u = URL.createObjectURL(file); if (!/pdf/i.test(file.type)) { const a = document.createElement("a"); a.href = u; a.download = file.name; document.body.appendChild(a); a.click(); a.remove(); if (msg) msg.textContent = "Word-Datei «" + file.name + "» wird geladen. Falls nichts passiert: «Word teilen» wählen und in Word oder Dateien sichern."; setTimeout(() => URL.revokeObjectURL(u), 60000); return; } const w = window.open(u, "_blank"); if (!w) location.href = u; setTimeout(() => URL.revokeObjectURL(u), 60000); },
     async share() { try { if (navigator.canShare && navigator.canShare({ files: [file] })) await navigator.share({ files: [file], title: file.name }); else msg.textContent = "Teilen wird von diesem Gerät nicht unterstützt. Nutze «PDF öffnen» und dort das Teilen-Symbol."; } catch (e) { if (e && e.name !== "AbortError") msg.textContent = "Teilen nicht möglich."; } },
     print() { const u = URL.createObjectURL(file), fr = document.createElement("iframe"); fr.style.cssText = "position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0"; fr.src = u; document.body.appendChild(fr); fr.onload = () => { try { fr.contentWindow.focus(); fr.contentWindow.print(); } catch (e) { window.open(u, "_blank"); } setTimeout(() => { fr.remove(); URL.revokeObjectURL(u); }, 60000); }; msg.textContent = "Falls kein Druckfenster erscheint: «PDF öffnen» wählen und dort drucken."; }
   };
