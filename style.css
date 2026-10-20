@@ -414,3 +414,7 @@ html.zw mark { background:rgba(200,22,29,.18); }
 
 .vlsave { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
 .vlsave select { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; }
+
+.lesbar { border: 2px dashed var(--line); border-radius: 14px; padding: 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; transition: background .15s, border-color .15s; }
+.lesbar.drag { border-color: var(--red); background: rgba(200,22,29,.08); }
+.dzhint { color: var(--muted); font-size: .92rem; }

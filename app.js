@@ -1,4 +1,4 @@
-const APP_VERSION = "1.83";
+const APP_VERSION = "1.84";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -857,13 +857,13 @@ async function lektionen(m, el) {
   const c = chs.find(x => x.k === state.lc) || chs[0];
   const mine = files.filter(f => f.ch === c.k).sort((a, b) => b.added - a.added);
   el.innerHTML = `<div class="banner"><h2>Kapitel ${c.k} – ${esc(c.n)}</h2><p>Lektionen als PDF oder Word-Datei</p></div>
-    <div class="lesbar"><label class="btn primary lesup">Datei hinzufügen (PDF / Word)<input type="file" id="lfile" accept="application/pdf,.pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple hidden></label></div>
+    <div class="lesbar"><span class="dzhint">PDF- oder Word-Dateien hierher ziehen oder</span> <label class="btn primary lesup">Datei hinzufügen (PDF / Word)<input type="file" id="lfile" accept="application/pdf,.pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple hidden></label></div>
     <div id="lmsg" class="sinfo" role="status"></div>
     <div class="sres">${mine.length ? mine.map(f => `<div class="hit les" data-id="${f.id}"><h3>${esc(f.name)}${isWord(f.name) ? ' <span class="tag plain">Word</span>' : ""}</h3><p>${fmtSize(f.size)} · ${new Date(f.added).toLocaleDateString("de-CH")}${f.by ? " · von " + esc(f.by) : ""}</p>
       <div class="lesact"><button class="btn" data-a="open">${isWord(f.name) ? "Öffnen / Laden" : "Öffnen"}</button><button class="btn" data-a="share">Teilen</button>${isWord(f.name) ? "" : '<button class="btn" data-a="print">Drucken</button>'}<button class="btn ghost" data-a="del">Löschen</button></div></div>`).join("") : '<p class="sinfo">Noch keine Dateien in diesem Kapitel.</p>'}</div>`;
   const msg = document.getElementById("lmsg");
-  document.getElementById("lfile").addEventListener("change", async e => {
-    const list = [...e.target.files]; let ok = 0;
+  const upload = async list => {
+    let ok = 0;
     for (const f of list) {
       if (!/\.(pdf|docx?)$/i.test(f.name) && f.type !== "application/pdf") { msg.textContent = "«" + f.name + "» ist weder PDF noch Word-Datei."; continue; }
       try {
@@ -873,7 +873,15 @@ async function lektionen(m, el) {
       } catch (err) { msg.textContent = /permission|insufficient/i.test(err.message || "") ? "Keine Berechtigung (Firestore-Regeln fehlen)." : (err.message || "Speichern nicht möglich: " + f.name); }
     }
     if (ok) lesView();
-  });
+  };
+  document.getElementById("lfile").addEventListener("change", e => { const l = [...e.target.files]; e.target.value = ""; upload(l); });
+  const dz = el.querySelector(".lesbar");
+  if (dz) {
+    const on = v => dz.classList.toggle("drag", v), hasF = e => e.dataTransfer && [...(e.dataTransfer.types || [])].includes("Files");
+    ["dragenter", "dragover"].forEach(t => el.addEventListener(t, e => { if (hasF(e)) { e.preventDefault(); on(true); } }));
+    el.addEventListener("dragleave", e => { if (!el.contains(e.relatedTarget)) on(false); });
+    el.addEventListener("drop", e => { if (!hasF(e)) return; e.preventDefault(); on(false); upload([...e.dataTransfer.files]); });
+  }
   el.querySelectorAll(".les").forEach(row => {
     const f = mine.find(x => String(x.id) === row.dataset.id);
     row.querySelectorAll("button").forEach(b => b.addEventListener("click", async () => {
