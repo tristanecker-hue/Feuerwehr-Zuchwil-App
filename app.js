@@ -92,7 +92,7 @@ function start() {
       <div class="menu">
         <button class="mbtn main" id="t-reg">Reglemente</button>
         <button class="mbtn main" id="t-les">Lektionen</button>
-        <button class="mbtn main" id="t-ao">Lernen für den Ausbildungsoffizier</button>
+        <button class="mbtn main" id="t-ao">Ausbildungsoffizier</button>
       </div>
       <div class="bottom">
         <button class="wxcard" id="wxs" aria-label="Wetter Zuchwil"><span class="wxl">Wetter Zuchwil …</span></button>
