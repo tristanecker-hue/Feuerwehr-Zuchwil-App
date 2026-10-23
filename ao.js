@@ -612,16 +612,30 @@ function aoKq() {
 }
 
 /* ---------- Kursprogramm ---------- */
+function aoTs(d, t) { const m = d.match(/(\d+)\.(\d+)\./), h = t.split("."); return new Date(2026, +m[2] - 1, +m[1], +h[0], +h[1]).getTime(); }
 function aoProg() {
   app.innerHTML = `<section class="hero"><h1>Kursprogramm</h1><p>Tagesbefehl, Version 02.10.2026. Wähle deine Klasse; sie wird dir am Kursbeginn mitgeteilt.</p></section>${aoKlasse()}
-    ${AO_DAYS.map(day => `<h3 class="zh">${day.d}</h3><div class="ztw"><table class="zt sch">${day.rows.map(r => {
-      const c = r[2 + AOS.k];
-      if (!c) return `<tr class="mute"><td>${r[0]}${r[1] ? "–" + r[1] : ""}</td><td>${esc(r[2])}</td></tr>`;
-      if (c[0] === "=") return `<tr><td>${r[0]}–${r[1]}</td><td>${esc(c.slice(1))}</td></tr>`;
+    <div class="row"><button class="btn primary" id="pnow">Jetzt</button></div>
+    ${AO_DAYS.map(day => `<h3 class="zh">${day.d}</h3><div class="ztw"><table class="zt sch tl">${day.rows.map(r => {
+      const c = r[2 + AOS.k], t = `<tr class="tr" data-s="${aoTs(day.d, r[0])}" data-e="${aoTs(day.d, r[1])}">`, tm = `<td>${r[0]}${r[1] ? "–" + r[1] : ""}</td>`;
+      if (!c) return t.replace('class="tr"', 'class="tr mute"') + `${tm}<td>${esc(r[2])}</td></tr>`;
+      if (c[0] === "=") return `${t}${tm}<td>${esc(c.slice(1))}</td></tr>`;
       const [n, ap] = c.split("/");
-      return `<tr><td>${r[0]}–${r[1]}</td><td><b>L ${n}</b> ${esc(AO_L[n] || "")}<br><span class="mu">Arbeitsplatz ${ap}: ${esc(AO_AP[ap] || "")}</span></td></tr>`;
+      return `${t}${tm}<td><b>L ${n}</b> ${esc(AO_L[n] || "")}<br><span class="mu">Arbeitsplatz ${ap}: ${esc(AO_AP[ap] || "")}</span></td></tr>`;
     }).join("")}</table></div>`).join("")}`;
   aoBind(app);
+  const rows = [...app.querySelectorAll("tr.tr")];
+  let first = true;
+  const mark = scroll => {
+    if (!document.body.contains(app.querySelector(".tl"))) return;
+    const now = Date.now(); let cur = null, nxt = null;
+    rows.forEach(r => { const s0 = +r.dataset.s, e0 = +r.dataset.e; r.classList.toggle("past", e0 <= now); const on = s0 <= now && now < e0; r.classList.toggle("now", on); if (on) cur = r; else if (!nxt && s0 > now) nxt = r; });
+    rows.forEach(r => r.classList.toggle("nxt", !cur && r === nxt && +r.dataset.s - now < 36e5 * 14));
+    if (scroll) { const t = cur || nxt; if (t) { const y = t.getBoundingClientRect().top + window.scrollY - 140; window.scrollTo({ top: Math.max(0, y), behavior: first ? "auto" : "smooth" }); } }
+  };
+  setTimeout(() => { mark(true); first = false; }, 80); mark(false);
+  const iv = setInterval(() => { if (!document.body.contains(app.querySelector(".tl"))) return clearInterval(iv); mark(false); }, 30000);
+  document.getElementById("pnow").onclick = () => mark(true);
 }
 
 /* ---------- Erfolgsauswertung / Bilanz (Formular 3.17.1, Handmethode) ---------- */

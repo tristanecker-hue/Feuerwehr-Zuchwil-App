@@ -429,3 +429,13 @@ html.zw mark { background:rgba(200,22,29,.18); }
 @media print{body.lekprint .lek.fach{font-family:Arial,Helvetica,sans-serif;font-size:10.5pt}body.lekprint .lek.fach li{margin-bottom:5px}body.lekprint .lek.fach h2{margin-top:12px}}
 
 .zt.jmp tr[data-p]{cursor:pointer}.zt.jmp tr[data-p]:active td{background:rgba(255,255,255,.07)}.zt.jmp tr[data-p] td:last-child:after{content:" ›";color:var(--accent,#dfae62)}
+
+/* Zeitleiste Kursprogramm */
+.zt.tl{border-collapse:separate;border-spacing:0}
+.zt.tl tr.tr td:first-child{border-left:3px solid var(--line,#2c3038);white-space:nowrap}
+.zt.tl tr.past td{opacity:.45}
+.zt.tl tr.now td{background:rgba(223,174,98,.16)}
+.zt.tl tr.now td:first-child{border-left-color:#dfae62;font-weight:700}
+.zt.tl tr.now td:first-child:before{content:"● ";color:#dfae62}
+.zt.tl tr.nxt td:first-child{border-left-color:#dfae62}
+.zt.tl tr.nxt td:first-child:after{content:" · als Nächstes";color:#dfae62;font-size:.8em}
