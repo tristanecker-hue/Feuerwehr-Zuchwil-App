@@ -459,3 +459,8 @@ html.zw mark { background:rgba(200,22,29,.18); }
 .cfgt th, .cfgt td { padding: 9px 8px; }
 .cfgt .cfgg th { position: sticky; left: 0; }
 .cfgt .cfgl { min-width: 118px; max-width: 118px; font-size: .9rem; }
+
+.gate { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; min-height: 80vh; text-align: center; }
+.gatelogo { width: min(70vw, 280px); border-radius: 18px; background: #fff; padding: 6px; }
+.gatemsg { color: var(--muted); max-width: 320px; margin: 0; }
+.gate .lgf { width: min(100%, 320px); }

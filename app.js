@@ -1,8 +1,8 @@
-const APP_VERSION = "1.92";
+const APP_VERSION = "1.93";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
-FWZ.onChange(() => { if (state.view === "les") lesView(); greetUpd(); });
+FWZ.onChange(() => { if (FWZ.enabled && !FWZ.user && state.view !== "gate" && typeof gateNeeded === "function" && gateNeeded()) { start(); return; } if (state.view === "les") lesView(); greetUpd(); });
 let state = { mod: null, tab: "cards", ch: null, cf: null, lc: null };
 let prog = {};
 try { prog = JSON.parse(localStorage.getItem("fwz-progress") || "{}"); } catch (e) { prog = {}; }
@@ -81,6 +81,7 @@ function greetUpd() {
   const L = document.querySelector(".landing"); if (L && L.dataset.tod !== tod) L.dataset.tod = tod;
 }
 function start() {
+  if (typeof gateNeeded === "function" && gateNeeded()) { gateView(); return; }
   state.mod = null; state.from = null; state.view = "start"; backBtn.hidden = true;
   document.body.classList.add("startpage"); document.querySelector(".top").hidden = true;
   app.innerHTML = `
@@ -97,6 +98,7 @@ function start() {
       <div class="bottom">
         <button class="wxcard" id="wxs" aria-label="Wetter Zuchwil"><span class="wxl">Wetter Zuchwil …</span></button>
         <div class="ver-foot" id="verf">V${APP_VERSION} · Logo antippen zum Aktualisieren</div>
+        ${FWZ.user ? '<button class="thm" id="outb">Abmelden (' + esc(FWZ.label()) + ")</button>" : ""}
         ${typeof cfgIsAdmin === "function" && cfgIsAdmin() ? '<button class="thm" id="setb">Einstellungen</button>' : ""}
         <button class="thm" id="thm">Design: ${document.documentElement.classList.contains("zw") ? "Zuchwil hell · auf Dunkel wechseln" : "Dunkel · auf Zuchwil hell wechseln"}</button>
       </div>
@@ -107,6 +109,7 @@ function start() {
   document.getElementById("logoup").onclick = appUpdate;
   document.getElementById("wxs").onclick = wxView; wxStrip();
   const sb = document.getElementById("setb"); if (sb) sb.onclick = settingsView;
+  const ob = document.getElementById("outb"); if (ob) ob.onclick = () => FWZ.logout().then(() => start());
   const tr = document.getElementById("t-reg"), tl = document.getElementById("t-les"), ta = document.getElementById("t-ao");
   if (tr) tr.onclick = home; if (tl) tl.onclick = () => { state.lc = null; lesView(); }; if (ta) ta.onclick = aoView;
   window.scrollTo(0, 0);
@@ -852,7 +855,7 @@ async function lektionen(m, el) {
     }).join("") + "</div>";
     const en = document.getElementById("eign"); if (en) en.textContent = files.length;
     el.querySelectorAll(".chtile").forEach(b => b.addEventListener("click", () => { state.lc = b.dataset.k; lesView(); window.scrollTo(0, 0); }));
-    const lgx = document.getElementById("lgx"); if (lgx) lgx.onclick = () => FWZ.logout().then(() => lesView());
+    const lgx = document.getElementById("lgx"); if (lgx) lgx.onclick = () => FWZ.logout().then(() => start());
     return;
   }
   const c = chs.find(x => x.k === state.lc) || chs[0];
@@ -911,6 +914,37 @@ async function lektionen(m, el) {
 }
 
 backBtn.addEventListener("click", () => { if (state.view === "les" && (state.lc === "vl" || state.lc === "vn")) { state.lc = "v"; lesView(); window.scrollTo(0, 0); return; } if (state.view === "sub" && !state.mod) { home(); return; } if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "gq" || state.view === "sgv" || state.view === "spick") { (state.sub ? subView(state.sub) : home()); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else (state.sub ? subView(state.sub) : home()); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) (state.sub ? subView(state.sub) : home()); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
+/* ---------- Anmeldepflicht ---------- */
+let gateOffline = false;
+function gateNeeded() { return !!FWZ.enabled && !FWZ.user && !gateOffline; }
+function gateView() {
+  state.mod = null; state.from = null; state.view = "gate"; backBtn.hidden = true;
+  document.body.classList.add("startpage"); document.querySelector(".top").hidden = true;
+  app.innerHTML = '<section class="landing gate"><img class="gatelogo" src="logo.jpg" alt="Feuerwehr Zuchwil"><p class="gatemsg" id="gm">Anmeldung wird geprüft …</p></section>';
+  const form = () => {
+    app.innerHTML = `<section class="landing gate"><img class="gatelogo" src="logo.jpg" alt="Feuerwehr Zuchwil"><h1>Anmelden</h1><p class="gatemsg">Melde dich mit deinem Benutzernamen an. Die Zugangsdaten bekommst du vom Kader.</p>
+      <form id="lgf" class="lgf">
+        <input id="lgu" type="text" autocomplete="username" autocapitalize="none" placeholder="Benutzername" aria-label="Benutzername">
+        <input id="lgp" type="password" autocomplete="current-password" placeholder="Passwort" aria-label="Passwort">
+        <button class="btn primary" type="submit">Anmelden</button>
+        <div id="lgm" role="alert" class="sinfo"></div>
+      </form></section>`;
+    try { document.getElementById("lgu").value = localStorage.getItem("fwz-user") || ""; } catch (e) {}
+    document.getElementById("lgf").addEventListener("submit", async e => {
+      e.preventDefault(); const m = document.getElementById("lgm"), u = document.getElementById("lgu").value, p = document.getElementById("lgp").value;
+      if (!u.trim() || !p) return; m.textContent = "Anmelden …";
+      try { await FWZ.login(u, p); try { localStorage.setItem("fwz-user", u.trim()); } catch (e2) {} try { await aoSync(); } catch (e3) {} try { await cfgPull(); } catch (e4) {} state.view = "start"; start(); }
+      catch (err) { m.textContent = /Firebase konnte/.test(err.message) ? err.message : "Anmeldung fehlgeschlagen. Benutzername oder Passwort prüfen."; }
+    });
+  };
+  FWZ.init().then(() => { if (FWZ.user) start(); else form(); }).catch(() => {
+    let was = false; try { was = localStorage.getItem("fwz-sync") === "1"; } catch (e) {}
+    if (was) { gateOffline = true; start(); return; }
+    app.innerHTML = '<section class="landing gate"><img class="gatelogo" src="logo.jpg" alt="Feuerwehr Zuchwil"><p class="gatemsg">Keine Verbindung. Für die erste Anmeldung brauchst du Internet.</p><button class="btn primary" id="gre">Erneut versuchen</button></section>';
+    document.getElementById("gre").onclick = gateView;
+  });
+}
+
 /* ---------- Einstellungen: Sichtbarkeit und Benutzerverwaltung ---------- */
 const CFG_ITEMS = [
   ["Startseite", [["home:reg", "Reglemente"], ["home:les", "Lektionen"], ["home:ao", "Ausbildungsoffizier"]]],
@@ -918,7 +952,7 @@ const CFG_ITEMS = [
 ];
 const CFG_DEF = () => ({ v: 1, t: 0, admins: ["tristan"], def: { hide: ["ao:check", "ao:keil", "ao:lek", "ao:kq", "ao:prog"] }, users: {} });
 let CFG = (() => { try { const o = JSON.parse(localStorage.getItem("fwz-cfg") || "null"); if (o && o.def && o.users) return o; } catch (e) {} return CFG_DEF(); })();
-const cfgMe = () => (typeof FWZ !== "undefined" && FWZ.user) ? FWZ.label() : "";
+const cfgMe = () => (typeof FWZ !== "undefined" && FWZ.user) ? FWZ.label() : (gateOffline ? ((() => { try { return (localStorage.getItem("fwz-user") || "").trim().toLowerCase(); } catch (e) { return ""; } })()) : "");
 const cfgIsAdmin = () => !!cfgMe() && (CFG.admins || []).includes(cfgMe());
 function fwzHidden(id) { const me = cfgMe(), u = me && CFG.users[me]; return ((u ? u.hide : CFG.def.hide) || []).includes(id); }
 async function cfgPull() {
