@@ -374,9 +374,14 @@ function aoLekHtml(t, fest) {
     </article>
     <div class="row" id="lekpr" data-t="${esc(t.id)}" data-f="${fest ? 1 : 0}"><button class="btn" data-a="open">PDF öffnen</button><button class="btn" data-a="share">Teilen</button><button class="btn" data-a="print">Drucken</button></div><div class="sinfo" id="lekmsg" role="status"></div>`;
 }
+/* Dateiname wie bei den eigenen Lektionen: Lektion, Nr., Themennummer, Thema, Stufe */
+function aoLekName(m, t, stufe) {
+  const th = String(m.thema || t.t || ""), mm = /\((\d+(?:\.\d+)*)/.exec(th), title = th.replace(/\s*\([^)]*\)\s*$/, "").replace(/[\\/:*?"<>|]/g, "-").slice(0, 60).trim();
+  return ("Lektion L" + String(m.nr).replace(/^L/i, "") + (mm ? " " + mm[1] : "") + " " + title + " " + stufe).replace(/\s+/g, " ") + ".pdf";
+}
 function aoLekPdf(t, fest) {
   const m = (fest ? AO_LEKF : AO_LEK)[t.id], stufe = fest ? "Festigungsstufe" : "Anlernstufe";
-  return aoLekPdfBuild(Object.assign({}, m, { stufeTxt: stufe + " · Dauer: 50 Min.", fname: "Lektion " + m.nr + " " + stufe + ".pdf" }));
+  return aoLekPdfBuild(Object.assign({}, m, { stufeTxt: stufe + " · Dauer: 50 Min.", fname: aoLekName(m, t, stufe) }));
 }
 function aoLekPdfBuild(m) {
   const W = 595, H = 842, M = 40, TW = W - 2 * M, cv = document.createElement("canvas").getContext("2d");
