@@ -92,6 +92,8 @@ const FWZ = (function () {
     await db().collection("fwz_files").doc(f.id).delete();
     for (let i = 0; i < f.parts; i++) await db().collection("fwz_fparts").doc(f.id + "_" + i).delete();
   };
+  api.getCfg = async () => { const s = await db().collection("fwz_config").doc("main").get(); return s.exists ? JSON.parse(s.data().data) : null; };
+  api.setCfg = o => db().collection("fwz_config").doc("main").set({ data: JSON.stringify(o), admins: o.admins || [], t: o.t || Date.now() });
   if (!api.enabled) { api.init = () => Promise.reject(new Error("Synchronisation nicht eingerichtet.")); return api; }
   try { if (localStorage.getItem(FLAG) === "1" && navigator.onLine) init().catch(() => {}); } catch (e) {}
   return api;

@@ -439,3 +439,10 @@ html.zw mark { background:rgba(200,22,29,.18); }
 .zt.tl tr.now td:first-child:before{content:"● ";color:#dfae62}
 .zt.tl tr.nxt td:first-child{border-left-color:#dfae62}
 .zt.tl tr.nxt td:first-child:after{content:" · als Nächstes";color:#dfae62;font-size:.8em}
+
+.cfglist { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
+.cfgrow { display: flex; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; justify-content: space-between; }
+.cfgrow input[type=checkbox] { width: 22px; height: 22px; accent-color: var(--red); flex: none; }
+.cfgrow span { flex: 1; min-width: 0; }
+.cfgadd { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+.cfgadd input { flex: 1; min-width: 140px; padding: 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; }

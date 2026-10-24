@@ -1,4 +1,4 @@
-const APP_VERSION = "1.89";
+const APP_VERSION = "1.91";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -90,13 +90,14 @@ function start() {
       <button class="logobtn" id="logoup" aria-label="Nach Update suchen"><img src="logo.jpg" alt="Feuerwehr Zuchwil"></button>
       <div class="greet" id="greet"></div>
       <div class="menu">
-        <button class="mbtn main" id="t-reg">Reglemente</button>
-        <button class="mbtn main" id="t-les">Lektionen</button>
-        <button class="mbtn main" id="t-ao">Ausbildungsoffizier</button>
+        ${typeof fwzHidden === "function" && fwzHidden("home:reg") ? "" : '<button class="mbtn main" id="t-reg">Reglemente</button>'}
+        ${typeof fwzHidden === "function" && fwzHidden("home:les") ? "" : '<button class="mbtn main" id="t-les">Lektionen</button>'}
+        ${typeof fwzHidden === "function" && fwzHidden("home:ao") ? "" : '<button class="mbtn main" id="t-ao">Ausbildungsoffizier</button>'}
       </div>
       <div class="bottom">
         <button class="wxcard" id="wxs" aria-label="Wetter Zuchwil"><span class="wxl">Wetter Zuchwil …</span></button>
         <div class="ver-foot" id="verf">V${APP_VERSION} · Logo antippen zum Aktualisieren</div>
+        ${typeof cfgIsAdmin === "function" && cfgIsAdmin() ? '<button class="thm" id="setb">Einstellungen</button>' : ""}
         <button class="thm" id="thm">Design: ${document.documentElement.classList.contains("zw") ? "Zuchwil hell · auf Dunkel wechseln" : "Dunkel · auf Zuchwil hell wechseln"}</button>
       </div>
     </section>`;
@@ -105,9 +106,9 @@ function start() {
   clearInterval(window.clk); tick(); window.clk = setInterval(tick, 1000); var clk = window.clk;
   document.getElementById("logoup").onclick = appUpdate;
   document.getElementById("wxs").onclick = wxView; wxStrip();
-  document.getElementById("t-reg").onclick = home;
-  document.getElementById("t-les").onclick = () => { state.lc = null; lesView(); };
-  document.getElementById("t-ao").onclick = aoView;
+  const sb = document.getElementById("setb"); if (sb) sb.onclick = settingsView;
+  const tr = document.getElementById("t-reg"), tl = document.getElementById("t-les"), ta = document.getElementById("t-ao");
+  if (tr) tr.onclick = home; if (tl) tl.onclick = () => { state.lc = null; lesView(); }; if (ta) ta.onclick = aoView;
   window.scrollTo(0, 0);
 }
 
@@ -910,6 +911,61 @@ async function lektionen(m, el) {
 }
 
 backBtn.addEventListener("click", () => { if (state.view === "les" && (state.lc === "vl" || state.lc === "vn")) { state.lc = "v"; lesView(); window.scrollTo(0, 0); return; } if (state.view === "sub" && !state.mod) { home(); return; } if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "gq" || state.view === "sgv" || state.view === "spick") { (state.sub ? subView(state.sub) : home()); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else (state.sub ? subView(state.sub) : home()); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) (state.sub ? subView(state.sub) : home()); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
+/* ---------- Einstellungen: Sichtbarkeit und Benutzerverwaltung ---------- */
+const CFG_ITEMS = [
+  ["Startseite", [["home:reg", "Reglemente"], ["home:les", "Lektionen"], ["home:ao", "Ausbildungsoffizier"]]],
+  ["Ausbildungsoffizier", [["ao:check", "Checkliste"], ["ao:keil", "KEIL"], ["ao:lek", "Lektionen"], ["ao:kq", "Kurs-Quiz"], ["ao:fach", "Fachlektionen"], ["ao:meth", "Lektion halten"], ["ao:zahl", "Zahlen-Trainer"], ["ao:bil", "Erfolgsauswertung / Bilanz"], ["ao:prog", "Kursprogramm"], ["ao:regl", "Reglement Basiswissen"]]]
+];
+const CFG_DEF = () => ({ v: 1, t: 0, admins: ["tristan"], def: { hide: ["ao:check", "ao:keil", "ao:lek", "ao:kq", "ao:prog"] }, users: {} });
+let CFG = (() => { try { const o = JSON.parse(localStorage.getItem("fwz-cfg") || "null"); if (o && o.def && o.users) return o; } catch (e) {} return CFG_DEF(); })();
+const cfgMe = () => (typeof FWZ !== "undefined" && FWZ.user) ? FWZ.label() : "";
+const cfgIsAdmin = () => !!cfgMe() && (CFG.admins || []).includes(cfgMe());
+function fwzHidden(id) { const me = cfgMe(), u = me && CFG.users[me]; return ((u ? u.hide : CFG.def.hide) || []).includes(id); }
+async function cfgPull() {
+  if (typeof FWZ === "undefined" || !FWZ.user) return;
+  try {
+    const c = await FWZ.getCfg();
+    if (c && c.def && c.users && (c.t || 0) >= (CFG.t || 0)) { CFG = c; try { localStorage.setItem("fwz-cfg", JSON.stringify(CFG)); } catch (e) {} }
+  } catch (e) {}
+  if (state.view === "start") start(); else if (state.view === "ao") aoGo("");
+}
+if (typeof FWZ !== "undefined") { FWZ.onChange(cfgPull); if (FWZ.user) cfgPull(); }
+async function cfgSave(msg) {
+  CFG.t = Date.now(); try { localStorage.setItem("fwz-cfg", JSON.stringify(CFG)); } catch (e) {}
+  try { await FWZ.setCfg(CFG); if (msg) msg.textContent = "Gespeichert."; }
+  catch (e) { if (msg) msg.textContent = /permission|insufficient/i.test((e && e.message) || "") ? "Im Konto speichern nicht möglich (Firestore-Regeln für fwz_config fehlen). Nur auf diesem Gerät gespeichert." : "Im Konto speichern nicht möglich (offline?). Nur auf diesem Gerät gespeichert."; }
+}
+let cfgScope = "";
+function settingsView() {
+  state.mod = null; state.view = "set"; backBtn.hidden = false;
+  document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
+  const me = cfgMe(), adm = cfgIsAdmin(), users = Object.keys(CFG.users).sort();
+  if (cfgScope && !CFG.users[cfgScope]) cfgScope = "";
+  const hide = cfgScope ? CFG.users[cfgScope].hide : CFG.def.hide;
+  const who = !me ? '<div class="note">Nicht angemeldet. Melde dich als Administrator an, um die Einstellungen zu ändern. Angezeigt wird die Standard-Ansicht.</div>' : adm ? '<div class="note"><b>Administrator:</b> ' + esc(me) + '. Änderungen gelten für alle und werden im Konto gespeichert.</div>' : '<div class="note">Angemeldet als <b>' + esc(me) + '</b>. Nur Administratoren können die Sichtbarkeit ändern. Unten siehst du, was für dich freigeschaltet ist.</div>';
+  const dis = adm ? "" : " disabled";
+  app.innerHTML = `<section class="hero"><h1>Einstellungen</h1><p>Benutzerverwaltung: Wer kann was sehen.</p></section>${who}
+    <h3 class="zh">Ansicht für</h3>
+    <div class="chips fbar" role="group" aria-label="Benutzer"><button class="chip" data-sc="" aria-pressed="${!cfgScope}">Standard (alle)</button>${users.map(u => `<button class="chip" data-sc="${esc(u)}" aria-pressed="${cfgScope === u}">${esc(u)}</button>`).join("")}</div>
+    <div class="note">${cfgScope ? "Eigene Ansicht für <b>" + esc(cfgScope) + "</b>. Sie ersetzt für diesen Benutzer die Standard-Ansicht." : "Gilt für alle, die keine eigene Ansicht haben."}</div>
+    ${CFG_ITEMS.map(g => `<h3 class="zh">${g[0]}</h3><div class="cfglist">${g[1].map(i => `<label class="cfgrow"><input type="checkbox" data-id="${i[0]}"${hide.includes(i[0]) ? "" : " checked"}${dis}><span>${esc(i[1])}</span></label>`).join("")}</div>`).join("")}
+    ${adm ? `<h3 class="zh">Benutzer</h3><div class="cfgadd"><input id="cfgnu" placeholder="Anmeldename, z. B. max" autocomplete="off" autocapitalize="none"><button class="btn primary" id="cfgau">Eigene Ansicht anlegen</button></div>
+      ${cfgScope ? '<button class="btn ghost" id="cfgdu">Eigene Ansicht von «' + esc(cfgScope) + '» entfernen</button>' : ""}
+      <h3 class="zh">Administratoren</h3><div class="cfglist">${(CFG.admins || []).map(a => `<div class="cfgrow"><span>${esc(a)}</span>${(CFG.admins.length > 1 && a !== me) ? `<button class="btn ghost" data-da="${esc(a)}">Entfernen</button>` : ""}</div>`).join("")}</div>
+      <div class="cfgadd"><input id="cfgna" placeholder="Anmeldename" autocomplete="off" autocapitalize="none"><button class="btn" id="cfgaa">Administrator hinzufügen</button></div>` : ""}
+    <div id="cfgmsg" class="sinfo" role="status"></div>
+    <p class="foot">Die Zugänge (Name und Passwort) werden in Firebase unter Authentication angelegt. Hier legst du fest, was ein Name in der App sieht. Ausgeblendete Kacheln sind weg, aber keine Zugriffssperre: Dateien und Lektionen schützt die Datenbank.</p>`;
+  const msg = document.getElementById("cfgmsg"), nm = s => (s || "").trim().toLowerCase().replace(/@.*$/, "").replace(/[^a-z0-9._-]/g, "");
+  app.querySelectorAll("[data-sc]").forEach(b => b.onclick = () => { cfgScope = b.dataset.sc; settingsView(); });
+  if (!adm) return;
+  app.querySelectorAll("[data-id]").forEach(c => c.onchange = () => { const l = (cfgScope ? CFG.users[cfgScope] : CFG.def); l.hide = l.hide.filter(x => x !== c.dataset.id); if (!c.checked) l.hide.push(c.dataset.id); cfgSave(msg); });
+  document.getElementById("cfgau").onclick = () => { const n = nm(document.getElementById("cfgnu").value); if (!n) { msg.textContent = "Bitte einen Anmeldenamen eingeben."; return; } if (!CFG.users[n]) CFG.users[n] = { hide: CFG.def.hide.slice() }; cfgScope = n; cfgSave(msg).then(settingsView); };
+  const du = document.getElementById("cfgdu"); if (du) du.onclick = () => { delete CFG.users[cfgScope]; cfgScope = ""; cfgSave(msg).then(settingsView); };
+  document.getElementById("cfgaa").onclick = () => { const n = nm(document.getElementById("cfgna").value); if (!n) { msg.textContent = "Bitte einen Anmeldenamen eingeben."; return; } if (!CFG.admins.includes(n)) CFG.admins.push(n); cfgSave(msg).then(settingsView); };
+  app.querySelectorAll("[data-da]").forEach(b => b.onclick = () => { CFG.admins = CFG.admins.filter(x => x !== b.dataset.da); cfgSave(msg).then(settingsView); });
+  window.scrollTo(0, 0);
+}
+
 start();
 
 if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {

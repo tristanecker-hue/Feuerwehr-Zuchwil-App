@@ -246,6 +246,7 @@ function aoHub() {
     ["prog", "Tagesbefehl", "Kursprogramm", "Dienstag bis Freitag, nach Klasse 1 oder 2", 0, 0, ""],
     ["regl", "Nachschlagen", "Reglement Basiswissen", "Das ganze Reglement im PDF öffnen", 0, 0, ""]
   ];
+  if (typeof fwzHidden === "function") for (let i = tiles.length - 1; i >= 0; i--) if (fwzHidden("ao:" + tiles[i][0])) tiles.splice(i, 1);
   app.innerHTML = `<section class="hero"><h1>Ausbildungsoffizier</h1><p>Ku 70 · Di 20. bis Fr 23.10.2026 · Feuerwehr Grenchen. ${cnt}</p></section>
     <div class="menu rgmenu aomenu">${tiles.map(t => `<button class="mbtn main pdfbtn aotile" data-r="${t[0]}"><span>${t[2]}</span><small>${t[6] || t[3]}</small></button>`).join("")}</div>
     <p class="foot">Quellen: Kursaufgebot 70/26/1 und Tagesbefehl (Version 02.10.2026). Massgebend sind die Unterlagen des SGV und die Anweisungen im Kurs. Fachinhalte stehen im Reglement Basiswissen (FKS).</p>`;
