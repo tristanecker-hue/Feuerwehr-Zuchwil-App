@@ -63,6 +63,7 @@ const FWZ = (function () {
     }
     return new Blob(bytes, { type: "application/pdf" });
   };
+  api.renameLesson = (f, name) => db().collection("fwz_lessons").doc(f.id).update({ name });
   api.delLesson = async f => {
     await db().collection("fwz_lessons").doc(f.id).delete();
     for (let i = 0; i < f.parts; i++) await db().collection("fwz_parts").doc(f.id + "_" + i).delete();

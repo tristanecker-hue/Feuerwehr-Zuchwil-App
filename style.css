@@ -470,3 +470,5 @@ html.zw #gear:not(.onhome) { background: rgba(255,255,255,.16); border-color: rg
 body.hasgear .top .wrap { padding-right: 54px; }
 body.hasgear .top .brand { font-size: 1rem; letter-spacing: .05em; white-space: nowrap; }
 #gear { width: 40px; height: 40px; top: calc(env(safe-area-inset-top, 0px) + 10px); right: 10px; }
+.lesren { flex: 1 1 140px; min-width: 0; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; }
+.lesext { align-self: center; color: var(--muted); }

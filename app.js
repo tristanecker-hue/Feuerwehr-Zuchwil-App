@@ -1,4 +1,4 @@
-const APP_VERSION = "1.97";
+const APP_VERSION = "1.98";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -821,7 +821,8 @@ const LDB = {
   },
   all() { return this.tx("readonly", s => s.getAll()); },
   add(rec) { return this.tx("readwrite", s => s.add(rec)); },
-  del(id) { return this.tx("readwrite", s => s.delete(id)); }
+  del(id) { return this.tx("readwrite", s => s.delete(id)); },
+  async rename(id, name) { const r = await this.tx("readonly", s => s.get(id)); r.name = name; return this.tx("readwrite", s => s.put(r)); }
 };
 const VMOD = { id: "vorlagen", chs: [{ k: "v", n: "Vorlagen Feuerwehr Zuchwil" }], sections: [] };
 function chaptersOf(m) {
@@ -858,7 +859,7 @@ async function lektionen(m, el) {
     <div class="lesbar"><span class="dzhint">PDF- oder Word-Dateien hierher ziehen oder</span> <label class="btn primary lesup">Datei hinzufügen (PDF / Word)<input type="file" id="lfile" accept="application/pdf,.pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple hidden></label></div>
     <div id="lmsg" class="sinfo" role="status"></div>
     <div class="sres">${mine.length ? mine.map(f => `<div class="hit les" data-id="${f.id}"><h3>${esc(f.name)}${isWord(f.name) ? ' <span class="tag plain">Word</span>' : ""}</h3><p>${fmtSize(f.size)} · ${new Date(f.added).toLocaleDateString("de-CH")}${f.by ? " · von " + esc(f.by) : ""}</p>
-      <div class="lesact"><button class="btn" data-a="open">${isWord(f.name) ? "Öffnen / Laden" : "Öffnen"}</button><button class="btn" data-a="share">Teilen</button>${isWord(f.name) ? "" : '<button class="btn" data-a="print">Drucken</button>'}<button class="btn ghost" data-a="del">Löschen</button></div></div>`).join("") : '<p class="sinfo">Noch keine Dateien in diesem Kapitel.</p>'}</div>`;
+      <div class="lesact"><button class="btn" data-a="open">${isWord(f.name) ? "Öffnen / Laden" : "Öffnen"}</button><button class="btn" data-a="share">Teilen</button>${isWord(f.name) ? "" : '<button class="btn" data-a="print">Drucken</button>'}<button class="btn" data-a="ren">Umbenennen</button><button class="btn ghost" data-a="del">Löschen</button></div></div>`).join("") : '<p class="sinfo">Noch keine Dateien in diesem Kapitel.</p>'}</div>`;
   const msg = document.getElementById("lmsg");
   const upload = async list => {
     let ok = 0;
@@ -884,6 +885,15 @@ async function lektionen(m, el) {
     const f = mine.find(x => String(x.id) === row.dataset.id);
     row.querySelectorAll("button").forEach(b => b.addEventListener("click", async () => {
       const a = b.dataset.a;
+      if (a === "ren") {
+        const act = row.querySelector(".lesact"), m0 = /(\.[A-Za-z0-9]{1,5})$/.exec(f.name), ext = m0 ? m0[1] : "", base = ext ? f.name.slice(0, -ext.length) : f.name, old = act.innerHTML;
+        act.innerHTML = `<input class="lesren" type="text" value="${esc(base)}" aria-label="Neuer Name" maxlength="120"><span class="lesext">${esc(ext)}</span><button class="btn primary" data-r="ok">Speichern</button><button class="btn ghost" data-r="no">Abbrechen</button>`;
+        const inp = act.querySelector("input"); inp.focus(); inp.select();
+        const go = async () => { const n = inp.value.replace(/[\\/:*?"<>|\n]/g, " ").trim(); if (!n) { msg.textContent = "Bitte einen Namen eingeben."; return; } try { if (f.cloud) await FWZ.renameLesson(f, n + ext); else await LDB.rename(f.id, n + ext); lesView(); } catch (err) { msg.textContent = "Umbenennen nicht möglich."; } };
+        act.querySelector('[data-r="ok"]').onclick = go; act.querySelector('[data-r="no"]').onclick = lesView;
+        inp.onkeydown = e => { if (e.key === "Enter") go(); else if (e.key === "Escape") lesView(); };
+        return;
+      }
       if (a !== "del") { msg.textContent = f.cloud ? "Lade Datei …" : ""; }
       let file = null;
       if (a !== "del") { try { file = new File([f.cloud ? await FWZ.getLesson(f) : f.blob], f.name, { type: fileMime(f.name) }); msg.textContent = ""; } catch (err) { msg.textContent = err.message || "Datei konnte nicht geladen werden."; return; } }
