@@ -1,4 +1,4 @@
-const APP_VERSION = "1.95";
+const APP_VERSION = "1.97";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -98,16 +98,12 @@ function start() {
       <div class="bottom">
         <button class="wxcard" id="wxs" aria-label="Wetter Zuchwil"><span class="wxl">Wetter Zuchwil …</span></button>
         <div class="ver-foot" id="verf">V${APP_VERSION} · Logo antippen zum Aktualisieren</div>
-        ${FWZ.user ? '<button class="thm" id="outb">Abmelden (' + esc(FWZ.label()) + ")</button>" : ""}
-        <button class="thm" id="thm">Design: ${document.documentElement.classList.contains("zw") ? "Zuchwil hell · auf Dunkel wechseln" : "Dunkel · auf Zuchwil hell wechseln"}</button>
       </div>
     </section>`;
-  document.getElementById("thm").onclick = () => { const h = document.documentElement.classList, z = h.toggle("zw"); try { localStorage.setItem("fwz-theme", z ? "zw" : "dark"); } catch (e) {} const m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = z ? "#c8161d" : "#121419"; document.getElementById("thm").textContent = z ? "Design: Zuchwil hell · auf Dunkel wechseln" : "Design: Dunkel · auf Zuchwil hell wechseln"; };
   const tick = () => { const c = document.getElementById("clock"); if (!c) return clearInterval(clk); c.textContent = new Date().toLocaleTimeString("de-CH", { hour12: false }); const dt = document.getElementById("date"); if (dt) dt.textContent = new Date().toLocaleDateString("de-CH", { weekday: "long", day: "numeric", month: "long", year: "numeric" }); greetUpd(); };
   clearInterval(window.clk); tick(); window.clk = setInterval(tick, 1000); var clk = window.clk;
   document.getElementById("logoup").onclick = appUpdate;
   document.getElementById("wxs").onclick = wxView; wxStrip();
-  const ob = document.getElementById("outb"); if (ob) ob.onclick = () => FWZ.logout().then(() => start());
   const tr = document.getElementById("t-reg"), tl = document.getElementById("t-les"), ta = document.getElementById("t-ao");
   if (tr) tr.onclick = home; if (tl) tl.onclick = () => { state.lc = null; lesView(); }; if (ta) ta.onclick = aoView;
   window.scrollTo(0, 0);
@@ -977,16 +973,23 @@ function settingsView() {
   const cols = [{ k: "", n: "Alle", hide: CFG.def.hide }].concat(users.map(u => ({ k: u, n: u, hide: CFG.users[u].hide })));
   const head = cols.map(c => `<th>${esc(c.n)}${adm && c.k ? `<button class="cfgx" data-du="${esc(c.k)}" aria-label="Benutzer ${esc(c.n)} entfernen" title="Benutzer entfernen">×</button>` : ""}</th>`).join("");
   const rows = CFG_ITEMS.map(g => `<tr class="cfgg"><th colspan="${cols.length + 1}">${g[0]}</th></tr>` + g[1].map(i => `<tr><td class="cfgl">${esc(i[1])}</td>${cols.map(c => `<td><input type="checkbox" data-id="${i[0]}" data-u="${esc(c.k)}" aria-label="${esc(i[1])} für ${esc(c.n)}"${c.hide.includes(i[0]) ? "" : " checked"}${dis}></td>`).join("")}</tr>`).join("")).join("");
+  const outHtml = FWZ.user ? `<h3 class="zh">Konto</h3><div class="cfgadd"><button class="btn" id="outb">Abmelden (${esc(FWZ.label())})</button></div>` : "";
+  const zwOn = document.documentElement.classList.contains("zw");
+  const thmHtml = `<h3 class="zh">Darstellung</h3><div class="cfgadd"><button class="btn thm" id="thm">Design: ${zwOn ? "Zuchwil hell · auf Dunkel wechseln" : "Dunkel · auf Zuchwil hell wechseln"}</button></div>`;
+  const thmBind = () => { const tb = document.getElementById("thm"); if (tb) tb.onclick = () => { const h = document.documentElement.classList, z = h.toggle("zw"); try { localStorage.setItem("fwz-theme", z ? "zw" : "dark"); } catch (e) {} const m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = z ? "#c8161d" : "#121419"; tb.textContent = z ? "Design: Zuchwil hell · auf Dunkel wechseln" : "Design: Dunkel · auf Zuchwil hell wechseln"; }; };
+  const outBind = () => { thmBind(); const ob = document.getElementById("outb"); if (ob) ob.onclick = () => FWZ.logout().then(() => start()); };
+  if (!adm) { app.innerHTML = `<section class="hero"><h1>Einstellungen</h1><p>${me ? "Angemeldet als " + esc(me) + "." : "Nicht angemeldet."}</p></section>${thmHtml}${outHtml}`; outBind(); window.scrollTo(0, 0); return; }
   app.innerHTML = `<section class="hero"><h1>Einstellungen</h1><p>Benutzerverwaltung: Wer kann was sehen.</p></section>${who}
     <div class="cfgtw"><table class="cfgt"><thead><tr><th></th>${head}</tr></thead><tbody>${rows}</tbody></table></div>
     <p class="foot">Spalte «Alle» gilt für jeden Benutzer ohne eigene Spalte.</p>
     ${adm ? `<h3 class="zh">Benutzer hinzufügen</h3><div class="cfgadd"><input id="cfgnu" placeholder="Anmeldename, z. B. max" autocomplete="off" autocapitalize="none"><button class="btn primary" id="cfgau">Hinzufügen</button></div>
       <h3 class="zh">Administratoren</h3><div class="cfglist">${(CFG.admins || []).map(a => `<div class="cfgrow"><span>${esc(a)}</span>${(CFG.admins.length > 1 && a !== me) ? `<button class="btn ghost" data-da="${esc(a)}">Entfernen</button>` : ""}</div>`).join("")}</div>
       <div class="cfgadd"><input id="cfgna" placeholder="Anmeldename" autocomplete="off" autocapitalize="none"><button class="btn" id="cfgaa">Administrator hinzufügen</button></div>` : ""}
+    ${thmHtml}${outHtml}
     <div id="cfgmsg" class="sinfo" role="status"></div>
     <p class="foot">Die Zugänge (Name und Passwort) werden in Firebase unter Authentication angelegt. Hier legst du fest, was ein Name in der App sieht. Ausgeblendete Kacheln sind weg, aber keine Zugriffssperre: Dateien und Lektionen schützt die Datenbank.</p>`;
   const msg = document.getElementById("cfgmsg"), nm = s => (s || "").trim().toLowerCase().replace(/@.*$/, "").replace(/[^a-z0-9._-]/g, "");
-  if (!adm) return;
+  outBind();
   app.querySelectorAll("input[data-id]").forEach(c => c.onchange = () => { const l = c.dataset.u ? CFG.users[c.dataset.u] : CFG.def; l.hide = l.hide.filter(x => x !== c.dataset.id); if (!c.checked) l.hide.push(c.dataset.id); cfgSave(msg); });
   app.querySelectorAll("[data-du]").forEach(b => b.onclick = () => { if (!b.dataset.c) { b.dataset.c = 1; b.textContent = "Entfernen?"; b.classList.add("sure"); return; } delete CFG.users[b.dataset.du]; cfgSave(msg).then(settingsView); });
   document.getElementById("cfgau").onclick = () => { const n = nm(document.getElementById("cfgnu").value); if (!n) { msg.textContent = "Bitte einen Anmeldenamen eingeben."; return; } if (!CFG.users[n]) CFG.users[n] = { hide: CFG.def.hide.slice() }; cfgSave(msg).then(settingsView); };
@@ -995,13 +998,13 @@ function settingsView() {
   window.scrollTo(0, 0);
 }
 
-/* Zahnrad oben rechts: nur für Administratoren */
+/* Zahnrad oben rechts: für alle Angemeldeten (Nicht-Admins sehen nur Abmelden) */
 (() => {
   const b = document.createElement("button"); b.id = "gear"; b.type = "button"; b.hidden = true; b.setAttribute("aria-label", "Einstellungen"); b.title = "Einstellungen";
   b.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5h0a1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
   b.onclick = () => { try { rgClose(); } catch (e) {} settingsView(); };
   document.body.appendChild(b);
-  const upd = () => { b.hidden = !(typeof cfgIsAdmin === "function" && cfgIsAdmin()) || state.view === "gate" || state.view === "set"; b.classList.toggle("onhome", state.view === "start"); document.body.classList.toggle("hasgear", !b.hidden); };
+  const upd = () => { b.hidden = !(typeof cfgMe === "function" && cfgMe()) || state.view === "gate" || state.view === "set"; b.classList.toggle("onhome", state.view === "start"); document.body.classList.toggle("hasgear", !b.hidden); };
   new MutationObserver(upd).observe(app, { childList: true });
   FWZ.onChange(upd); upd();
 })();
