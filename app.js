@@ -1,4 +1,4 @@
-const APP_VERSION = "1.99";
+const APP_VERSION = "1.100";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -1064,13 +1064,14 @@ function vlCheck() { const d = parseInt(VL.dauer, 10), sm = vlSum(); if (!VL.dau
 const vlToc = () => (window.RGTOC || {}).basis || [];
 function vlFind(t) { t = String(t || "").trim().toLowerCase(); if (!t) return null; return vlToc().find(x => x[1].toLowerCase() === t) || null; }
 const vlRef = x => "Basiswissen " + x[0] + " " + x[1] + " (S. " + x[2] + ")";
+function vlThemaTxt() { if (lesNum(VL.nr || "")) return ""; const x = vlFind(VL.thema); return x ? " " + (x[0] + " " + x[1]).replace(/[\\/:*?"<>|]/g, "-").slice(0, 60).trim() : ""; }
 function vlQuelle() { const x = vlFind(VL.thema); return x ? "Basiswissen, Kap. " + x[0] + " " + x[1] + " (S. " + x[2] + ")" : ""; }
 function vlImg(file) { return new Promise((res, rej) => { const u = URL.createObjectURL(file), im = new Image(); im.onload = () => { const k = Math.min(1, 700 / Math.max(im.width, im.height)), w = Math.round(im.width * k), h = Math.round(im.height * k), c = document.createElement("canvas"); c.width = w; c.height = h; const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, w, h); g.drawImage(im, 0, 0, w, h); URL.revokeObjectURL(u); res({ w, h, d: c.toDataURL("image/jpeg", 0.72) }); }; im.onerror = () => { URL.revokeObjectURL(u); rej(new Error("Bild konnte nicht gelesen werden.")); }; im.src = u; }); }
 function vlModel() {
   return { nr: VL.nr || "", kopf1: "Ausbildung", kopf2: VL.kopf2 || "", version: VL.ver || "", thema: VL.thema || "", ziele: vlLines(VL.ziele), krit: vlLines(VL.krit), material: vlLines(VL.mat), fahrzeuge: vlLines(VL.fz),
     stufeTxt: VL.stufe + "   |   Dauer: " + vlDauer() + " Min.", logo: VLN ? null : (window.LOGOJ || null),
     quelle: vlQuelle(), c2: 135,
-    ablauf: VL.ab.map(r => ({ min: r.min || "", titel: r.t || "", zeilen: vlLines(r.z), hinweis: (r.h || "").trim(), imgs: (r.im || []).map(u => ({ w: u.w, h: u.h, b64: u.d.split(",")[1] })) })), fname: "Lektion " + (VLN ? "Neutral " : "") + (VL.nr || "").replace(/[\\/:*?"<>|]/g, "-") + " " + VL.stufe + ".pdf" };
+    ablauf: VL.ab.map(r => ({ min: r.min || "", titel: r.t || "", zeilen: vlLines(r.z), hinweis: (r.h || "").trim(), imgs: (r.im || []).map(u => ({ w: u.w, h: u.h, b64: u.d.split(",")[1] })) })), fname: "Lektion " + (VLN ? "Neutral " : "") + (VL.nr || "").replace(/[\\/:*?"<>|]/g, "-") + vlThemaTxt() + " " + VL.stufe + ".pdf" };
 }
 const CRC_T = (() => { const t = []; for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
 function crc32(u) { let c = 0xFFFFFFFF; for (let i = 0; i < u.length; i++) c = CRC_T[(c ^ u[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
