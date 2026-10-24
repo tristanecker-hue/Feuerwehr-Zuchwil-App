@@ -1,4 +1,4 @@
-const APP_VERSION = "1.101";
+const APP_VERSION = "1.102";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -845,6 +845,12 @@ function lesSec(secs, n) {
   return best;
 }
 function lesGroups(m, c, mine, rowH) {
+  if (m.id === "vorlagen") {
+    state.lfo = state.lfo || new Set();
+    const fz = mine.filter(f => /Zuchwil/i.test(f.name)), ne = mine.filter(f => !/Zuchwil/i.test(f.name));
+    const fold = (key, title, fs) => `<details class="lfold" data-k="${key}"${state.lfo.has(key) ? " open" : ""}><summary><span>${title}</span><b>${fs.length}</b></summary><div class="lfbody">${fs.sort((a, b) => a.name.localeCompare(b.name, "de", { numeric: true })).map(rowH).join("") || '<p class="sinfo">Noch keine Dateien.</p>'}</div></details>`;
+    return fold("v:fwz", "Feuerwehr Zuchwil Vorlagen", fz) + fold("v:neu", "Neutrale Vorlagen", ne);
+  }
   const secs = c.g ? m.sections.filter(x => x.g === c.g) : [];
   if (!secs.length) return mine.map(rowH).join("");
   const grp = new Map(), other = [];
