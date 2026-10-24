@@ -1,4 +1,4 @@
-const APP_VERSION = "1.91";
+const APP_VERSION = "1.92";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -935,32 +935,28 @@ async function cfgSave(msg) {
   try { await FWZ.setCfg(CFG); if (msg) msg.textContent = "Gespeichert."; }
   catch (e) { if (msg) msg.textContent = /permission|insufficient/i.test((e && e.message) || "") ? "Im Konto speichern nicht möglich (Firestore-Regeln für fwz_config fehlen). Nur auf diesem Gerät gespeichert." : "Im Konto speichern nicht möglich (offline?). Nur auf diesem Gerät gespeichert."; }
 }
-let cfgScope = "";
 function settingsView() {
   state.mod = null; state.view = "set"; backBtn.hidden = false;
   document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
   const me = cfgMe(), adm = cfgIsAdmin(), users = Object.keys(CFG.users).sort();
-  if (cfgScope && !CFG.users[cfgScope]) cfgScope = "";
-  const hide = cfgScope ? CFG.users[cfgScope].hide : CFG.def.hide;
-  const who = !me ? '<div class="note">Nicht angemeldet. Melde dich als Administrator an, um die Einstellungen zu ändern. Angezeigt wird die Standard-Ansicht.</div>' : adm ? '<div class="note"><b>Administrator:</b> ' + esc(me) + '. Änderungen gelten für alle und werden im Konto gespeichert.</div>' : '<div class="note">Angemeldet als <b>' + esc(me) + '</b>. Nur Administratoren können die Sichtbarkeit ändern. Unten siehst du, was für dich freigeschaltet ist.</div>';
+  const who = !me ? '<div class="note">Nicht angemeldet. Melde dich als Administrator an, um die Einstellungen zu ändern. Angezeigt wird die Standard-Ansicht.</div>' : adm ? '<div class="note"><b>Administrator:</b> ' + esc(me) + '. Haken = sichtbar. Änderungen werden sofort im Konto gespeichert.</div>' : '<div class="note">Angemeldet als <b>' + esc(me) + '</b>. Nur Administratoren können die Sichtbarkeit ändern.</div>';
   const dis = adm ? "" : " disabled";
+  const cols = [{ k: "", n: "Alle", hide: CFG.def.hide }].concat(users.map(u => ({ k: u, n: u, hide: CFG.users[u].hide })));
+  const head = cols.map(c => `<th>${esc(c.n)}${adm && c.k ? `<button class="cfgx" data-du="${esc(c.k)}" aria-label="Benutzer ${esc(c.n)} entfernen" title="Benutzer entfernen">×</button>` : ""}</th>`).join("");
+  const rows = CFG_ITEMS.map(g => `<tr class="cfgg"><th colspan="${cols.length + 1}">${g[0]}</th></tr>` + g[1].map(i => `<tr><td class="cfgl">${esc(i[1])}</td>${cols.map(c => `<td><input type="checkbox" data-id="${i[0]}" data-u="${esc(c.k)}" aria-label="${esc(i[1])} für ${esc(c.n)}"${c.hide.includes(i[0]) ? "" : " checked"}${dis}></td>`).join("")}</tr>`).join("")).join("");
   app.innerHTML = `<section class="hero"><h1>Einstellungen</h1><p>Benutzerverwaltung: Wer kann was sehen.</p></section>${who}
-    <h3 class="zh">Ansicht für</h3>
-    <div class="chips fbar" role="group" aria-label="Benutzer"><button class="chip" data-sc="" aria-pressed="${!cfgScope}">Standard (alle)</button>${users.map(u => `<button class="chip" data-sc="${esc(u)}" aria-pressed="${cfgScope === u}">${esc(u)}</button>`).join("")}</div>
-    <div class="note">${cfgScope ? "Eigene Ansicht für <b>" + esc(cfgScope) + "</b>. Sie ersetzt für diesen Benutzer die Standard-Ansicht." : "Gilt für alle, die keine eigene Ansicht haben."}</div>
-    ${CFG_ITEMS.map(g => `<h3 class="zh">${g[0]}</h3><div class="cfglist">${g[1].map(i => `<label class="cfgrow"><input type="checkbox" data-id="${i[0]}"${hide.includes(i[0]) ? "" : " checked"}${dis}><span>${esc(i[1])}</span></label>`).join("")}</div>`).join("")}
-    ${adm ? `<h3 class="zh">Benutzer</h3><div class="cfgadd"><input id="cfgnu" placeholder="Anmeldename, z. B. max" autocomplete="off" autocapitalize="none"><button class="btn primary" id="cfgau">Eigene Ansicht anlegen</button></div>
-      ${cfgScope ? '<button class="btn ghost" id="cfgdu">Eigene Ansicht von «' + esc(cfgScope) + '» entfernen</button>' : ""}
+    <div class="cfgtw"><table class="cfgt"><thead><tr><th></th>${head}</tr></thead><tbody>${rows}</tbody></table></div>
+    <p class="foot">Spalte «Alle» gilt für jeden Benutzer ohne eigene Spalte.</p>
+    ${adm ? `<h3 class="zh">Benutzer hinzufügen</h3><div class="cfgadd"><input id="cfgnu" placeholder="Anmeldename, z. B. max" autocomplete="off" autocapitalize="none"><button class="btn primary" id="cfgau">Hinzufügen</button></div>
       <h3 class="zh">Administratoren</h3><div class="cfglist">${(CFG.admins || []).map(a => `<div class="cfgrow"><span>${esc(a)}</span>${(CFG.admins.length > 1 && a !== me) ? `<button class="btn ghost" data-da="${esc(a)}">Entfernen</button>` : ""}</div>`).join("")}</div>
       <div class="cfgadd"><input id="cfgna" placeholder="Anmeldename" autocomplete="off" autocapitalize="none"><button class="btn" id="cfgaa">Administrator hinzufügen</button></div>` : ""}
     <div id="cfgmsg" class="sinfo" role="status"></div>
     <p class="foot">Die Zugänge (Name und Passwort) werden in Firebase unter Authentication angelegt. Hier legst du fest, was ein Name in der App sieht. Ausgeblendete Kacheln sind weg, aber keine Zugriffssperre: Dateien und Lektionen schützt die Datenbank.</p>`;
   const msg = document.getElementById("cfgmsg"), nm = s => (s || "").trim().toLowerCase().replace(/@.*$/, "").replace(/[^a-z0-9._-]/g, "");
-  app.querySelectorAll("[data-sc]").forEach(b => b.onclick = () => { cfgScope = b.dataset.sc; settingsView(); });
   if (!adm) return;
-  app.querySelectorAll("[data-id]").forEach(c => c.onchange = () => { const l = (cfgScope ? CFG.users[cfgScope] : CFG.def); l.hide = l.hide.filter(x => x !== c.dataset.id); if (!c.checked) l.hide.push(c.dataset.id); cfgSave(msg); });
-  document.getElementById("cfgau").onclick = () => { const n = nm(document.getElementById("cfgnu").value); if (!n) { msg.textContent = "Bitte einen Anmeldenamen eingeben."; return; } if (!CFG.users[n]) CFG.users[n] = { hide: CFG.def.hide.slice() }; cfgScope = n; cfgSave(msg).then(settingsView); };
-  const du = document.getElementById("cfgdu"); if (du) du.onclick = () => { delete CFG.users[cfgScope]; cfgScope = ""; cfgSave(msg).then(settingsView); };
+  app.querySelectorAll("input[data-id]").forEach(c => c.onchange = () => { const l = c.dataset.u ? CFG.users[c.dataset.u] : CFG.def; l.hide = l.hide.filter(x => x !== c.dataset.id); if (!c.checked) l.hide.push(c.dataset.id); cfgSave(msg); });
+  app.querySelectorAll("[data-du]").forEach(b => b.onclick = () => { if (!b.dataset.c) { b.dataset.c = 1; b.textContent = "Entfernen?"; b.classList.add("sure"); return; } delete CFG.users[b.dataset.du]; cfgSave(msg).then(settingsView); });
+  document.getElementById("cfgau").onclick = () => { const n = nm(document.getElementById("cfgnu").value); if (!n) { msg.textContent = "Bitte einen Anmeldenamen eingeben."; return; } if (!CFG.users[n]) CFG.users[n] = { hide: CFG.def.hide.slice() }; cfgSave(msg).then(settingsView); };
   document.getElementById("cfgaa").onclick = () => { const n = nm(document.getElementById("cfgna").value); if (!n) { msg.textContent = "Bitte einen Anmeldenamen eingeben."; return; } if (!CFG.admins.includes(n)) CFG.admins.push(n); cfgSave(msg).then(settingsView); };
   app.querySelectorAll("[data-da]").forEach(b => b.onclick = () => { CFG.admins = CFG.admins.filter(x => x !== b.dataset.da); cfgSave(msg).then(settingsView); });
   window.scrollTo(0, 0);

@@ -446,3 +446,16 @@ html.zw mark { background:rgba(200,22,29,.18); }
 .cfgrow span { flex: 1; min-width: 0; }
 .cfgadd { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
 .cfgadd input { flex: 1; min-width: 140px; padding: 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; }
+
+.cfgtw { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+.cfgt { border-collapse: collapse; width: 100%; font-size: .95rem; }
+.cfgt th, .cfgt td { padding: 10px 12px; text-align: center; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.cfgt thead th { font-family: var(--font-display); text-transform: uppercase; letter-spacing: .05em; position: relative; }
+.cfgt .cfgl { text-align: left; position: sticky; left: 0; background: var(--surface); white-space: normal; min-width: 130px; }
+.cfgt .cfgg th { text-align: left; background: var(--bg); color: var(--muted); font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; }
+.cfgt input[type=checkbox] { width: 22px; height: 22px; accent-color: var(--red); }
+.cfgx { margin-left: 6px; border: 0; background: none; color: var(--muted); font-size: 1.1rem; cursor: pointer; }
+.cfgx.sure { color: var(--bad); font-size: .8rem; }
+.cfgt th, .cfgt td { padding: 9px 8px; }
+.cfgt .cfgg th { position: sticky; left: 0; }
+.cfgt .cfgl { min-width: 118px; max-width: 118px; font-size: .9rem; }
