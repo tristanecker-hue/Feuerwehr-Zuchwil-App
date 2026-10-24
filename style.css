@@ -481,3 +481,4 @@ body.hasgear .top .brand { font-size: 1rem; letter-spacing: .05em; white-space: 
 .lfold > summary b { background: var(--bg); border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; font-size: .85rem; color: var(--muted); }
 .lfbody { padding: 0 10px 10px; border-top: 1px solid var(--line); padding-top: 10px; }
 .lfbody .hit { margin-bottom: 10px; }
+.lfbody .vlink { margin-bottom: 10px; width: 100%; }

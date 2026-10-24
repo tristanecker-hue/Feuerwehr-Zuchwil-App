@@ -1,4 +1,4 @@
-const APP_VERSION = "1.102";
+const APP_VERSION = "1.103";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -773,7 +773,7 @@ function lesView() {
   const grp = (t, n, inner) => `<details class="lgrp"><summary><span>${t}</span><b>${n}</b></summary><div class="lgbody">${inner}</div></details>`;
   const mlHtml = ml && !state.lc ? grp("Musterlektionen (50 Min.)", nA + nF, '<h3 class="zh">Anlernstufe</h3>' + tiles(AO_LEK, "m") + (nF ? '<h3 class="zh">Festigungsstufe</h3>' + tiles(AO_LEKF, "f") : "")) : "";
   if (state.lc === "vl" || state.lc === "vn") { vorlageView(state.lc === "vn"); return; }
-  if (state.lc === "v") { app.innerHTML = '<section class="hero"><h1>Vorlagen</h1><p>Vorlagen der Feuerwehr Zuchwil (PDF / Word), für alle angemeldeten Mitglieder.</p></section><button class="lgrp vlink" id="vlt"><span>Vorlage Lektion (bearbeiten, PDF / Word)</span></button><button class="lgrp vlink" id="vln"><span>Lektion Vorlage Neutral (ohne Kopfzeile)</span></button><button class="lgrp vlink" id="vb1"><span>Feuerwehr Zuchwil leer (Word)</span></button><button class="lgrp vlink" id="vb2"><span>Neutral leer (Word)</span></button><div id="vbm" class="sinfo" role="status"></div><div id="body"></div>'; [["vb1", false], ["vb2", true]].forEach(([id, n]) => { document.getElementById(id).onclick = () => { const keep = VLN; VLN = n; try { aoPdfActs(vlDocx(true), document.getElementById("vbm")).open(); } catch (e) { document.getElementById("vbm").textContent = e.message || "Word-Datei konnte nicht erstellt werden."; } VLN = keep; }; }); document.getElementById("vlt").onclick = () => { state.lc = "vl"; lesView(); }; document.getElementById("vln").onclick = () => { state.lc = "vn"; lesView(); }; lektionen(VMOD, document.getElementById("body")); return; }
+  if (state.lc === "v") { app.innerHTML = '<section class="hero"><h1>Vorlagen</h1><p>Vorlagen der Feuerwehr Zuchwil (PDF / Word), für alle angemeldeten Mitglieder.</p></section><div id="vbm" class="sinfo" role="status"></div><div id="body"></div>'; lektionen(VMOD, document.getElementById("body")); return; }
   app.innerHTML = '<section class="hero"><h1>Lektionen</h1></section>' + loginBox + mlHtml + (state.lc ? '<div id="body"></div>' : '<button class="lgrp vlink" id="vlk"><span>Vorlagen Feuerwehr Zuchwil</span><b id="vn">…</b></button><details class="lgrp" id="eig"><summary><span>Eigene Lektionen (PDF / Word)</span><b id="eign">…</b></summary><div class="lgbody" id="body"></div></details>');
   const lgo0 = document.getElementById("lgo"); if (lgo0) lgo0.onclick = loginView;
   document.querySelectorAll("[data-m]").forEach(b => b.addEventListener("click", () => { state.lc = b.dataset.m; lesView(); window.scrollTo(0, 0); }));
@@ -833,6 +833,12 @@ function chaptersOf(m) {
 }
 function fmtSize(b) { return b > 1048576 ? (b / 1048576).toFixed(1).replace(".", ",") + " MB" : Math.max(1, Math.round(b / 1024)) + " KB"; }
 /* Lektionen nach Basiswissen-Thema in Ordnern: Kapitelnummer aus dem Dateinamen (z. B. 6.8) -> Abschnitt (z. B. «6.7 und 6.8 Wasserbezug und Leitungsbau») */
+const vlLk = (id, t) => `<button class="lgrp vlink" id="${id}"><span>${t}</span></button>`;
+function vlLinksBind() {
+  const g = id => document.getElementById(id); if (!g("vlt")) return;
+  [["vb1", false], ["vb2", true]].forEach(([id, n]) => { g(id).onclick = () => { const keep = VLN; VLN = n; try { aoPdfActs(vlDocx(true), g("vbm")).open(); } catch (e) { g("vbm").textContent = e.message || "Word-Datei konnte nicht erstellt werden."; } VLN = keep; }; });
+  g("vlt").onclick = () => { state.lc = "vl"; lesView(); }; g("vln").onclick = () => { state.lc = "vn"; lesView(); };
+}
 function lesNum(name) { const x = /(?:^|[^\d.])(\d{1,2}(?:\.\d{1,2}){1,3})(?![\d])/.exec(String(name).replace(/\.(pdf|docx?|PDF|DOCX?)$/, "").replace(/\bL\d+\b/g, " ")); return x ? x[1] : ""; }
 function lesCmp(a, b) { const x = a.split(".").map(Number), y = b.split(".").map(Number); for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] ?? -1) - (y[i] ?? -1); if (d) return d; } return 0; }
 function lesSec(secs, n) {
@@ -848,8 +854,8 @@ function lesGroups(m, c, mine, rowH) {
   if (m.id === "vorlagen") {
     state.lfo = state.lfo || new Set();
     const fz = mine.filter(f => /Zuchwil/i.test(f.name)), ne = mine.filter(f => !/Zuchwil/i.test(f.name));
-    const fold = (key, title, fs) => `<details class="lfold" data-k="${key}"${state.lfo.has(key) ? " open" : ""}><summary><span>${title}</span><b>${fs.length}</b></summary><div class="lfbody">${fs.sort((a, b) => a.name.localeCompare(b.name, "de", { numeric: true })).map(rowH).join("") || '<p class="sinfo">Noch keine Dateien.</p>'}</div></details>`;
-    return fold("v:fwz", "Feuerwehr Zuchwil Vorlagen", fz) + fold("v:neu", "Neutrale Vorlagen", ne);
+    const fold = (key, title, fs, links) => `<details class="lfold" data-k="${key}"${state.lfo.has(key) ? " open" : ""}><summary><span>${title}</span><b>${fs.length + 2}</b></summary><div class="lfbody">${links}${fs.sort((a, b) => a.name.localeCompare(b.name, "de", { numeric: true })).map(rowH).join("") || ""}</div></details>`;
+    return fold("v:fwz", "Feuerwehr Zuchwil Vorlagen", fz, vlLk("vlt", "Vorlage Lektion (bearbeiten, PDF / Word)") + vlLk("vb1", "Feuerwehr Zuchwil leer (Word)")) + fold("v:neu", "Neutrale Vorlagen", ne, vlLk("vln", "Lektion Vorlage Neutral (ohne Kopfzeile)") + vlLk("vb2", "Neutral leer (Word)"));
   }
   const secs = c.g ? m.sections.filter(x => x.g === c.g) : [];
   if (!secs.length) return mine.map(rowH).join("");
@@ -884,10 +890,11 @@ async function lektionen(m, el) {
   const mine = files.filter(f => f.ch === c.k).sort((a, b) => b.added - a.added);
   const rowH = f => `<div class="hit les" data-id="${f.id}"><h3>${esc(f.name)}${isWord(f.name) ? ' <span class="tag plain">Word</span>' : ""}</h3><p>${fmtSize(f.size)} · ${new Date(f.added).toLocaleDateString("de-CH")}${f.by ? " · von " + esc(f.by) : ""}</p>
       <div class="lesact"><button class="btn" data-a="open">${isWord(f.name) ? "Öffnen / Laden" : "Öffnen"}</button><button class="btn" data-a="share">Teilen</button>${isWord(f.name) ? "" : '<button class="btn" data-a="print">Drucken</button>'}<button class="btn" data-a="ren">Umbenennen</button><button class="btn ghost" data-a="del">Löschen</button></div></div>`;
-  el.innerHTML = `<div class="banner"><h2>Kapitel ${c.k} – ${esc(c.n)}</h2><p>Lektionen als PDF oder Word-Datei</p></div>
+  el.innerHTML = `<div class="banner"><h2>${m.id === "vorlagen" ? "Vorlagen" : "Kapitel " + c.k + " – " + esc(c.n)}</h2><p>${m.id === "vorlagen" ? "Vorlagen und Dateien als PDF oder Word" : "Lektionen als PDF oder Word-Datei"}</p></div>
     <div class="lesbar"><span class="dzhint">PDF- oder Word-Dateien hierher ziehen oder</span> <label class="btn primary lesup">Datei hinzufügen (PDF / Word)<input type="file" id="lfile" accept="application/pdf,.pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple hidden></label></div>
     <div id="lmsg" class="sinfo" role="status"></div>
-    <div class="sres">${mine.length ? lesGroups(m, c, mine, rowH) : '<p class="sinfo">Noch keine Dateien in diesem Kapitel.</p>'}</div>`;
+    <div class="sres">${mine.length || m.id === "vorlagen" ? lesGroups(m, c, mine, rowH) : '<p class="sinfo">Noch keine Dateien in diesem Kapitel.</p>'}</div>`;
+  if (m.id === "vorlagen") vlLinksBind();
   const msg = document.getElementById("lmsg");
   const upload = async list => {
     let ok = 0;
