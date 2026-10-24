@@ -1,4 +1,4 @@
-const APP_VERSION = "1.94";
+const APP_VERSION = "1.95";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -99,7 +99,6 @@ function start() {
         <button class="wxcard" id="wxs" aria-label="Wetter Zuchwil"><span class="wxl">Wetter Zuchwil …</span></button>
         <div class="ver-foot" id="verf">V${APP_VERSION} · Logo antippen zum Aktualisieren</div>
         ${FWZ.user ? '<button class="thm" id="outb">Abmelden (' + esc(FWZ.label()) + ")</button>" : ""}
-        ${typeof cfgIsAdmin === "function" && cfgIsAdmin() ? '<button class="thm" id="setb">Einstellungen</button>' : ""}
         <button class="thm" id="thm">Design: ${document.documentElement.classList.contains("zw") ? "Zuchwil hell · auf Dunkel wechseln" : "Dunkel · auf Zuchwil hell wechseln"}</button>
       </div>
     </section>`;
@@ -108,7 +107,6 @@ function start() {
   clearInterval(window.clk); tick(); window.clk = setInterval(tick, 1000); var clk = window.clk;
   document.getElementById("logoup").onclick = appUpdate;
   document.getElementById("wxs").onclick = wxView; wxStrip();
-  const sb = document.getElementById("setb"); if (sb) sb.onclick = settingsView;
   const ob = document.getElementById("outb"); if (ob) ob.onclick = () => FWZ.logout().then(() => start());
   const tr = document.getElementById("t-reg"), tl = document.getElementById("t-les"), ta = document.getElementById("t-ao");
   if (tr) tr.onclick = home; if (tl) tl.onclick = () => { state.lc = null; lesView(); }; if (ta) ta.onclick = aoView;
@@ -996,6 +994,17 @@ function settingsView() {
   app.querySelectorAll("[data-da]").forEach(b => b.onclick = () => { CFG.admins = CFG.admins.filter(x => x !== b.dataset.da); cfgSave(msg).then(settingsView); });
   window.scrollTo(0, 0);
 }
+
+/* Zahnrad oben rechts: nur für Administratoren */
+(() => {
+  const b = document.createElement("button"); b.id = "gear"; b.type = "button"; b.hidden = true; b.setAttribute("aria-label", "Einstellungen"); b.title = "Einstellungen";
+  b.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5h0a1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
+  b.onclick = () => { try { rgClose(); } catch (e) {} settingsView(); };
+  document.body.appendChild(b);
+  const upd = () => { b.hidden = !(typeof cfgIsAdmin === "function" && cfgIsAdmin()) || state.view === "gate" || state.view === "set"; b.classList.toggle("onhome", state.view === "start"); document.body.classList.toggle("hasgear", !b.hidden); };
+  new MutationObserver(upd).observe(app, { childList: true });
+  FWZ.onChange(upd); upd();
+})();
 
 start();
 

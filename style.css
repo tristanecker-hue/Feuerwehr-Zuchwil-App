@@ -464,3 +464,9 @@ html.zw mark { background:rgba(200,22,29,.18); }
 .gatelogo { width: min(70vw, 280px); border-radius: 18px; background: #fff; padding: 6px; }
 .gatemsg { color: var(--muted); max-width: 320px; margin: 0; }
 .gate .lgf { width: min(100%, 320px); }
+
+#gear { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 8px); right: 12px; z-index: 30; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--line); background: var(--surface); color: var(--ink); box-shadow: 0 2px 8px rgba(0,0,0,.18); padding: 0; }
+html.zw #gear:not(.onhome) { background: rgba(255,255,255,.16); border-color: rgba(255,255,255,.5); color: #fff; box-shadow: none; }
+body.hasgear .top .wrap { padding-right: 54px; }
+body.hasgear .top .brand { font-size: 1rem; letter-spacing: .05em; white-space: nowrap; }
+#gear { width: 40px; height: 40px; top: calc(env(safe-area-inset-top, 0px) + 10px); right: 10px; }
