@@ -1,4 +1,4 @@
-const APP_VERSION = "1.98";
+const APP_VERSION = "1.99";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -832,6 +832,27 @@ function chaptersOf(m) {
   return seen.map(g => ({ g, k: g.split(" ")[0], n: g.replace(/^\d+ /, "") }));
 }
 function fmtSize(b) { return b > 1048576 ? (b / 1048576).toFixed(1).replace(".", ",") + " MB" : Math.max(1, Math.round(b / 1024)) + " KB"; }
+/* Lektionen nach Basiswissen-Thema in Ordnern: Kapitelnummer aus dem Dateinamen (z. B. 6.8) -> Abschnitt (z. B. «6.7 und 6.8 Wasserbezug und Leitungsbau») */
+function lesNum(name) { const x = /(?:^|[^\d.])(\d{1,2}(?:\.\d{1,2}){1,3})(?![\d])/.exec(String(name).replace(/\.(pdf|docx?|PDF|DOCX?)$/, "").replace(/\bL\d+\b/g, " ")); return x ? x[1] : ""; }
+function lesCmp(a, b) { const x = a.split(".").map(Number), y = b.split(".").map(Number); for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] ?? -1) - (y[i] ?? -1); if (d) return d; } return 0; }
+function lesSec(secs, n) {
+  let best = null;
+  secs.forEach(sc => {
+    const t = String(sc.t || sc.title || sc.n || sc.name || ""), m = /^(\d+(?:\.\d+)*)(?: (?:und|bis) (\d+(?:\.\d+)*))?/.exec(t); if (!m) return;
+    const lo = m[1], hi = m[2] || m[1];
+    if (lesCmp(n, lo) >= 0 && (lesCmp(n, hi) <= 0 || n.startsWith(hi + "."))) { if (!best || lesCmp(lo, best.lo) > 0) best = { lo, t, sc }; }
+  });
+  return best;
+}
+function lesGroups(m, c, mine, rowH) {
+  const secs = c.g ? m.sections.filter(x => x.g === c.g) : [];
+  if (!secs.length) return mine.map(rowH).join("");
+  const grp = new Map(), other = [];
+  mine.forEach(f => { const b = lesSec(secs, lesNum(f.name)); if (b) { if (!grp.has(b.t)) grp.set(b.t, { lo: b.lo, t: b.t, fs: [] }); grp.get(b.t).fs.push(f); } else other.push(f); });
+  state.lfo = state.lfo || new Set();
+  const fold = (key, title, fs) => `<details class="lfold" data-k="${esc(key)}"${state.lfo.has(key) || fs.length === 0 ? " open" : ""}><summary><span>${esc(title)}</span><b>${fs.length}</b></summary><div class="lfbody">${fs.sort((a, b) => (/Festig/i.test(a.name) ? 1 : 0) - (/Festig/i.test(b.name) ? 1 : 0) || a.name.replace(/\.[^.]+$/, "").localeCompare(b.name.replace(/\.[^.]+$/, ""), "de", { numeric: true }) || (isWord(a.name) ? 1 : 0) - (isWord(b.name) ? 1 : 0)).map(rowH).join("")}</div></details>`;
+  return [...grp.values()].sort((a, b) => lesCmp(a.lo, b.lo)).map(g => fold(c.k + ":" + g.t, g.t, g.fs)).join("") + (other.length ? fold(c.k + ":_", "Weitere Dateien", other) : "");
+}
 async function lektionen(m, el) {
   const chs = chaptersOf(m);
   let files = [];
@@ -855,11 +876,12 @@ async function lektionen(m, el) {
   }
   const c = chs.find(x => x.k === state.lc) || chs[0];
   const mine = files.filter(f => f.ch === c.k).sort((a, b) => b.added - a.added);
+  const rowH = f => `<div class="hit les" data-id="${f.id}"><h3>${esc(f.name)}${isWord(f.name) ? ' <span class="tag plain">Word</span>' : ""}</h3><p>${fmtSize(f.size)} · ${new Date(f.added).toLocaleDateString("de-CH")}${f.by ? " · von " + esc(f.by) : ""}</p>
+      <div class="lesact"><button class="btn" data-a="open">${isWord(f.name) ? "Öffnen / Laden" : "Öffnen"}</button><button class="btn" data-a="share">Teilen</button>${isWord(f.name) ? "" : '<button class="btn" data-a="print">Drucken</button>'}<button class="btn" data-a="ren">Umbenennen</button><button class="btn ghost" data-a="del">Löschen</button></div></div>`;
   el.innerHTML = `<div class="banner"><h2>Kapitel ${c.k} – ${esc(c.n)}</h2><p>Lektionen als PDF oder Word-Datei</p></div>
     <div class="lesbar"><span class="dzhint">PDF- oder Word-Dateien hierher ziehen oder</span> <label class="btn primary lesup">Datei hinzufügen (PDF / Word)<input type="file" id="lfile" accept="application/pdf,.pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple hidden></label></div>
     <div id="lmsg" class="sinfo" role="status"></div>
-    <div class="sres">${mine.length ? mine.map(f => `<div class="hit les" data-id="${f.id}"><h3>${esc(f.name)}${isWord(f.name) ? ' <span class="tag plain">Word</span>' : ""}</h3><p>${fmtSize(f.size)} · ${new Date(f.added).toLocaleDateString("de-CH")}${f.by ? " · von " + esc(f.by) : ""}</p>
-      <div class="lesact"><button class="btn" data-a="open">${isWord(f.name) ? "Öffnen / Laden" : "Öffnen"}</button><button class="btn" data-a="share">Teilen</button>${isWord(f.name) ? "" : '<button class="btn" data-a="print">Drucken</button>'}<button class="btn" data-a="ren">Umbenennen</button><button class="btn ghost" data-a="del">Löschen</button></div></div>`).join("") : '<p class="sinfo">Noch keine Dateien in diesem Kapitel.</p>'}</div>`;
+    <div class="sres">${mine.length ? lesGroups(m, c, mine, rowH) : '<p class="sinfo">Noch keine Dateien in diesem Kapitel.</p>'}</div>`;
   const msg = document.getElementById("lmsg");
   const upload = async list => {
     let ok = 0;
@@ -881,6 +903,7 @@ async function lektionen(m, el) {
     el.addEventListener("dragleave", e => { if (!el.contains(e.relatedTarget)) on(false); });
     el.addEventListener("drop", e => { if (!hasF(e)) return; e.preventDefault(); on(false); upload([...e.dataTransfer.files]); });
   }
+  el.querySelectorAll(".lfold").forEach(d => d.addEventListener("toggle", () => { if (d.open) state.lfo.add(d.dataset.k); else state.lfo.delete(d.dataset.k); }));
   el.querySelectorAll(".les").forEach(row => {
     const f = mine.find(x => String(x.id) === row.dataset.id);
     row.querySelectorAll("button").forEach(b => b.addEventListener("click", async () => {
