@@ -33,7 +33,8 @@ const FWZ = (function () {
   api.login = async (name, pw) => {
     await init();
     name = name.trim().toLowerCase();
-    await firebase.auth().signInWithEmailAndPassword(name.includes("@") ? name : name + "@" + DOMAIN, pw);
+    if (name.includes("@")) await firebase.auth().signInWithEmailAndPassword(name, pw);
+    else { try { await firebase.auth().signInWithEmailAndPassword(name + "@" + DOMAIN, pw); } catch (e) { if (!/user-not-found|invalid-credential|invalid-login/.test((e && e.code) || "")) throw e; await firebase.auth().signInWithEmailAndPassword(name + "@feuerwehr-zuchwil.ch", pw); } }
     try { localStorage.setItem(FLAG, "1"); } catch (e) {}
   };
   api.logout = async () => { try { await firebase.auth().signOut(); } catch (e) {} try { localStorage.removeItem(FLAG); } catch (e) {} api.user = null; emit(); };

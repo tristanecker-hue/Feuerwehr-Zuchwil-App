@@ -1,4 +1,4 @@
-const APP_VERSION = "1.93";
+const APP_VERSION = "1.94";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -951,7 +951,8 @@ const CFG_ITEMS = [
   ["Ausbildungsoffizier", [["ao:check", "Checkliste"], ["ao:keil", "KEIL"], ["ao:lek", "Lektionen"], ["ao:kq", "Kurs-Quiz"], ["ao:fach", "Fachlektionen"], ["ao:meth", "Lektion halten"], ["ao:zahl", "Zahlen-Trainer"], ["ao:bil", "Erfolgsauswertung / Bilanz"], ["ao:prog", "Kursprogramm"], ["ao:regl", "Reglement Basiswissen"]]]
 ];
 const CFG_DEF = () => ({ v: 1, t: 0, admins: ["tristan"], def: { hide: ["ao:check", "ao:keil", "ao:lek", "ao:kq", "ao:prog"] }, users: {} });
-let CFG = (() => { try { const o = JSON.parse(localStorage.getItem("fwz-cfg") || "null"); if (o && o.def && o.users) return o; } catch (e) {} return CFG_DEF(); })();
+let CFG = (() => { let c = null; try { const o = JSON.parse(localStorage.getItem("fwz-cfg") || "null"); if (o && o.def && o.users) c = o; } catch (e) {} return cfgSeed(c || CFG_DEF()); })();
+function cfgSeed(c) { if (!c.seed) { ["admin", "feuerwehr", "daniele", "marin", "tristan"].forEach(n => { if (!c.users[n]) c.users[n] = { hide: c.def.hide.slice() }; }); c.seed = 1; } return c; }
 const cfgMe = () => (typeof FWZ !== "undefined" && FWZ.user) ? FWZ.label() : (gateOffline ? ((() => { try { return (localStorage.getItem("fwz-user") || "").trim().toLowerCase(); } catch (e) { return ""; } })()) : "");
 const cfgIsAdmin = () => !!cfgMe() && (CFG.admins || []).includes(cfgMe());
 function fwzHidden(id) { const me = cfgMe(), u = me && CFG.users[me]; return ((u ? u.hide : CFG.def.hide) || []).includes(id); }
@@ -959,7 +960,7 @@ async function cfgPull() {
   if (typeof FWZ === "undefined" || !FWZ.user) return;
   try {
     const c = await FWZ.getCfg();
-    if (c && c.def && c.users && (c.t || 0) >= (CFG.t || 0)) { CFG = c; try { localStorage.setItem("fwz-cfg", JSON.stringify(CFG)); } catch (e) {} }
+    if (c && c.def && c.users && (c.t || 0) >= (CFG.t || 0)) { CFG = cfgSeed(c); try { localStorage.setItem("fwz-cfg", JSON.stringify(CFG)); } catch (e) {} }
   } catch (e) {}
   if (state.view === "start") start(); else if (state.view === "ao") aoGo("");
 }
