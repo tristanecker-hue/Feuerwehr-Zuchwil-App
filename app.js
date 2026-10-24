@@ -1,4 +1,4 @@
-const APP_VERSION = "1.103";
+const APP_VERSION = "1.104";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -888,8 +888,8 @@ async function lektionen(m, el) {
   }
   const c = chs.find(x => x.k === state.lc) || chs[0];
   const mine = files.filter(f => f.ch === c.k).sort((a, b) => b.added - a.added);
-  const rowH = f => `<div class="hit les" data-id="${f.id}"><h3>${esc(f.name)}${isWord(f.name) ? ' <span class="tag plain">Word</span>' : ""}</h3><p>${fmtSize(f.size)} · ${new Date(f.added).toLocaleDateString("de-CH")}${f.by ? " · von " + esc(f.by) : ""}</p>
-      <div class="lesact"><button class="btn" data-a="open">${isWord(f.name) ? "Öffnen / Laden" : "Öffnen"}</button><button class="btn" data-a="share">Teilen</button>${isWord(f.name) ? "" : '<button class="btn" data-a="print">Drucken</button>'}<button class="btn" data-a="ren">Umbenennen</button><button class="btn ghost" data-a="del">Löschen</button></div></div>`;
+  const rowH = f => `<details class="hit les lfile" data-id="${f.id}"${state.lfo && state.lfo.has("f:" + f.id) ? " open" : ""}><summary><h3>${esc(f.name)}${isWord(f.name) ? ' <span class="tag plain">Word</span>' : ""}</h3></summary><p>${fmtSize(f.size)} · ${new Date(f.added).toLocaleDateString("de-CH")}${f.by ? " · von " + esc(f.by) : ""}</p>
+      <div class="lesact"><button class="btn" data-a="open">${isWord(f.name) ? "Öffnen / Laden" : "Öffnen"}</button><button class="btn" data-a="share">Teilen</button>${isWord(f.name) ? "" : '<button class="btn" data-a="print">Drucken</button>'}<button class="btn" data-a="ren">Umbenennen</button><button class="btn ghost" data-a="del">Löschen</button></div></details>`;
   el.innerHTML = `<div class="banner"><h2>${m.id === "vorlagen" ? "Vorlagen" : "Kapitel " + c.k + " – " + esc(c.n)}</h2><p>${m.id === "vorlagen" ? "Vorlagen und Dateien als PDF oder Word" : "Lektionen als PDF oder Word-Datei"}</p></div>
     <div class="lesbar"><span class="dzhint">PDF- oder Word-Dateien hierher ziehen oder</span> <label class="btn primary lesup">Datei hinzufügen (PDF / Word)<input type="file" id="lfile" accept="application/pdf,.pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple hidden></label></div>
     <div id="lmsg" class="sinfo" role="status"></div>
@@ -917,6 +917,8 @@ async function lektionen(m, el) {
     el.addEventListener("drop", e => { if (!hasF(e)) return; e.preventDefault(); on(false); upload([...e.dataTransfer.files]); });
   }
   el.querySelectorAll(".lfold").forEach(d => d.addEventListener("toggle", () => { if (d.open) state.lfo.add(d.dataset.k); else state.lfo.delete(d.dataset.k); }));
+  state.lfo = state.lfo || new Set();
+  el.querySelectorAll(".lfile").forEach(d => d.addEventListener("toggle", () => { const k = "f:" + d.dataset.id; if (d.open) state.lfo.add(k); else state.lfo.delete(k); }));
   el.querySelectorAll(".les").forEach(row => {
     const f = mine.find(x => String(x.id) === row.dataset.id);
     row.querySelectorAll("button").forEach(b => b.addEventListener("click", async () => {

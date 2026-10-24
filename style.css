@@ -482,3 +482,9 @@ body.hasgear .top .brand { font-size: 1rem; letter-spacing: .05em; white-space: 
 .lfbody { padding: 0 10px 10px; border-top: 1px solid var(--line); padding-top: 10px; }
 .lfbody .hit { margin-bottom: 10px; }
 .lfbody .vlink { margin-bottom: 10px; width: 100%; }
+.lfile > summary { list-style: none; cursor: pointer; display: flex; align-items: flex-start; gap: 8px; }
+.lfile > summary::-webkit-details-marker { display: none; }
+.lfile > summary::before { content: "\25B8"; color: var(--muted); margin-top: 2px; transition: transform .15s; }
+.lfile[open] > summary::before { transform: rotate(90deg); }
+.lfile > summary h3 { margin: 0; flex: 1; min-width: 0; }
+.lfile > p { margin: 8px 0 0 22px; }
