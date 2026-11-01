@@ -94,7 +94,7 @@ function gmLoesch(el) {
 const GM_BK = [["Holz", "A"], ["Papier", "A"], ["Kohle", "A"], ["Stroh", "A"], ["Benzin", "B"], ["Heizöl", "B"], ["Lack", "B"], ["Alkohol", "B"], ["Erdgas", "C"], ["Propan", "C"], ["Methan", "C"], ["Acetylen", "C"], ["Magnesium", "D"], ["Aluminiumstaub", "D"], ["Lithium", "D"], ["Natrium", "D"], ["Frittieröl", "F"], ["Bratfett", "F"], ["Speiseöl in der Pfanne", "F"]];
 const GM_BKN = { A: "feste Stoffe", B: "flüssige Stoffe", C: "Gase", D: "Metalle", F: "Speisefette und -öle" };
 function gmKlassen(el) {
-  const qs = gmShuffle(GM_BK).slice(0, 10); let i = 0, pts = 0, streak = 0;
+  const qs = gmShuffle(Object.keys(GM_BKN).flatMap(k => gmShuffle(GM_BK.filter(x => x[1] === k)).slice(0, 2))); let i = 0, pts = 0, streak = 0;
   const show = () => {
     if (i >= qs.length) { const bst = gmGet("klassen", 0), nb = pts > bst; if (nb) gmSet("klassen", pts); return gmEnd(el, "Fertig!", [pts + " Punkte von " + qs.length * 10, nb ? "Neuer Rekord!" : "Rekord: " + bst], () => gamesStart("klassen")); }
     el.innerHTML = `<div class="gmbar"><span>Frage ${i + 1} / ${qs.length}</span><span>Punkte: ${pts}</span></div><div class="bkq"><small>Brandklasse von</small><b>${esc(qs[i][0])}</b></div>
