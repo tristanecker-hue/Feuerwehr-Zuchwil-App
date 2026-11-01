@@ -546,3 +546,4 @@ body.hasgear .top .brand { font-size: 1rem; letter-spacing: .05em; white-space: 
 .keys { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
 .key { padding: 10px 0; border: 2px solid var(--line); border-radius: 10px; background: var(--surface); font-weight: 700; min-width: 0; }
 .key:disabled { opacity: .85; }
+.fcv { display: block; margin: 0 auto; max-width: 100%; border-radius: 14px; border: 2px solid var(--line); touch-action: manipulation; user-select: none; -webkit-user-select: none; }

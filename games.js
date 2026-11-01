@@ -4,7 +4,8 @@ const GM_GAMES = [
   ["loesch", "Feuer löschen", "Tippe die Flammen aus, bevor das Haus brennt"],
   ["klassen", "Brandklassen-Blitz", "Welche Brandklasse hat der Stoff?"],
   ["rohr", "Leitungsbau", "Dreh die Rohre: Wasser vom Hydranten zum Strahlrohr"],
-  ["wort", "Feuer-Wörter", "Rate das Feuerwehr-Wort Buchstabe für Buchstabe"]
+  ["wort", "Feuer-Wörter", "Rate das Feuerwehr-Wort Buchstabe für Buchstabe"],
+  ["fahrt", "Einsatzfahrt", "Weiche dem Verkehr aus und komm schnell zum Brand"]
 ];
 const gmGet = (k, d) => { try { const v = localStorage.getItem("fwz-gm-" + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } };
 const gmSet = (k, v) => { try { localStorage.setItem("fwz-gm-" + k, JSON.stringify(v)); } catch (e) {} };
@@ -18,8 +19,8 @@ function gamesView() {
   document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
   app.innerHTML = `<section class="hero"><h1>Feuerwehr Spiele</h1><p>Kleine Spiele für zwischendurch. Alles rund ums Feuerwehr.</p></section>
     <div class="gmgrid">${GM_GAMES.map(g => `<button class="gmtile" data-g="${g[0]}"><span class="gmic">${GM_ICON[g[0]]}</span><span class="gmtx"><b>${g[1]}</b><small>${g[2]}</small><em id="gb-${g[0]}"></em></span></button>`).join("")}</div>`;
-  const best = { memory: gmGet("memory", 0), loesch: gmGet("loesch", 0), klassen: gmGet("klassen", 0), rohr: gmGet("rohr", 0), wort: gmGet("wort", 0) };
-  const txt = { memory: v => v ? "Bestzeit " + v + " s" : "", loesch: v => v ? "Rekord " + v + " Punkte" : "", klassen: v => v ? "Rekord " + v + " Punkte" : "", rohr: v => v ? "Bestzeit " + v + " s" : "", wort: v => v ? "Rekord " + v + " Wörter" : "" };
+  const best = { memory: gmGet("memory", 0), loesch: gmGet("loesch", 0), klassen: gmGet("klassen", 0), rohr: gmGet("rohr", 0), wort: gmGet("wort", 0), fahrt: gmGet("fahrt", 0) };
+  const txt = { memory: v => v ? "Bestzeit " + v + " s" : "", loesch: v => v ? "Rekord " + v + " Punkte" : "", klassen: v => v ? "Rekord " + v + " Punkte" : "", rohr: v => v ? "Bestzeit " + v + " s" : "", wort: v => v ? "Rekord " + v + " Wörter" : "", fahrt: v => v ? "Rekord " + v + " m" : "" };
   Object.keys(best).forEach(k => { const e = document.getElementById("gb-" + k); if (e) e.textContent = txt[k](best[k]); });
   app.querySelectorAll(".gmtile").forEach(b => b.onclick = () => gamesStart(b.dataset.g));
   window.scrollTo(0, 0);
@@ -29,11 +30,12 @@ const GM_ICON = {
   loesch: '<svg viewBox="0 0 48 48" width="40" height="40" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><path d="M24 5c3 7 11 10 11 20a11 11 0 0 1-22 0c0-5 3-7 4-11 3 2 4 4 4 6 3-4 3-9 3-15z" fill="currentColor"/></svg>',
   klassen: '<svg viewBox="0 0 48 48" width="40" height="40" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><circle cx="24" cy="24" r="18"/><path d="M16 32l8-18 8 18M19 27h10"/></svg>',
   rohr: '<svg viewBox="0 0 48 48" width="40" height="40" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14h14v20h22"/><circle cx="6" cy="14" r="1" /><circle cx="42" cy="34" r="1"/></svg>',
+  fahrt: '<svg viewBox="0 0 48 48" width="40" height="40" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><rect x="4" y="18" width="30" height="16" rx="3"/><path d="M34 22h6l4 6v6H34z"/><circle cx="14" cy="36" r="4" fill="currentColor"/><circle cx="36" cy="36" r="4" fill="currentColor"/><path d="M12 14h6M15 11v6"/></svg>',
   wort: '<svg viewBox="0 0 48 48" width="40" height="40" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 40h32M14 40V12h20M24 12v6"/><circle cx="24" cy="23" r="4"/><path d="M24 27v8M18 31h12"/></svg>'
 };
 function gamesStart(id) {
   gmStop(); state.gm = id; backBtn.hidden = false;
-  const f = { memory: gmMemory, loesch: gmLoesch, klassen: gmKlassen, rohr: gmRohr, wort: gmWort }[id];
+  const f = { memory: gmMemory, loesch: gmLoesch, klassen: gmKlassen, rohr: gmRohr, wort: gmWort, fahrt: gmFahrt }[id];
   const g = GM_GAMES.find(x => x[0] === id);
   app.innerHTML = `<section class="hero"><h1>${g[1]}</h1><p>${g[2]}</p></section><div id="gmbody" class="gmbody"></div>`;
   f(document.getElementById("gmbody")); window.scrollTo(0, 0);
@@ -157,4 +159,41 @@ function gmWort(el) {
     el.querySelectorAll(".key").forEach(b => b.onclick = () => { used.add(b.dataset.k); if (!w.includes(b.dataset.k)) miss++; render(); });
   };
   render();
+}
+
+/* ----- 6. Einsatzfahrt: dem Verkehr ausweichen ----- */
+function gmFahrt(el) {
+  const W = Math.min(360, el.clientWidth || 360), H = Math.round(W * 1.45), L = 3, LW = W / L;
+  el.innerHTML = `<div class="gmbar"><span id="fm">0 m</span><span id="fl">Tempo 1</span><span id="fb">Tropfen: 0</span></div><canvas id="fc" width="${W}" height="${H}" class="fcv" aria-label="Spielfeld"></canvas><p class="foot">Tippe links oder rechts (oder wische), um die Spur zu wechseln. Sammle Wassertropfen, weiche den Autos aus.</p>`;
+  const cv = document.getElementById("fc"), g = cv.getContext("2d"); cv.style.width = W + "px";
+  let lane = 1, tx = lane * LW + LW / 2, x = tx, dist = 0, v = 150, obs = [], drops = 0, nxt = .6, tt = 0, dead = false, last = performance.now(), stripe = 0;
+  const cols = ["#3a7bd5", "#2fa66b", "#8e5bd0", "#d98a1f", "#e8d23a"];
+  const go = d => { lane = Math.max(0, Math.min(L - 1, lane + d)); };
+  cv.addEventListener("pointerdown", e => { const r = cv.getBoundingClientRect(); go(e.clientX - r.left < r.width / 2 ? -1 : 1); e.preventDefault(); });
+  let sx = null; cv.addEventListener("touchstart", e => { sx = e.touches[0].clientX; }, { passive: true });
+  cv.addEventListener("touchend", e => { if (sx !== null && Math.abs(e.changedTouches[0].clientX - sx) > 30) go(e.changedTouches[0].clientX > sx ? 1 : -1); sx = null; });
+  const key = e => { if (!el.isConnected) return removeEventListener("keydown", key); if (e.key === "ArrowLeft") go(-1); if (e.key === "ArrowRight") go(1); };
+  addEventListener("keydown", key);
+  function car(cx, cy, w, h, c, truck) { g.fillStyle = c; g.beginPath(); g.roundRect(cx - w / 2, cy - h / 2, w, h, 6); g.fill(); g.fillStyle = "rgba(255,255,255,.55)"; g.fillRect(cx - w / 2 + 4, cy - h / 2 + (truck ? 6 : 10), w - 8, h * .18); g.fillStyle = "#111"; g.fillRect(cx - w / 2 - 2, cy - h / 2 + 8, 3, 12); g.fillRect(cx + w / 2 - 1, cy - h / 2 + 8, 3, 12); g.fillRect(cx - w / 2 - 2, cy + h / 2 - 20, 3, 12); g.fillRect(cx + w / 2 - 1, cy + h / 2 - 20, 3, 12); }
+  function frame(now) {
+    if (!el.isConnected || over) return; const dt = Math.min(.05, (now - last) / 1000); last = now; tt += dt;
+    if (!dead) { v = Math.min(420, 150 + dist / 14); dist += v * dt / 8; stripe = (stripe + v * dt) % 60; tx = lane * LW + LW / 2; x += (tx - x) * Math.min(1, dt * 14);
+      nxt -= dt; if (nxt <= 0) { nxt = Math.max(.32, .95 - dist / 3000) * (.7 + Math.random() * .6); const ln = Math.random() * L | 0, drop = Math.random() < .28; obs.push({ ln, y: -50, drop, c: cols[Math.random() * cols.length | 0], big: !drop && Math.random() < .25 }); }
+      obs.forEach(o => { o.y += v * dt * (o.drop ? 1 : .78); }); obs = obs.filter(o => o.y < H + 60);
+      const px = x, py = H - 80;
+      obs.forEach(o => { if (o.done) return; const ox = o.ln * LW + LW / 2, hw = o.drop ? 16 : (o.big ? 24 : 18), hh = o.drop ? 16 : (o.big ? 46 : 32);
+        if (Math.abs(ox - px) < hw + 17 && Math.abs(o.y - py) < hh + 34) { if (o.drop) { o.done = true; drops++; dist += 12; } else { dead = true; } } }); }
+    g.fillStyle = "#4b5058"; g.fillRect(0, 0, W, H); g.fillStyle = "#2f7d4f"; g.fillRect(0, 0, 5, H); g.fillRect(W - 5, 0, 5, H);
+    g.fillStyle = "#e9e1d6"; for (let l = 1; l < L; l++) for (let y = -60 + stripe; y < H; y += 60) g.fillRect(l * LW - 2, y, 4, 30);
+    obs.forEach(o => { if (o.done) return; const ox = o.ln * LW + LW / 2;
+      if (o.drop) { g.fillStyle = "#5bb6ff"; g.beginPath(); g.moveTo(ox, o.y - 16); g.quadraticCurveTo(ox + 16, o.y + 6, ox, o.y + 14); g.quadraticCurveTo(ox - 16, o.y + 6, ox, o.y - 16); g.fill(); }
+      else car(ox, o.y, o.big ? 48 : 36, o.big ? 92 : 64, o.c, o.big); });
+    const py = H - 80, blink = Math.floor(tt * 8) % 2;
+    car(x, py, 38, 72, "#c8161d", true); g.fillStyle = "#fff"; g.fillRect(x - 15, py + 6, 30, 5); g.fillStyle = blink ? "#3a8bff" : "#ff3030"; g.fillRect(x - 12, py - 26, 10, 6); g.fillStyle = blink ? "#ff3030" : "#3a8bff"; g.fillRect(x + 2, py - 26, 10, 6);
+    if (dead) { g.fillStyle = "rgba(0,0,0,.55)"; g.fillRect(0, 0, W, H); g.fillStyle = "#fff"; g.font = "700 26px system-ui,sans-serif"; g.textAlign = "center"; g.fillText("Unfall!", W / 2, H / 2); }
+    document.getElementById("fm").textContent = Math.round(dist) + " m"; document.getElementById("fl").textContent = "Tempo " + Math.round(v / 60); document.getElementById("fb").textContent = "Tropfen: " + drops;
+    if (dead && !last0) { last0 = now; gmTimers.push(setTimeout(() => { over = true; const pts = Math.round(dist), bst = gmGet("fahrt", 0), nb = pts > bst; if (nb) gmSet("fahrt", pts); gmEnd(el, "Angekommen? Leider nicht.", [pts + " m gefahren, " + drops + " Tropfen gesammelt.", nb ? "Neuer Rekord!" : "Rekord: " + bst + " m"], () => gamesStart("fahrt")); }, 900)); }
+    requestAnimationFrame(frame);
+  }
+  let last0 = 0, over = false; requestAnimationFrame(frame);
 }
