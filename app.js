@@ -1,4 +1,4 @@
-const APP_VERSION = "1.116";
+const APP_VERSION = "1.117";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -871,6 +871,17 @@ function lesView() {
 }
 
 /* ---------- Anmeldung ---------- */
+function loginErr(err) {
+  const c = String((err && err.code) || "").replace("auth/", ""), msg = (err && err.message) || "";
+  if (/Firebase konnte/.test(msg)) return msg;
+  if (c === "too-many-requests") return "Zu viele Fehlversuche: Firebase hat den Zugang kurz gesperrt. Etwa 15 Minuten warten oder in Firebase das Passwort neu setzen. (" + c + ")";
+  if (/invalid-credential|wrong-password|user-not-found|invalid-login/.test(c)) return "Benutzername oder Passwort stimmt nicht. In Firebase muss die Kennung name@feuerwehr-zuchwil-app.ch heissen. (" + c + ")";
+  if (c === "user-disabled") return "Dieses Konto ist in Firebase deaktiviert. (" + c + ")";
+  if (c === "network-request-failed") return "Keine Verbindung. Internet prüfen. (" + c + ")";
+  if (c === "operation-not-allowed") return "Die Anmeldung mit E-Mail und Passwort ist in Firebase nicht aktiviert. (" + c + ")";
+  if (/api-key|app-not-authorized|unauthorized-domain/.test(c)) return "Firebase lehnt diese Seite ab (API-Schlüssel oder Domain). (" + c + ")";
+  return "Anmeldung fehlgeschlagen" + (c ? " (" + c + ")" : msg ? " (" + msg.slice(0, 80) + ")" : "") + ".";
+}
 function pwEye() { const i = document.getElementById("lgp"), b = document.getElementById("lgeye"); if (!i || !b) return; b.onclick = () => { const show = i.type === "password"; i.type = show ? "text" : "password"; b.textContent = show ? "Verbergen" : "Anzeigen"; b.setAttribute("aria-pressed", show); b.setAttribute("aria-label", show ? "Passwort verbergen" : "Passwort anzeigen"); i.focus(); }; }
 function loginView() {
   state.mod = null; state.view = "login"; backBtn.hidden = false;
@@ -887,7 +898,7 @@ function loginView() {
     e.preventDefault(); const m = document.getElementById("lgm"), u = document.getElementById("lgu").value, p = document.getElementById("lgp").value;
     if (!u.trim() || !p) return; m.textContent = "Anmelden …";
     try { await FWZ.login(u, p); try { localStorage.setItem("fwz-user", u.trim()); } catch (e2) {} if (state.after) { const f = state.after; state.after = null; await aoSync(); f(); } else lesView(); }
-    catch (err) { m.textContent = /Firebase konnte/.test(err.message) ? err.message : "Anmeldung fehlgeschlagen. Benutzername oder Passwort prüfen."; }
+    catch (err) { m.textContent = loginErr(err); }
   });
 }
 
@@ -1068,7 +1079,7 @@ function gateView() {
       e.preventDefault(); const m = document.getElementById("lgm"), u = document.getElementById("lgu").value, p = document.getElementById("lgp").value;
       if (!u.trim() || !p) return; m.textContent = "Anmelden …";
       try { await FWZ.login(u, p); try { localStorage.setItem("fwz-user", u.trim()); } catch (e2) {} try { await aoSync(); } catch (e3) {} try { await cfgPull(); } catch (e4) {} state.view = "start"; start(); }
-      catch (err) { m.textContent = /Firebase konnte/.test(err.message) ? err.message : "Anmeldung fehlgeschlagen. Benutzername oder Passwort prüfen."; }
+      catch (err) { m.textContent = loginErr(err); }
     });
   };
   FWZ.init().then(() => { if (FWZ.user) start(); else form(); }).catch(() => {
