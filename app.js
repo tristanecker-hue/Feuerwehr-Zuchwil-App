@@ -1,4 +1,4 @@
-const APP_VERSION = "1.119";
+const APP_VERSION = "1.120";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -274,6 +274,7 @@ function search(q) {
   const words = fold(q).split(/\s+/).filter(Boolean);
   const res = [];
   MODS.forEach(m => {
+    if (typeof fwzHidden === "function" && fwzHidden("reg:" + m.id)) return;
     m.sections.forEach((s, i) => {
       const paras = s.p.concat((s.bx || []).flatMap(b => b[2])).filter(p => words.every(w => fold(s.t + " " + p).includes(w)));
       const titleHit = words.every(w => fold(s.t).includes(w));
@@ -333,11 +334,12 @@ function home() {
     <div id="sbox" hidden></div>
     <div class="menu rgmenu" id="mgrid">${(() => {
       const bt = (id, t, sm) => `<button class="mbtn main pdfbtn" data-id="${id}"><span>${esc(t)}</span><small>${esc(sm)}</small></button>`;
-      return bt("sub:basis", "Basiswissen", "PDF, Quiz, Spickzettel") +
-        bt("sub:einsatz", "Einsatzführung", "PDF, Karten & Quiz") +
-        bt("sgv", "Kantonale Ergänzungen (SGV)", "Original-PDF + " + SGV.length + " Merkblätter") +
-        bt("sub:abc", "ABC-Handbuch", "FKS · 508 S. in 4 Teilen + Quiz") +
-        bt("sub:veg", "Vegetationsbrände", "Handbuch Spezialwissen · PDF + Quiz");
+      const sh = id => !(typeof fwzHidden === "function" && fwzHidden("reg:" + id));
+      return (sh("basis") ? bt("sub:basis", "Basiswissen", "PDF, Quiz, Spickzettel") : "") +
+        (sh("einsatz") ? bt("sub:einsatz", "Einsatzführung", "PDF und Quiz") : "") +
+        (sh("sgv") ? bt("sgv", "Kantonale Ergänzungen (SGV)", "Original-PDF + " + SGV.length + " Merkblätter") : "") +
+        (sh("abc") ? bt("sub:abc", "ABC-Handbuch", "FKS · 508 S. in 4 Teilen + Quiz") : "") +
+        (sh("veg") ? bt("sub:veg", "Vegetationsbrände", "Handbuch Spezialwissen · PDF + Quiz") : "");
     })()}</div>
     <p class="foot">Lernhilfe aus den FKS-Reglementen von feukos.ch. Massgebend ist immer das jeweilige Reglement in der gültigen Fassung.</p>`;
   app.querySelectorAll(".pdfbtn").forEach(b => b.addEventListener("click", () => b.dataset.id.startsWith("sub:") ? subView(b.dataset.id.slice(4)) : b.dataset.id === "gq" ? gquizView() : b.dataset.id === "sgv" ? sgvView() : b.dataset.id === "spick" ? spickView() : b.dataset.id.startsWith("pdf:") ? rgView(b.dataset.id.slice(4)) : openMod(b.dataset.id, "quiz")));
@@ -1093,6 +1095,7 @@ function gateView() {
 /* ---------- Einstellungen: Sichtbarkeit und Benutzerverwaltung ---------- */
 const CFG_ITEMS = [
   ["Startseite", [["home:reg", "Reglemente"], ["home:les", "Lektionen"], ["home:ao", "Ausbildungsoffizier"], ["home:vor", "Vorlagen"], ["home:games", "Feuerwehr Spiele"]]],
+  ["Reglemente", [["reg:basis", "Basiswissen"], ["reg:einsatz", "Einsatzführung"], ["reg:sgv", "Kantonale Ergänzungen (SGV)"], ["reg:abc", "ABC-Handbuch"], ["reg:veg", "Vegetationsbrände"]]],
   ["Ausbildungsoffizier", [["ao:check", "Checkliste"], ["ao:keil", "KEIL"], ["ao:lek", "Lektionen"], ["ao:kq", "Kurs-Quiz"], ["ao:fach", "Fachlektionen"], ["ao:meth", "Lektion halten"], ["ao:zahl", "Zahlen-Trainer"], ["ao:bil", "Erfolgsauswertung / Bilanz"], ["ao:prog", "Kursprogramm"], ["ao:regl", "Reglement Basiswissen"]]]
 ];
 const CFG_DEF = () => ({ v: 1, t: 0, admins: ["tristan"], def: { hide: ["ao:check", "ao:keil", "ao:lek", "ao:kq", "ao:prog"] }, users: {} });
