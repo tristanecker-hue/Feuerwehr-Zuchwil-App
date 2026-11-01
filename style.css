@@ -527,7 +527,7 @@ body.hasgear .top .brand { font-size: 1rem; letter-spacing: .05em; white-space: 
 /* Brandklassen */
 .bkq { text-align: center; padding: 22px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; display: flex; flex-direction: column; gap: 4px; }
 .bkq small { color: var(--muted); } .bkq b { font-family: var(--font-display); font-size: 2rem; text-transform: uppercase; }
-.bkb { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.bkb { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; } .bkb .bkbtn:last-child:nth-child(odd) { grid-column: 1 / -1; }
 .bkbtn { display: flex; flex-direction: column; gap: 2px; padding: 12px 8px; } .bkbtn b { font-size: 1.6rem; font-family: var(--font-display); } .bkbtn small { color: var(--muted); font-size: .8rem; }
 .bkbtn.good, .key.good { background: var(--ok-bg); border-color: var(--ok); }
 .bkbtn.badc, .key.badc { background: var(--bad-bg); border-color: var(--bad); }

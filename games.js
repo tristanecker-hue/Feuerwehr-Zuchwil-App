@@ -91,8 +91,8 @@ function gmLoesch(el) {
 }
 
 /* ----- 3. Brandklassen-Blitz ----- */
-const GM_BK = [["Holz", "A"], ["Papier", "A"], ["Kohle", "A"], ["Stroh", "A"], ["Benzin", "B"], ["Heizöl", "B"], ["Lack", "B"], ["Alkohol", "B"], ["Erdgas", "C"], ["Propan", "C"], ["Methan", "C"], ["Acetylen", "C"], ["Magnesium", "D"], ["Aluminiumstaub", "D"], ["Lithium", "D"], ["Natrium", "D"], ["Frittieröl", "F"], ["Bratfett", "F"], ["Speiseöl in der Pfanne", "F"]];
-const GM_BKN = { A: "feste Stoffe", B: "flüssige Stoffe", C: "Gase", D: "Metalle", F: "Speisefette und -öle" };
+const GM_BK = [["Holz", "A"], ["Papier", "A"], ["Kohle", "A"], ["Stroh", "A"], ["Benzin", "B"], ["Heizöl", "B"], ["Lack", "B"], ["Alkohol", "B"], ["Erdgas", "C"], ["Propan", "C"], ["Methan", "C"], ["Acetylen", "C"], ["Magnesium", "D"], ["Aluminiumstaub", "D"], ["Natrium", "D"], ["Frittieröl", "F"], ["Bratfett", "F"], ["Speiseöl in der Pfanne", "F"], ["E-Bike-Akku", "L"], ["Akku eines E-Autos", "L"], ["Lithium-Ionen-Batterie", "L"], ["PV-Speicher (Heimbatterie)", "L"], ["Handy-Akku", "L"]];
+const GM_BKN = { A: "feste Stoffe", B: "flüssige Stoffe", C: "Gase", D: "Metalle", F: "Speisefette und -öle", L: "Lithium-Ionen-Akkus" };
 function gmKlassen(el) {
   const qs = gmShuffle(Object.keys(GM_BKN).flatMap(k => gmShuffle(GM_BK.filter(x => x[1] === k)).slice(0, 2))); let i = 0, pts = 0, streak = 0;
   const show = () => {
