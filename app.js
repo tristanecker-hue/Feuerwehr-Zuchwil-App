@@ -1,4 +1,4 @@
-const APP_VERSION = "1.105";
+const APP_VERSION = "1.106";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -856,7 +856,7 @@ function lesGroups(m, c, mine, rowH) {
     state.lfo = state.lfo || new Set();
     const fz = mine.filter(f => /Zuchwil/i.test(f.name)), ne = mine.filter(f => !/Zuchwil/i.test(f.name));
     const fold = (key, title, fs, links) => `<details class="lfold" data-k="${key}"${state.lfo.has(key) ? " open" : ""}><summary><span>${title}</span><b>${fs.length + links.split("vlink").length - 1}</b></summary><div class="lfbody">${links}${fs.sort((a, b) => a.name.localeCompare(b.name, "de", { numeric: true })).map(rowH).join("") || ""}</div></details>`;
-    return fold("v:fwz", "Feuerwehr Zuchwil Vorlagen", fz, vlLk("vlt", "Vorlage Lektion (bearbeiten, PDF / Word)") + vlLk("vb1", "Feuerwehr Zuchwil leer (Word)") + vlLk("vbil", "Erfolgsauswertung / Bilanz (Formular 3.17.1, PDF)")) + fold("v:neu", "Neutrale Vorlagen", ne, vlLk("vln", "Lektion Vorlage Neutral (ohne Kopfzeile)") + vlLk("vb2", "Neutral leer (Word)"));
+    return fold("v:fwz", "Feuerwehr Zuchwil Vorlagen", fz, vlLk("vlt", "Vorlage Lektion Feuerwehr Zuchwil (Formular)") + vlLk("vb1", "Feuerwehr Zuchwil leer (Word)") + vlLk("vbil", "Erfolgsauswertung / Bilanz 3.17.1 (Formular)")) + fold("v:neu", "Neutrale Vorlagen", ne, vlLk("vln", "Vorlage Lektion Neutral (Formular)") + vlLk("vb2", "Neutral leer (Word)"));
   }
   const secs = c.g ? m.sections.filter(x => x.g === c.g) : [];
   if (!secs.length) return mine.map(rowH).join("");
@@ -891,7 +891,7 @@ async function lektionen(m, el) {
   const mine = files.filter(f => f.ch === c.k).sort((a, b) => b.added - a.added);
   const rowH = f => `<details class="hit les lfile" data-id="${f.id}"${state.lfo && state.lfo.has("f:" + f.id) ? " open" : ""}><summary><h3>${esc(f.name)}${isWord(f.name) ? ' <span class="tag plain">Word</span>' : ""}</h3></summary><p>${fmtSize(f.size)} · ${new Date(f.added).toLocaleDateString("de-CH")}${f.by ? " · von " + esc(f.by) : ""}</p>
       <div class="lesact"><button class="btn" data-a="open">${isWord(f.name) ? "Öffnen / Laden" : "Öffnen"}</button><button class="btn" data-a="share">Teilen</button>${isWord(f.name) ? "" : '<button class="btn" data-a="print">Drucken</button>'}<button class="btn" data-a="ren">Umbenennen</button><button class="btn ghost" data-a="del">Löschen</button></div></details>`;
-  el.innerHTML = `<div class="banner"><h2>${m.id === "vorlagen" ? "Vorlagen" : "Kapitel " + c.k + " – " + esc(c.n)}</h2><p>${m.id === "vorlagen" ? "Vorlagen und Dateien als PDF oder Word" : "Lektionen als PDF oder Word-Datei"}</p></div>
+  el.innerHTML = `${m.id === "vorlagen" ? "" : `<div class="banner"><h2>Kapitel ${c.k} – ${esc(c.n)}</h2><p>Lektionen als PDF oder Word-Datei</p></div>`}
     <div class="lesbar"><span class="dzhint">PDF- oder Word-Dateien hierher ziehen oder</span> <label class="btn primary lesup">Datei hinzufügen (PDF / Word)<input type="file" id="lfile" accept="application/pdf,.pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple hidden></label></div>
     <div id="lmsg" class="sinfo" role="status"></div>
     <div class="sres">${mine.length || m.id === "vorlagen" ? lesGroups(m, c, mine, rowH) : '<p class="sinfo">Noch keine Dateien in diesem Kapitel.</p>'}</div>`;
@@ -1138,7 +1138,7 @@ function vorlageView(neutral) {
   const inp = (k, l, ph, ls) => `<label class="vlf"><span>${l}</span><input data-k="${k}" value="${esc(VL[k])}" placeholder="${esc(ph || "")}"${ls ? ` list="${ls}" autocomplete="off"` : ""}></label>`;
   const ta = (k, l, n, ph) => `<label class="vlf"><span>${l}</span><textarea data-k="${k}" rows="${n}" placeholder="${esc(ph || "")}">${esc(VL[k])}</textarea></label>`;
   const rows = () => VL.ab.map((r, i) => `<div class="vlrow" data-i="${i}"><div class="vlr1"><span class="vlh" aria-label="Verschieben" title="Zum Verschieben ziehen">⋮⋮</span><input data-r="min" inputmode="numeric" value="${esc(r.min)}" aria-label="Minuten" placeholder="Min."><input data-r="t" value="${esc(r.t)}" aria-label="Titel" placeholder="Titel des Abschnitts"><button class="btn vldel" aria-label="Zeile löschen">×</button></div><div class="vlmv"><button class="btn vlup" aria-label="Nach oben">▲</button><button class="btn vldn" aria-label="Nach unten">▼</button></div><textarea data-r="z" rows="2" placeholder="Ablauf / Inhalt (eine Zeile pro Absatz)">${esc(r.z)}</textarea><textarea data-r="h" rows="2" placeholder="Hinweise | Hilfen">${esc(r.h)}</textarea><input data-bw list="vlbw2" autocomplete="off" placeholder="+ Verweis auf Basiswissen (Thema suchen)"><div class="vlimgs">${(r.im || []).map((u, j) => `<span class="vlth"><img src="${u.d}" alt="Bild ${j + 1}"><button class="vlx" data-j="${j}" aria-label="Bild entfernen">×</button></span>`).join("")}<label class="btn vladdimg">+ Bild<input type="file" accept="image/*" multiple hidden></label></div></div>`).join("");
-  app.innerHTML = `<section class="hero"><h1>${VLN ? "Lektion Vorlage Neutral" : "Vorlage Lektion"}</h1><p>${VLN ? "Ohne Kopfzeile (Logo). " : ""}Felder ausfüllen, dann als PDF oder Word exportieren. Deine Eingaben bleiben auf diesem Gerät gespeichert.</p></section>
+  app.innerHTML = `<section class="hero"><h1>${VLN ? "Vorlage Lektion Neutral (Formular)" : "Vorlage Lektion Feuerwehr Zuchwil (Formular)"}</h1><p>${VLN ? "Ohne Kopfzeile (Logo). " : ""}Felder ausfüllen, dann als PDF oder Word exportieren. Deine Eingaben bleiben auf diesem Gerät gespeichert.</p></section>
     <div class="vlform">
       <div class="vl2">${inp("kopf2", "Bereich", "Feuerwehrdienst")}${inp("nr", "Lektion Nr.", "gem. Aufgebot")}</div>
       <div class="vl2">${inp("ver", "Version / Datum", "TT.MM.JJJJ")}<label class="vlf"><span>Ausbildungsstufe</span><select data-k="stufe">${["Anlernstufe", "Festigungsstufe", "Anwendungsstufe"].map(s => `<option${VL.stufe === s ? " selected" : ""}>${s}</option>`).join("")}</select></label></div>
