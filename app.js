@@ -1,4 +1,4 @@
-const APP_VERSION = "1.108";
+const APP_VERSION = "1.109";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -154,9 +154,10 @@ function extinguishFx(lb, fire) {
     /* zufällige Position: links, rechts, unten oder schräg oben */
     const zones = [[-25, 25], [155, 205], [55, 125], [-60, -30], [210, 240]], z = zones[Math.random() * zones.length | 0], th = (z[0] + Math.random() * (z[1] - z[0])) * Math.PI / 180;
     const R = Math.min(r.width / 2 + 70, 210);
-    let fx = Math.min(VW - 40, Math.max(40, cx + Math.cos(th) * R * 1.15)), fy = Math.min(VH - 60, Math.max(70, cy + Math.sin(th) * R * .95));
-    const dir = cx >= fx ? 1 : -1, sc = Math.min(1.15, Math.max(.8, VW / 390));
-    const slideFrom = dir === 1 ? -90 : VW + 90, ps = [], t0 = performance.now(), IN = 600, SPRAY = 1900, OUT = 500, TOT = IN + SPRAY + OUT; let last = t0, hit = false;
+    const sc = Math.min(2.1, Math.max(1.5, VW / 390 * 1.8));
+    let fx = Math.min(VW - 45 * sc, Math.max(45 * sc, cx + Math.cos(th) * R * 1.15)), fy = Math.min(VH - 65 * sc, Math.max(75 * sc, cy + Math.sin(th) * R * .95));
+    const dir = cx >= fx ? 1 : -1;
+    const slideFrom = dir === 1 ? -120 * sc : VW + 120 * sc, ps = [], t0 = performance.now(), IN = 600, SPRAY = 1900, OUT = 500, TOT = IN + SPRAY + OUT; let last = t0, hit = false;
     const ease = x => 1 - Math.pow(1 - x, 3);
     function man(x, y, t, aim) {
       g.save(); g.translate(x, y); g.scale(dir * sc, sc);
@@ -183,9 +184,9 @@ function extinguishFx(lb, fire) {
       let aim = Math.atan2(cy - fy, Math.abs(cx - fx)); aim = Math.max(-.9, Math.min(.9, aim));
       const [nx, ny] = man(x, fy, now, aim);
       /* Schlauch vom Bildrand zum Strahlrohr */
-      g.strokeStyle = "#d4b22a"; g.lineWidth = 6; g.lineCap = "round"; g.beginPath(); g.moveTo(slideFrom, fy + 40); g.bezierCurveTo(slideFrom + (x - slideFrom) * .4, fy + 60, x - dir * 20, fy + 50, x + dir * 4 * sc, fy + 2 * sc); g.stroke();
+      g.strokeStyle = "#d4b22a"; g.lineWidth = 6 * sc / 1.2; g.lineCap = "round"; g.beginPath(); g.moveTo(slideFrom, fy + 40); g.bezierCurveTo(slideFrom + (x - slideFrom) * .4, fy + 60, x - dir * 20, fy + 50, x + dir * 4 * sc, fy + 2 * sc); g.stroke();
       if (el > IN && el < IN + SPRAY) {
-        for (let i = 0; i < 9; i++) { const d = Math.atan2(cy - ny, cx - nx) + (Math.random() - .5) * .09, sp = 520 + Math.random() * 120; ps.push({ x: nx, y: ny, vx: Math.cos(d) * sp, vy: Math.sin(d) * sp, w: 1, l: 0 }); }
+        for (let i = 0; i < 9; i++) { const d = Math.atan2(cy - ny, cx - nx) + (Math.random() - .5) * .09, sp = 600 + Math.random() * 140; ps.push({ x: nx, y: ny, vx: Math.cos(d) * sp, vy: Math.sin(d) * sp, w: 1, l: 0 }); }
         if (!hit && el > IN + 450) { hit = true; fire.level(0); }
       }
       g.globalCompositeOperation = "source-over";
@@ -194,7 +195,7 @@ function extinguishFx(lb, fire) {
         const inLogo = p.w && p.x > r.left && p.x < r.right && p.y > r.top && p.y < r.bottom;
         if (inLogo && Math.random() < .35) { p.w = 0; p.vx = (Math.random() - .5) * 120; p.vy = -30 - Math.random() * 60; p.l = 0; }
         if (p.l > (p.w ? 1.2 : .7) || p.y > VH + 20) { ps.splice(i, 1); continue; }
-        if (p.w) { g.fillStyle = "rgba(120,190,255,.85)"; g.beginPath(); g.arc(p.x, p.y, 2.6, 0, 6.3); g.fill(); }
+        if (p.w) { g.fillStyle = "rgba(120,190,255,.85)"; g.beginPath(); g.arc(p.x, p.y, 2.6 * sc / 1.3, 0, 6.3); g.fill(); }
         else { const a = 1 - p.l / .7; g.fillStyle = `rgba(235,240,245,${a * .5})`; g.beginPath(); g.arc(p.x, p.y, 7 + p.l * 22, 0, 6.3); g.fill(); }
       }
       if (el < TOT || ps.length) requestAnimationFrame(frame); else { cv.remove(); done(); }
