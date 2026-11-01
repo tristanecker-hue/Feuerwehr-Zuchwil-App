@@ -1,4 +1,4 @@
-const APP_VERSION = "1.120";
+const APP_VERSION = "1.122";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -146,6 +146,7 @@ function fireFx(btn) {
   return { level(l) { lvl = l; if (!run) { run = true; last = performance.now(); requestAnimationFrame(frame); } } };
 }
 /* Marin, der Feuerwehrmann, löscht das brennende Logo: jedes Mal andere Position und anderer Auftritt */
+const FF_JOKES = ["Feuer ist wie Montag: am besten sofort löschen.", "Eine Feuerwehr ohne Humor ist wie ein Hydrant ohne Wasser.", "Ich lösche alles, nur nicht den Durst nach Kaffee.", "Warum tragen Feuerwehrleute rote Hosenträger? Damit der Schlauch nicht verrutscht!", "Wer zu spät kommt, den bestraft der Brandmelder.", "Zuchwil brennt nicht an. Dafür sorge ich.", "Keine Panik, ich hab den Schlauch im Griff!", "Schlauch ab, Feierabend!", "Was ist heiss, nass und rot? @ im Einsatz!", "Ich bin nicht aus Zucker, aber bei Feuer schmelz ich trotzdem dahin.", "Grillieren kann jeder. Löschen kann nur ich.", "Brandklasse M: das Mittagessen von @. Wasser marsch!"];
 function extinguishFx(lb, fire) {
   return new Promise(done => {
     if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) { fire.level(0); done(); return; }
@@ -155,12 +156,13 @@ function extinguishFx(lb, fire) {
     document.body.appendChild(cv); const g = cv.getContext("2d"); g.scale(dpr, dpr);
     const pick = a => a[Math.random() * a.length | 0];
     /* Skills: ein Hauptauftritt, dazu mit 65 % die Siegerpose */
-    const skill = window.__fxSkill || pick(["strahl", "schwenk", "salto", "eimer", "fontaene", "pirouette"]), pose = window.__fxPose !== undefined ? window.__fxPose : Math.random() < .65, say = pick(["Gelöscht!", "Alles im Griff!", "Marin ist da!", "Wasser marsch!", "Feuer aus!"]);
+    let nm = window.__fxName; if (!nm) { const NM = ["Marin", "Tristan", "Daniele"]; let k = 0; try { k = (parseInt(localStorage.getItem("fwz-ffn") || "-1", 10) + 1) % 3; localStorage.setItem("fwz-ffn", k); } catch (e) { k = Math.floor(Math.random() * 3); } nm = NM[k]; }
+    const skill = window.__fxSkill || pick(["strahl", "schwenk", "salto", "eimer", "fontaene", "pirouette"]), pose = window.__fxJoke ? true : window.__fxPose !== undefined ? window.__fxPose : Math.random() < .65, joke = window.__fxJoke !== undefined ? window.__fxJoke : Math.random() < .5, say = (joke ? pick(FF_JOKES) : pick(["Gelöscht!", "Alles im Griff!", "@ ist da!", "Wasser marsch!", "Feuer aus!"])).replace("@", nm);
     const zones = [[-25, 25], [155, 205], [55, 125], [-60, -30], [210, 240]], z = pick(zones), th = (z[0] + Math.random() * (z[1] - z[0])) * Math.PI / 180;
     const R = Math.min(r.width / 2 + 70, 210), sc = Math.min(1.5, Math.max(1.05, VW / 390 * 1.26));
     let fx = Math.min(VW - 45 * sc, Math.max(45 * sc, cx + Math.cos(th) * R * 1.15)), fy = Math.min(VH - 70 * sc, Math.max(95 * sc, cy + Math.sin(th) * R * .95));
     const dir = cx >= fx ? 1 : -1, slideFrom = dir === 1 ? -120 * sc : VW + 120 * sc, ps = [], t0 = performance.now();
-    const IN = 650, SPRAY = skill === "eimer" ? 1700 : 1900, POSE = pose ? 900 : 0, OUT = 500, TOT = IN + SPRAY + POSE + OUT;
+    const IN = 650, SPRAY = skill === "eimer" ? 1700 : 1900, POSE = joke ? 4300 : pose ? 900 : 0, OUT = 500, TOT = IN + SPRAY + POSE + OUT;
     let last = t0, sprayT = 0, out = false, thrown = false, bucket = null;
     const ease = x => 1 - Math.pow(1 - x, 3);
     function man(x, y, t, aim, o) {
@@ -186,11 +188,17 @@ function extinguishFx(lb, fire) {
         else if (!o.noNozzle) { g.strokeStyle = "#c8a82a"; g.lineWidth = 7; g.beginPath(); g.moveTo(4 + Math.cos(a) * 20, -4 + Math.sin(a) * 20); g.lineTo(4 + Math.cos(a) * 40, -4 + Math.sin(a) * 40); g.stroke(); }
       }
       g.restore();
-      g.save(); g.font = "700 " + Math.round(11 * sc) + "px system-ui, sans-serif"; g.textAlign = "center"; const tw = g.measureText("Marin").width + 12, ty = y - 58 * sc + (o.dy || 0);
+      g.save(); g.font = "700 " + Math.round(11 * sc) + "px system-ui, sans-serif"; g.textAlign = "center"; const tw = g.measureText(nm).width + 12, ty = y - 58 * sc + (o.dy || 0);
       g.fillStyle = "rgba(255,255,255,.92)"; g.strokeStyle = "#c8161d"; g.lineWidth = 1.5; g.beginPath(); g.roundRect(x - tw / 2, ty - 12 * sc, tw, 17 * sc, 8); g.fill(); g.stroke();
-      g.fillStyle = "#c8161d"; g.fillText("Marin", x, ty + 1 * sc);
-      if (o.say) { g.font = "700 " + Math.round(13 * sc) + "px system-ui, sans-serif"; const sw2 = g.measureText(o.say).width + 18, bx = Math.min(VW - sw2 / 2 - 6, Math.max(sw2 / 2 + 6, x)), by = Math.max(24, ty - 34 * sc);
-        g.fillStyle = "#fff"; g.strokeStyle = "#c8161d"; g.lineWidth = 2; g.beginPath(); g.roundRect(bx - sw2 / 2, by - 14, sw2, 26, 12); g.fill(); g.stroke(); g.fillStyle = "#c8161d"; g.fillText(o.say, bx, by + 5); }
+      g.fillStyle = "#c8161d"; g.fillText(nm, x, ty + 1 * sc);
+      if (o.say) {
+        const fs = Math.round(13 * sc), maxW = Math.min(VW - 28, 250 * Math.max(1, sc / 1.3)); g.font = "700 " + fs + "px system-ui, sans-serif"; g.textAlign = "center";
+        const ws = o.say.split(" "), lines = []; let cur = ""; ws.forEach(w => { const t = cur ? cur + " " + w : w; if (g.measureText(t).width > maxW - 22 && cur) { lines.push(cur); cur = w; } else cur = t; }); lines.push(cur);
+        const bw = Math.max(...lines.map(l => g.measureText(l).width)) + 22, bh = lines.length * fs * 1.25 + 14, bx = Math.min(VW - bw / 2 - 8, Math.max(bw / 2 + 8, x));
+        let by = ty - 20 * sc - bh; if (by < 8) by = Math.min(VH - bh - 8, y + 62 * sc);
+        g.fillStyle = "#fff"; g.strokeStyle = "#c8161d"; g.lineWidth = 2; g.beginPath(); g.roundRect(bx - bw / 2, by, bw, bh, 12); g.fill(); g.stroke();
+        g.fillStyle = "#c8161d"; lines.forEach((l, k) => g.fillText(l, bx, by + 7 + fs * (1.05 + k * 1.25)));
+      }
       g.restore();
       return [x + dir * sc * (4 + Math.cos(aim) * 41), y + sc * (-4 + Math.sin(aim) * 41)];
     }
