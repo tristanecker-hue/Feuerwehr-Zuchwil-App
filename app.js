@@ -1,4 +1,4 @@
-const APP_VERSION = "1.107";
+const APP_VERSION = "1.108";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -171,6 +171,9 @@ function extinguishFx(lb, fire) {
       g.strokeStyle = "#3a3f4a"; g.lineWidth = 6; g.lineCap = "round"; g.beginPath(); g.moveTo(4, -10); g.lineTo(4 + Math.cos(a) * 22, -4 + Math.sin(a) * 22); g.stroke();
       g.strokeStyle = "#c8a82a"; g.lineWidth = 7; g.beginPath(); g.moveTo(4 + Math.cos(a) * 20, -4 + Math.sin(a) * 20); g.lineTo(4 + Math.cos(a) * 40, -4 + Math.sin(a) * 40); g.stroke();
       g.restore();
+      g.save(); g.font = "700 " + Math.round(11 * sc) + "px system-ui, sans-serif"; g.textAlign = "center"; const tw = g.measureText("Marin").width + 12, ty = y - 58 * sc;
+      g.fillStyle = "rgba(255,255,255,.92)"; g.strokeStyle = "#c8161d"; g.lineWidth = 1.5; g.beginPath(); g.roundRect(x - tw / 2, ty - 12 * sc, tw, 17 * sc, 8); g.fill(); g.stroke();
+      g.fillStyle = "#c8161d"; g.fillText("Marin", x, ty + 1 * sc); g.restore();
       return [x + dir * sc * (4 + Math.cos(aim) * 41), y + sc * (-4 + Math.sin(aim) * 41)];
     }
     function frame(now) {
