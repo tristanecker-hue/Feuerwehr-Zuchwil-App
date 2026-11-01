@@ -1,4 +1,4 @@
-const APP_VERSION = "1.118";
+const APP_VERSION = "1.119";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -1115,6 +1115,22 @@ async function cfgSave(msg) {
   try { await FWZ.setCfg(CFG); if (msg) msg.textContent = "Gespeichert."; }
   catch (e) { if (msg) msg.textContent = /permission|insufficient/i.test((e && e.message) || "") ? "Im Konto speichern nicht möglich (Firestore-Regeln für fwz_config fehlen). Nur auf diesem Gerät gespeichert." : "Im Konto speichern nicht möglich (offline?). Nur auf diesem Gerät gespeichert."; }
 }
+async function cfgLog(filter) {
+  const box = document.getElementById("cfglog"); if (!box) return;
+  if (!FWZ.user) { box.innerHTML = '<p class="sinfo">Nur mit Anmeldung sichtbar.</p>'; return; }
+  try {
+    const all = await FWZ.log(200), names = [...new Set(all.map(l => l.name))].sort(), rows = filter ? all.filter(l => l.name === filter) : all;
+    const dfmt = t => new Date(t).toLocaleDateString("de-CH", { weekday: "short", day: "numeric", month: "numeric" }), tfmt = t => new Date(t).toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" });
+    const dur = l => { const m = Math.max(1, Math.round((l.last - l.start) / 60000)); return m < 60 ? m + " Min." : Math.floor(m / 60) + " Std. " + (m % 60) + " Min."; };
+    let day = "";
+    box.innerHTML = `<label class="vlf"><span>Benutzer</span><select id="lgfil"><option value="">Alle Benutzer</option>${names.map(n => `<option${n === filter ? " selected" : ""}>${esc(n)}</option>`).join("")}</select></label>
+      <div class="loglist">${rows.map(l => { const h = dfmt(l.start), head = h !== day ? (day = h, `<div class="logday">${esc(h)}</div>`) : ""; return head + `<div class="logrow"><b>${esc(l.name)}</b><span>${esc(l.kind || "")}${l.v ? " · V" + esc(l.v) : ""}</span><span class="lt">${tfmt(l.start)}–${tfmt(l.last)} · ${dur(l)}</span></div>`; }).join("") || '<p class="sinfo">Noch keine Einträge.</p>'}</div>
+      <p class="foot">Eine Zeile ist ein Besuch der App: von Start bis zum letzten Lebenszeichen (alle 2 Minuten). Es zählen nur angemeldete Geräte.</p>
+      <button class="btn ghost" id="lgclr">Einträge älter als 30 Tage löschen</button>`;
+    document.getElementById("lgfil").onchange = e => cfgLog(e.target.value);
+    document.getElementById("lgclr").onclick = async e => { const b = e.currentTarget; if (!b.dataset.c) { b.dataset.c = 1; b.textContent = "Wirklich löschen?"; return; } try { const n = await FWZ.clearLog(30); b.textContent = n + " Einträge gelöscht"; } catch (er) { b.textContent = "Löschen nicht möglich"; } };
+  } catch (e) { box.innerHTML = '<p class="sinfo">' + (/permission|insufficient/i.test(e.message || "") ? "Keine Berechtigung: In den Firestore-Regeln fehlt <code>fwz_log</code>." : "Protokoll konnte nicht geladen werden (offline?).") + "</p>"; }
+}
 async function cfgDevices() {
   const box = document.getElementById("cfgdev"); if (!box) return;
   if (!FWZ.user) { box.innerHTML = '<p class="sinfo">Nur mit Anmeldung sichtbar.</p>'; return; }
@@ -1150,11 +1166,12 @@ function settingsView() {
       <h3 class="zh">Administratoren</h3><div class="cfglist">${(CFG.admins || []).map(a => `<div class="cfgrow"><span>${esc(a)}</span>${(CFG.admins.length > 1 && a !== me) ? `<button class="btn ghost" data-da="${esc(a)}">Entfernen</button>` : ""}</div>`).join("")}</div>
       <div class="cfgadd"><input id="cfgna" placeholder="Anmeldename" autocomplete="off" autocapitalize="none"><button class="btn" id="cfgaa">Administrator hinzufügen</button></div>` : ""}
     <h3 class="zh">Geräte</h3><div id="cfgdev" class="cfgdev"><p class="sinfo">Lade …</p></div>
+    <h3 class="zh">Protokoll: wer war wann online</h3><div id="cfglog" class="cfgdev"><p class="sinfo">Lade …</p></div>
     ${thmHtml}${outHtml}
     <div id="cfgmsg" class="sinfo" role="status"></div>
     <p class="foot">Die Zugänge (Name und Passwort) werden in Firebase unter Authentication angelegt. Hier legst du fest, was ein Name in der App sieht. Ausgeblendete Kacheln sind weg, aber keine Zugriffssperre: Dateien und Lektionen schützt die Datenbank.</p>`;
   const msg = document.getElementById("cfgmsg"), nm = s => (s || "").trim().toLowerCase().replace(/@.*$/, "").replace(/[^a-z0-9._-]/g, "");
-  outBind(); cfgDevices();
+  outBind(); cfgDevices(); cfgLog();
   app.querySelectorAll("input[data-id]").forEach(c => c.onchange = () => { const l = c.dataset.u ? CFG.users[c.dataset.u] : CFG.def; l.hide = l.hide.filter(x => x !== c.dataset.id); if (!c.checked) l.hide.push(c.dataset.id); cfgSave(msg); });
   app.querySelectorAll("[data-du]").forEach(b => b.onclick = () => { if (!b.dataset.c) { b.dataset.c = 1; b.textContent = "Entfernen?"; b.classList.add("sure"); return; } delete CFG.users[b.dataset.du]; cfgSave(msg).then(settingsView); });
   document.getElementById("cfgau").onclick = () => { const n = nm(document.getElementById("cfgnu").value); if (!n) { msg.textContent = "Bitte einen Anmeldenamen eingeben."; return; } if (!CFG.users[n]) CFG.users[n] = { hide: CFG.def.hide.slice() }; cfgSave(msg).then(settingsView); };

@@ -97,7 +97,13 @@ const FWZ = (function () {
   /* Geräte: jedes Gerät meldet sich alle paar Minuten in fwz_presence/<Geräte-ID> */
   const devId = () => { try { let d = localStorage.getItem("fwz-dev"); if (!d) { d = Math.random().toString(36).slice(2, 10) + Date.now().toString(36); localStorage.setItem("fwz-dev", d); } return d; } catch (e) { return "x" + Math.random().toString(36).slice(2, 8); } };
   const devKind = () => { const u = navigator.userAgent || ""; return /iPhone/.test(u) ? "iPhone" : /iPad/.test(u) ? "iPad" : /Android/.test(u) ? "Android" : /Mac/.test(u) ? "Mac" : /Windows/.test(u) ? "Windows" : /Linux/.test(u) ? "Linux" : "Gerät"; };
-  api.ping = async () => { if (!api.user) return; await db().collection("fwz_presence").doc(devId()).set({ name: api.label(), kind: devKind(), seen: Date.now(), v: typeof APP_VERSION !== "undefined" ? APP_VERSION : "" }, { merge: true }); };
+  const sess = Date.now();
+  api.ping = async () => { if (!api.user) return; const now = Date.now(), v = typeof APP_VERSION !== "undefined" ? APP_VERSION : "";
+    await db().collection("fwz_presence").doc(devId()).set({ name: api.label(), kind: devKind(), seen: now, v }, { merge: true });
+    /* Protokoll: eine Sitzung = ein Dokument (Start, zuletzt gesehen) */
+    await db().collection("fwz_log").doc(devId() + "_" + sess + "_" + api.label()).set({ name: api.label(), kind: devKind(), start: sess, last: now, v }, { merge: true }); };
+  api.log = async n => { const s = await db().collection("fwz_log").orderBy("last", "desc").limit(n || 120).get(); return s.docs.map(d => Object.assign({ id: d.id }, d.data())); };
+  api.clearLog = async days => { const s = await db().collection("fwz_log").where("last", "<", Date.now() - days * 864e5).get(); for (const d of s.docs) await d.ref.delete(); return s.size; };
   api.devices = async () => { const s = await db().collection("fwz_presence").get(); return s.docs.map(d => Object.assign({ id: d.id, me: d.id === devId() }, d.data())); };
   api.delDevice = id => db().collection("fwz_presence").doc(id).delete();
   api.getCfg = async () => { const s = await db().collection("fwz_config").doc("main").get(); return s.exists ? JSON.parse(s.data().data) : null; };
