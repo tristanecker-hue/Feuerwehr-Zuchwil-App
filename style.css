@@ -547,3 +547,6 @@ body.hasgear .top .brand { font-size: 1rem; letter-spacing: .05em; white-space: 
 .key { padding: 10px 0; border: 2px solid var(--line); border-radius: 10px; background: var(--surface); font-weight: 700; min-width: 0; }
 .key:disabled { opacity: .85; }
 .fcv { display: block; margin: 0 auto; max-width: 100%; border-radius: 14px; border: 2px solid var(--line); touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+.pwrow { position: relative; display: block; }
+.pwrow input { width: 100%; padding-right: 96px; }
+.pweye { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); min-height: 38px; padding: 0 12px; border: 0; border-radius: 10px; background: transparent; color: var(--muted); font-weight: 600; font-size: .9rem; }

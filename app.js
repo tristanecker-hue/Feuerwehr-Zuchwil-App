@@ -1,4 +1,4 @@
-const APP_VERSION = "1.115";
+const APP_VERSION = "1.116";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -871,16 +871,18 @@ function lesView() {
 }
 
 /* ---------- Anmeldung ---------- */
+function pwEye() { const i = document.getElementById("lgp"), b = document.getElementById("lgeye"); if (!i || !b) return; b.onclick = () => { const show = i.type === "password"; i.type = show ? "text" : "password"; b.textContent = show ? "Verbergen" : "Anzeigen"; b.setAttribute("aria-pressed", show); b.setAttribute("aria-label", show ? "Passwort verbergen" : "Passwort anzeigen"); i.focus(); }; }
 function loginView() {
   state.mod = null; state.view = "login"; backBtn.hidden = false;
   app.innerHTML = `<section class="hero"><h1>Anmelden</h1><p>Mit der Anmeldung sind die Lektionen für alle Mitglieder gemeinsam abrufbar. Die Zugangsdaten bekommst du vom Kader.</p></section>
     <form id="lgf" class="lgf">
-      <input id="lgu" type="text" autocomplete="username" autocapitalize="none" placeholder="Benutzername" aria-label="Benutzername">
-      <input id="lgp" type="password" autocomplete="current-password" placeholder="Passwort" aria-label="Passwort">
+      <input id="lgu" type="text" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Benutzername" aria-label="Benutzername">
+      <span class="pwrow"><input id="lgp" type="password" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Passwort" aria-label="Passwort"><button type="button" class="pweye" id="lgeye" aria-label="Passwort anzeigen" aria-pressed="false">Anzeigen</button></span>
       <button class="btn primary" type="submit">Anmelden</button>
       <div id="lgm" role="alert" class="sinfo"></div>
     </form>`;
   try { document.getElementById("lgu").value = localStorage.getItem("fwz-user") || ""; } catch (e) {}
+  pwEye();
   document.getElementById("lgf").addEventListener("submit", async e => {
     e.preventDefault(); const m = document.getElementById("lgm"), u = document.getElementById("lgu").value, p = document.getElementById("lgp").value;
     if (!u.trim() || !p) return; m.textContent = "Anmelden …";
@@ -1055,12 +1057,13 @@ function gateView() {
   const form = () => {
     app.innerHTML = `<section class="landing gate"><img class="gatelogo" src="logo.jpg" alt="Feuerwehr Zuchwil"><h1>Anmelden</h1><p class="gatemsg">Melde dich mit deinem Benutzernamen an. Die Zugangsdaten bekommst du vom Kader.</p>
       <form id="lgf" class="lgf">
-        <input id="lgu" type="text" autocomplete="username" autocapitalize="none" placeholder="Benutzername" aria-label="Benutzername">
-        <input id="lgp" type="password" autocomplete="current-password" placeholder="Passwort" aria-label="Passwort">
+        <input id="lgu" type="text" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Benutzername" aria-label="Benutzername">
+        <span class="pwrow"><input id="lgp" type="password" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Passwort" aria-label="Passwort"><button type="button" class="pweye" id="lgeye" aria-label="Passwort anzeigen" aria-pressed="false">Anzeigen</button></span>
         <button class="btn primary" type="submit">Anmelden</button>
         <div id="lgm" role="alert" class="sinfo"></div>
       </form></section>`;
     try { document.getElementById("lgu").value = localStorage.getItem("fwz-user") || ""; } catch (e) {}
+  pwEye();
     document.getElementById("lgf").addEventListener("submit", async e => {
       e.preventDefault(); const m = document.getElementById("lgm"), u = document.getElementById("lgu").value, p = document.getElementById("lgp").value;
       if (!u.trim() || !p) return; m.textContent = "Anmelden …";
