@@ -1,4 +1,4 @@
-const APP_VERSION = "1.104";
+const APP_VERSION = "1.105";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -94,6 +94,7 @@ function start() {
         ${typeof fwzHidden === "function" && fwzHidden("home:reg") ? "" : '<button class="mbtn main" id="t-reg">Reglemente</button>'}
         ${typeof fwzHidden === "function" && fwzHidden("home:les") ? "" : '<button class="mbtn main" id="t-les">Lektionen</button>'}
         ${typeof fwzHidden === "function" && fwzHidden("home:ao") ? "" : '<button class="mbtn main" id="t-ao">Ausbildungsoffizier</button>'}
+        ${typeof fwzHidden === "function" && fwzHidden("home:vor") ? "" : '<button class="mbtn main" id="t-vor">Vorlagen</button>'}
       </div>
       <div class="bottom">
         <button class="wxcard" id="wxs" aria-label="Wetter Zuchwil"><span class="wxl">Wetter Zuchwil …</span></button>
@@ -104,8 +105,9 @@ function start() {
   clearInterval(window.clk); tick(); window.clk = setInterval(tick, 1000); var clk = window.clk;
   document.getElementById("logoup").onclick = appUpdate;
   document.getElementById("wxs").onclick = wxView; wxStrip();
-  const tr = document.getElementById("t-reg"), tl = document.getElementById("t-les"), ta = document.getElementById("t-ao");
-  if (tr) tr.onclick = home; if (tl) tl.onclick = () => { state.lc = null; lesView(); }; if (ta) ta.onclick = aoView;
+  const tr = document.getElementById("t-reg"), tl = document.getElementById("t-les"), ta = document.getElementById("t-ao"), tv = document.getElementById("t-vor");
+  if (tv) tv.onclick = () => { state.vorHome = true; state.lc = "v"; lesView(); };
+  if (tr) tr.onclick = home; if (tl) tl.onclick = () => { state.vorHome = false; state.lc = null; lesView(); }; if (ta) ta.onclick = aoView;
   window.scrollTo(0, 0);
 }
 
@@ -774,11 +776,9 @@ function lesView() {
   const mlHtml = ml && !state.lc ? grp("Musterlektionen (50 Min.)", nA + nF, '<h3 class="zh">Anlernstufe</h3>' + tiles(AO_LEK, "m") + (nF ? '<h3 class="zh">Festigungsstufe</h3>' + tiles(AO_LEKF, "f") : "")) : "";
   if (state.lc === "vl" || state.lc === "vn") { vorlageView(state.lc === "vn"); return; }
   if (state.lc === "v") { app.innerHTML = '<section class="hero"><h1>Vorlagen</h1><p>Vorlagen der Feuerwehr Zuchwil (PDF / Word), für alle angemeldeten Mitglieder.</p></section><div id="vbm" class="sinfo" role="status"></div><div id="body"></div>'; lektionen(VMOD, document.getElementById("body")); return; }
-  app.innerHTML = '<section class="hero"><h1>Lektionen</h1></section>' + loginBox + mlHtml + (state.lc ? '<div id="body"></div>' : '<button class="lgrp vlink" id="vlk"><span>Vorlagen Feuerwehr Zuchwil</span><b id="vn">…</b></button><details class="lgrp" id="eig"><summary><span>Eigene Lektionen (PDF / Word)</span><b id="eign">…</b></summary><div class="lgbody" id="body"></div></details>');
+  app.innerHTML = '<section class="hero"><h1>Lektionen</h1></section>' + loginBox + mlHtml + (state.lc ? '<div id="body"></div>' : '<details class="lgrp" id="eig"><summary><span>Eigene Lektionen (PDF / Word)</span><b id="eign">…</b></summary><div class="lgbody" id="body"></div></details>');
   const lgo0 = document.getElementById("lgo"); if (lgo0) lgo0.onclick = loginView;
   document.querySelectorAll("[data-m]").forEach(b => b.addEventListener("click", () => { state.lc = b.dataset.m; lesView(); window.scrollTo(0, 0); }));
-  const vlk = document.getElementById("vlk"); if (vlk) { vlk.onclick = () => { state.lc = "v"; lesView(); window.scrollTo(0, 0); };
-    (async () => { try { const fl = FWZ.user ? await FWZ.lessons() : await LDB.all(); document.getElementById("vn").textContent = fl.filter(f => f.mod === "vorlagen").length; } catch (e) { document.getElementById("vn").textContent = "–"; } })(); }
   lektionen(getMod("basis"), document.getElementById("body"));
 }
 
@@ -837,6 +837,7 @@ const vlLk = (id, t) => `<button class="lgrp vlink" id="${id}"><span>${t}</span>
 function vlLinksBind() {
   const g = id => document.getElementById(id); if (!g("vlt")) return;
   [["vb1", false], ["vb2", true]].forEach(([id, n]) => { g(id).onclick = () => { const keep = VLN; VLN = n; try { aoPdfActs(vlDocx(true), g("vbm")).open(); } catch (e) { g("vbm").textContent = e.message || "Word-Datei konnte nicht erstellt werden."; } VLN = keep; }; });
+  if (g("vbil")) g("vbil").onclick = () => aoGo("bil");
   g("vlt").onclick = () => { state.lc = "vl"; lesView(); }; g("vln").onclick = () => { state.lc = "vn"; lesView(); };
 }
 function lesNum(name) { const x = /(?:^|[^\d.])(\d{1,2}(?:\.\d{1,2}){1,3})(?![\d])/.exec(String(name).replace(/\.(pdf|docx?|PDF|DOCX?)$/, "").replace(/\bL\d+\b/g, " ")); return x ? x[1] : ""; }
@@ -854,8 +855,8 @@ function lesGroups(m, c, mine, rowH) {
   if (m.id === "vorlagen") {
     state.lfo = state.lfo || new Set();
     const fz = mine.filter(f => /Zuchwil/i.test(f.name)), ne = mine.filter(f => !/Zuchwil/i.test(f.name));
-    const fold = (key, title, fs, links) => `<details class="lfold" data-k="${key}"${state.lfo.has(key) ? " open" : ""}><summary><span>${title}</span><b>${fs.length + 2}</b></summary><div class="lfbody">${links}${fs.sort((a, b) => a.name.localeCompare(b.name, "de", { numeric: true })).map(rowH).join("") || ""}</div></details>`;
-    return fold("v:fwz", "Feuerwehr Zuchwil Vorlagen", fz, vlLk("vlt", "Vorlage Lektion (bearbeiten, PDF / Word)") + vlLk("vb1", "Feuerwehr Zuchwil leer (Word)")) + fold("v:neu", "Neutrale Vorlagen", ne, vlLk("vln", "Lektion Vorlage Neutral (ohne Kopfzeile)") + vlLk("vb2", "Neutral leer (Word)"));
+    const fold = (key, title, fs, links) => `<details class="lfold" data-k="${key}"${state.lfo.has(key) ? " open" : ""}><summary><span>${title}</span><b>${fs.length + links.split("vlink").length - 1}</b></summary><div class="lfbody">${links}${fs.sort((a, b) => a.name.localeCompare(b.name, "de", { numeric: true })).map(rowH).join("") || ""}</div></details>`;
+    return fold("v:fwz", "Feuerwehr Zuchwil Vorlagen", fz, vlLk("vlt", "Vorlage Lektion (bearbeiten, PDF / Word)") + vlLk("vb1", "Feuerwehr Zuchwil leer (Word)") + vlLk("vbil", "Erfolgsauswertung / Bilanz (Formular 3.17.1, PDF)")) + fold("v:neu", "Neutrale Vorlagen", ne, vlLk("vln", "Lektion Vorlage Neutral (ohne Kopfzeile)") + vlLk("vb2", "Neutral leer (Word)"));
   }
   const secs = c.g ? m.sections.filter(x => x.g === c.g) : [];
   if (!secs.length) return mine.map(rowH).join("");
@@ -955,7 +956,7 @@ async function lektionen(m, el) {
   });
 }
 
-backBtn.addEventListener("click", () => { if (state.view === "les" && (state.lc === "vl" || state.lc === "vn")) { state.lc = "v"; lesView(); window.scrollTo(0, 0); return; } if (state.view === "sub" && !state.mod) { home(); return; } if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "gq" || state.view === "sgv" || state.view === "spick") { (state.sub ? subView(state.sub) : home()); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else (state.sub ? subView(state.sub) : home()); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) (state.sub ? subView(state.sub) : home()); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
+backBtn.addEventListener("click", () => { if (state.view === "les" && state.lc === "v" && state.vorHome) { state.vorHome = false; state.lc = null; start(); return; } if (state.view === "les" && (state.lc === "vl" || state.lc === "vn")) { state.lc = "v"; lesView(); window.scrollTo(0, 0); return; } if (state.view === "sub" && !state.mod) { home(); return; } if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "gq" || state.view === "sgv" || state.view === "spick") { (state.sub ? subView(state.sub) : home()); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else (state.sub ? subView(state.sub) : home()); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) (state.sub ? subView(state.sub) : home()); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
 /* ---------- Anmeldepflicht ---------- */
 let gateOffline = false;
 function gateNeeded() { return !!FWZ.enabled && !FWZ.user && !gateOffline; }
@@ -989,7 +990,7 @@ function gateView() {
 
 /* ---------- Einstellungen: Sichtbarkeit und Benutzerverwaltung ---------- */
 const CFG_ITEMS = [
-  ["Startseite", [["home:reg", "Reglemente"], ["home:les", "Lektionen"], ["home:ao", "Ausbildungsoffizier"]]],
+  ["Startseite", [["home:reg", "Reglemente"], ["home:les", "Lektionen"], ["home:ao", "Ausbildungsoffizier"], ["home:vor", "Vorlagen"]]],
   ["Ausbildungsoffizier", [["ao:check", "Checkliste"], ["ao:keil", "KEIL"], ["ao:lek", "Lektionen"], ["ao:kq", "Kurs-Quiz"], ["ao:fach", "Fachlektionen"], ["ao:meth", "Lektion halten"], ["ao:zahl", "Zahlen-Trainer"], ["ao:bil", "Erfolgsauswertung / Bilanz"], ["ao:prog", "Kursprogramm"], ["ao:regl", "Reglement Basiswissen"]]]
 ];
 const CFG_DEF = () => ({ v: 1, t: 0, admins: ["tristan"], def: { hide: ["ao:check", "ao:keil", "ao:lek", "ao:kq", "ao:prog"] }, users: {} });
