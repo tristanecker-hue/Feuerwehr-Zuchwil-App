@@ -1,4 +1,4 @@
-const APP_VERSION = "1.110";
+const APP_VERSION = "1.111";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -95,6 +95,7 @@ function start() {
         ${typeof fwzHidden === "function" && fwzHidden("home:les") ? "" : '<button class="mbtn main" id="t-les">Lektionen</button>'}
         ${typeof fwzHidden === "function" && fwzHidden("home:ao") ? "" : '<button class="mbtn main" id="t-ao">Ausbildungsoffizier</button>'}
         ${typeof fwzHidden === "function" && fwzHidden("home:vor") ? "" : '<button class="mbtn main" id="t-vor">Vorlagen</button>'}
+        ${typeof fwzHidden === "function" && fwzHidden("home:games") ? "" : '<button class="mbtn main" id="t-gm">Feuerwehr Spiele</button>'}
       </div>
       <div class="bottom">
         <button class="wxcard" id="wxs" aria-label="Wetter Zuchwil"><span class="wxl">Wetter Zuchwil …</span></button>
@@ -105,7 +106,8 @@ function start() {
   clearInterval(window.clk); tick(); window.clk = setInterval(tick, 1000); var clk = window.clk;
   document.getElementById("logoup").onclick = appUpdate;
   document.getElementById("wxs").onclick = wxView; wxStrip();
-  const tr = document.getElementById("t-reg"), tl = document.getElementById("t-les"), ta = document.getElementById("t-ao"), tv = document.getElementById("t-vor");
+  const tr = document.getElementById("t-reg"), tl = document.getElementById("t-les"), ta = document.getElementById("t-ao"), tv = document.getElementById("t-vor"), tg = document.getElementById("t-gm");
+  if (tg) tg.onclick = gamesView;
   if (tv) tv.onclick = () => { state.vorHome = true; state.lc = "v"; lesView(); };
   if (tr) tr.onclick = home; if (tl) tl.onclick = () => { state.vorHome = false; state.lc = null; lesView(); }; if (ta) ta.onclick = aoView;
   window.scrollTo(0, 0);
@@ -1047,7 +1049,7 @@ async function lektionen(m, el) {
   });
 }
 
-backBtn.addEventListener("click", () => { if (state.view === "les" && state.lc === "v" && state.vorHome) { state.vorHome = false; state.lc = null; start(); return; } if (state.view === "les" && (state.lc === "vl" || state.lc === "vn")) { state.lc = "v"; lesView(); window.scrollTo(0, 0); return; } if (state.view === "sub" && !state.mod) { home(); return; } if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "gq" || state.view === "sgv" || state.view === "spick") { (state.sub ? subView(state.sub) : home()); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else (state.sub ? subView(state.sub) : home()); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) (state.sub ? subView(state.sub) : home()); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
+backBtn.addEventListener("click", () => { if (state.view === "games") { if (state.gm) gamesView(); else { gmStop(); start(); } return; } if (state.view === "les" && state.lc === "v" && state.vorHome) { state.vorHome = false; state.lc = null; start(); return; } if (state.view === "les" && (state.lc === "vl" || state.lc === "vn")) { state.lc = "v"; lesView(); window.scrollTo(0, 0); return; } if (state.view === "sub" && !state.mod) { home(); return; } if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "gq" || state.view === "sgv" || state.view === "spick") { (state.sub ? subView(state.sub) : home()); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else (state.sub ? subView(state.sub) : home()); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) (state.sub ? subView(state.sub) : home()); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
 /* ---------- Anmeldepflicht ---------- */
 let gateOffline = false;
 function gateNeeded() { return !!FWZ.enabled && !FWZ.user && !gateOffline; }
@@ -1081,7 +1083,7 @@ function gateView() {
 
 /* ---------- Einstellungen: Sichtbarkeit und Benutzerverwaltung ---------- */
 const CFG_ITEMS = [
-  ["Startseite", [["home:reg", "Reglemente"], ["home:les", "Lektionen"], ["home:ao", "Ausbildungsoffizier"], ["home:vor", "Vorlagen"]]],
+  ["Startseite", [["home:reg", "Reglemente"], ["home:les", "Lektionen"], ["home:ao", "Ausbildungsoffizier"], ["home:vor", "Vorlagen"], ["home:games", "Feuerwehr Spiele"]]],
   ["Ausbildungsoffizier", [["ao:check", "Checkliste"], ["ao:keil", "KEIL"], ["ao:lek", "Lektionen"], ["ao:kq", "Kurs-Quiz"], ["ao:fach", "Fachlektionen"], ["ao:meth", "Lektion halten"], ["ao:zahl", "Zahlen-Trainer"], ["ao:bil", "Erfolgsauswertung / Bilanz"], ["ao:prog", "Kursprogramm"], ["ao:regl", "Reglement Basiswissen"]]]
 ];
 const CFG_DEF = () => ({ v: 1, t: 0, admins: ["tristan"], def: { hide: ["ao:check", "ao:keil", "ao:lek", "ao:kq", "ao:prog"] }, users: {} });

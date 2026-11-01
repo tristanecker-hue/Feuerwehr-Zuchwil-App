@@ -488,3 +488,61 @@ body.hasgear .top .brand { font-size: 1rem; letter-spacing: .05em; white-space: 
 .lfile[open] > summary::before { transform: rotate(90deg); }
 .lfile > summary h3 { margin: 0; flex: 1; min-width: 0; }
 .lfile > p { margin: 8px 0 0 22px; }
+
+/* ---------- Feuerwehr Spiele ---------- */
+.gmgrid { display: grid; gap: 12px; }
+.gmtile { display: flex; align-items: center; gap: 14px; text-align: left; padding: 14px 16px; background: var(--surface); border: 2px solid var(--line); border-radius: 16px; min-width: 0; }
+.gmtile:hover, .gmtile:focus-visible { border-color: var(--red); }
+.gmic { flex: none; width: 56px; height: 56px; border-radius: 14px; background: var(--red); color: var(--red-ink); display: grid; place-items: center; }
+.gmtx { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.gmtx b { font-family: var(--font-display); font-size: 1.2rem; text-transform: uppercase; letter-spacing: .02em; }
+.gmtx small { color: var(--muted); font-size: .9rem; }
+.gmtx em { color: var(--red); font-style: normal; font-size: .85rem; font-weight: 600; }
+.gmbody { display: flex; flex-direction: column; gap: 14px; }
+.gmbar { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-weight: 700; padding: 10px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; font-variant-numeric: tabular-nums; }
+.gmend { text-align: center; padding: 22px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; display: flex; flex-direction: column; gap: 8px; }
+.gmend h2 { font-family: var(--font-display); text-transform: uppercase; font-size: 1.7rem; }
+.gmend .row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
+/* Memory */
+.memgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.memc { aspect-ratio: 3 / 4; padding: 0; border: 0; background: none; perspective: 600px; min-width: 0; }
+.memf { position: relative; display: block; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform .35s; }
+.memc.up .memf, .memc.done .memf { transform: rotateY(180deg); }
+.memb, .memfr { position: absolute; inset: 0; display: grid; place-items: center; border-radius: 12px; backface-visibility: hidden; -webkit-backface-visibility: hidden; overflow: hidden; }
+.memb { background: var(--red); color: var(--red-ink); font-size: 1.6rem; border: 2px solid var(--line); }
+.memfr { transform: rotateY(180deg); background: #fff; border: 2px solid var(--line); }
+.memc.done .memfr { border-color: var(--ok); }
+.memfr img { width: 100%; height: 100%; object-fit: contain; background: #fff; }
+.memtx { font-size: clamp(.7rem, 3.2vw, .95rem); line-height: 1.2; padding: 4px; color: #222; font-weight: 700; text-align: center; overflow-wrap: anywhere; hyphens: auto; }
+/* Feuer löschen */
+.house { --dmg: 0; position: relative; padding: 0 6px 6px; filter: saturate(calc(1 - var(--dmg) * .7)) brightness(calc(1 - var(--dmg) * .35)); }
+.roof { height: 34px; background: var(--red); clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.hgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; background: #8c4a3a; padding: 12px; border-radius: 0 0 14px 14px; }
+.win { position: relative; aspect-ratio: 1; border-radius: 8px; border: 4px solid #e9e1d6; background: #7ec8ff; padding: 0; font-size: 2.6rem; overflow: hidden; }
+.win .fl, .win .wt { position: absolute; inset: 0; display: grid; place-items: center; opacity: 0; transform: scale(.4); transition: all .18s; }
+.win.on { background: #ffb040; }
+.win.on .fl { opacity: 1; transform: scale(1); animation: flick .35s infinite alternate; }
+.win.wet .wt { opacity: 1; transform: scale(1.1); }
+@keyframes flick { to { transform: scale(1.15) rotate(4deg); } }
+/* Brandklassen */
+.bkq { text-align: center; padding: 22px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; display: flex; flex-direction: column; gap: 4px; }
+.bkq small { color: var(--muted); } .bkq b { font-family: var(--font-display); font-size: 2rem; text-transform: uppercase; }
+.bkb { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.bkbtn { display: flex; flex-direction: column; gap: 2px; padding: 12px 8px; } .bkbtn b { font-size: 1.6rem; font-family: var(--font-display); } .bkbtn small { color: var(--muted); font-size: .8rem; }
+.bkbtn.good, .key.good { background: var(--ok-bg); border-color: var(--ok); }
+.bkbtn.badc, .key.badc { background: var(--bad-bg); border-color: var(--bad); }
+/* Leitungsbau */
+.rohrw { display: flex; align-items: stretch; gap: 6px; }
+.hyd, .nzl { font-size: 1.8rem; flex: none; display: flex; align-items: center; height: calc((100vw - 32px - 70px) / 5); max-height: 70px; }
+.nzl { align-self: flex-end; } .hyd { align-self: flex-start; }
+.rgrid { flex: 1; display: grid; grid-template-columns: repeat(var(--s), 1fr); gap: 4px; min-width: 0; }
+.rc { aspect-ratio: 1; padding: 0; border: 2px solid var(--line); border-radius: 10px; background: var(--surface); min-width: 0; }
+.rc .pipe { width: 100%; height: 100%; transform: rotate(var(--rot)); transition: transform .15s; fill: #8b93a1; stroke: #8b93a1; stroke-width: 9; stroke-linecap: butt; display: block; }
+.rc.wet { border-color: #4aa8ff; } .rc.wet .pipe { stroke: #4aa8ff; fill: #4aa8ff; }
+/* Feuer-Wörter */
+.hang { text-align: center; padding: 18px 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; display: flex; flex-direction: column; gap: 14px; }
+.hose { height: 14px; border-radius: 8px; background: linear-gradient(90deg, #e8ac52 calc((1 - var(--p)) * 100%), #5b2b22 calc((1 - var(--p)) * 100%)); }
+.hw { font-family: var(--font-display); font-size: clamp(1.2rem, 6.4vw, 2rem); letter-spacing: .05em; overflow-wrap: anywhere; }
+.keys { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.key { padding: 10px 0; border: 2px solid var(--line); border-radius: 10px; background: var(--surface); font-weight: 700; min-width: 0; }
+.key:disabled { opacity: .85; }
