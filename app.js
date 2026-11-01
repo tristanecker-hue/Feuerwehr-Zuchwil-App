@@ -1,9 +1,9 @@
-const APP_VERSION = "1.113";
+const APP_VERSION = "1.114";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
 FWZ.onChange(() => { if (FWZ.enabled && !FWZ.user && state.view !== "gate" && typeof gateNeeded === "function" && gateNeeded()) { start(); return; } if (state.view === "les") lesView(); greetUpd(); });
-let state = { mod: null, tab: "cards", ch: null, cf: null, lc: null };
+let state = { mod: null, tab: "quiz", ch: null, cf: null, lc: null };
 let prog = {};
 try { prog = JSON.parse(localStorage.getItem("fwz-progress") || "{}"); } catch (e) { prog = {}; }
 if (prog.einsatz && !prog.einsatz.v2) prog.einsatz = { known: [], best: null, v2: 1 };
@@ -279,7 +279,6 @@ function search(q) {
       const titleHit = words.every(w => fold(s.t).includes(w));
       if ((paras.length || titleHit) && (s.t.match(/^(\d+(?:\.\d+)*)\s/) && rgNum(m.id, s.t.match(/^(\d+(?:\.\d+)*)\s/)[1]))) res.push({ t: "s", m, s, i, paras: paras.length ? paras.slice(0, 2) : [s.p[0]], score: titleHit ? 2 : 1 });
     });
-    m.cards.forEach((c, i) => { if (words.every(w => fold(c[0] + " " + c[1]).includes(w))) res.push({ t: "c", m, c, score: 0 }); });
   });
   res.sort((a, b) => b.score - a.score);
   return { words, res };
@@ -307,7 +306,6 @@ function subView(g) {
   if (g === "basis") {
     const bm = getMod("basis"), gb = (mp("basis").gbs || {})[bm.quiz.length];
     h = bt("pdf:basis", "Basiswissen komplett", "PDF · " + RGDEF.basis.pages + " S.") +
-      bt("basis", "Lernkarten", mp("basis").known.length + " von " + bm.cards.length + " gewusst") +
       bt("gq", "Quiz", bm.quiz.length + " Fragen" + (gb != null ? " · Best " + gb : "")) +
       bt("spick", "Spickzettel", "wichtigste Zahlen · PDF");
   } else if (g === "abc") {
@@ -317,10 +315,10 @@ function subView(g) {
   } else {
     const em = getMod("einsatz");
     h = bt("pdf:einsatz", "Einsatzführung komplett", "PDF · " + RGDEF.einsatz.pages + " S.") +
-      bt("einsatz", "Karten & Quiz", mp("einsatz").known.length + " von " + em.cards.length + " gewusst");
+      bt("einsatz", "Quiz", em.quiz.length + " Fragen");
   }
-  app.innerHTML = `<section class="hero"><h1>${g === "basis" ? "Basiswissen" : g === "abc" ? "ABC-Handbuch" : g === "veg" ? "Vegetationsbrände" : "Einsatzführung"}</h1><p>${g === "abc" ? "Handbuch für ABC-Einsätze (FKS), 508 Seiten in vier Teilen." : g === "veg" ? "Handbuch Spezialwissen Vegetationsbrände (FKS) mit Quiz." : "Reglement als PDF, Lernkarten und Quiz."}</p></section><div class="menu rgmenu">${h}</div>`;
-  app.querySelectorAll(".pdfbtn").forEach(b => b.addEventListener("click", () => { const i = b.dataset.id; state.sub = g; i === "gq" ? gquizView() : i.startsWith("gq:") ? gquizView(i.slice(3)) : i === "spick" ? spickView() : i.startsWith("pdf:") ? rgJump(i.slice(4), 0, () => subView(g)) : openMod(i, "cards"); }));
+  app.innerHTML = `<section class="hero"><h1>${g === "basis" ? "Basiswissen" : g === "abc" ? "ABC-Handbuch" : g === "veg" ? "Vegetationsbrände" : "Einsatzführung"}</h1><p>${g === "abc" ? "Handbuch für ABC-Einsätze (FKS), 508 Seiten in vier Teilen." : g === "veg" ? "Handbuch Spezialwissen Vegetationsbrände (FKS) mit Quiz." : "Reglement als PDF und Quiz."}</p></section><div class="menu rgmenu">${h}</div>`;
+  app.querySelectorAll(".pdfbtn").forEach(b => b.addEventListener("click", () => { const i = b.dataset.id; state.sub = g; i === "gq" ? gquizView() : i.startsWith("gq:") ? gquizView(i.slice(3)) : i === "spick" ? spickView() : i.startsWith("pdf:") ? rgJump(i.slice(4), 0, () => subView(g)) : openMod(i, "quiz"); }));
   window.scrollTo(0, 0);
 }
 function home() {
@@ -329,20 +327,20 @@ function home() {
   app.innerHTML = `
     <section class="hero">
       <h1>Reglemente</h1>
-      <p>Lies das ganze Reglement im PDF, übe mit Lernkarten und teste dich im Quiz.</p>
+      <p>Lies das ganze Reglement im PDF, teste dich im Quiz.</p>
     </section>
     <div class="srch"><input type="search" id="q" placeholder="Reglemente durchsuchen (z. B. Atemschutz, OAABS, 118)" aria-label="Suche" autocomplete="off"></div>
     <div id="sbox" hidden></div>
     <div class="menu rgmenu" id="mgrid">${(() => {
       const bt = (id, t, sm) => `<button class="mbtn main pdfbtn" data-id="${id}"><span>${esc(t)}</span><small>${esc(sm)}</small></button>`;
-      return bt("sub:basis", "Basiswissen", "PDF, Lernkarten, Quiz, Spickzettel") +
+      return bt("sub:basis", "Basiswissen", "PDF, Quiz, Spickzettel") +
         bt("sub:einsatz", "Einsatzführung", "PDF, Karten & Quiz") +
         bt("sgv", "Kantonale Ergänzungen (SGV)", "Original-PDF + " + SGV.length + " Merkblätter") +
         bt("sub:abc", "ABC-Handbuch", "FKS · 508 S. in 4 Teilen + Quiz") +
         bt("sub:veg", "Vegetationsbrände", "Handbuch Spezialwissen · PDF + Quiz");
     })()}</div>
     <p class="foot">Lernhilfe aus den FKS-Reglementen von feukos.ch. Massgebend ist immer das jeweilige Reglement in der gültigen Fassung.</p>`;
-  app.querySelectorAll(".pdfbtn").forEach(b => b.addEventListener("click", () => b.dataset.id.startsWith("sub:") ? subView(b.dataset.id.slice(4)) : b.dataset.id === "gq" ? gquizView() : b.dataset.id === "sgv" ? sgvView() : b.dataset.id === "spick" ? spickView() : b.dataset.id.startsWith("pdf:") ? rgView(b.dataset.id.slice(4)) : openMod(b.dataset.id, "cards")));
+  app.querySelectorAll(".pdfbtn").forEach(b => b.addEventListener("click", () => b.dataset.id.startsWith("sub:") ? subView(b.dataset.id.slice(4)) : b.dataset.id === "gq" ? gquizView() : b.dataset.id === "sgv" ? sgvView() : b.dataset.id === "spick" ? spickView() : b.dataset.id.startsWith("pdf:") ? rgView(b.dataset.id.slice(4)) : openMod(b.dataset.id, "quiz")));
   const qi = document.getElementById("q"), sb = document.getElementById("sbox"), mg = document.getElementById("mgrid");
   qi.addEventListener("input", () => {
     const v = qi.value.trim();
@@ -435,18 +433,15 @@ async function rgView(id, page) {
 }
 
 /* ---------- Reglement ---------- */
-function openMod(id, tab) { state.ch = null; state.cf = null; state.lc = null; state.mod = id; state.tab = tab || "cards"; renderMod(); window.scrollTo(0, 0); }
+function openMod(id, tab) { state.ch = null; state.cf = null; state.lc = null; state.mod = id; state.tab = tab || "quiz"; renderMod(); window.scrollTo(0, 0); }
 function renderMod() {
   const m = getMod(state.mod); backBtn.hidden = false;
   app.innerHTML = `
     <section class="head"><h1>${esc(m.title)}</h1><div class="ver">${esc(m.ver)}</div></section>
-    <div class="tabs" role="tablist">
-      ${[["cards", "Lernkarten"], ["quiz", "Quiz"]].map(([k, l]) => `<button role="tab" data-tab="${k}" aria-selected="${state.tab === k}">${l}</button>`).join("")}
-    </div>
     <div id="body"></div>`;
   app.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => { state.tab = b.dataset.tab; state.lc = null; renderMod(); }));
   const body = document.getElementById("body");
-  if (state.tab === "cards" || state.tab === "sum") cards(m, body);
+  if (state.tab === "sum") cards(m, body);
   else quiz(m, body);
 }
 const CH = {

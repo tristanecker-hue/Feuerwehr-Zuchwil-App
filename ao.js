@@ -1,6 +1,6 @@
 /* Ausbildungsoffizier: Kurs 70 (Di 20.10. bis Fr 23.10.2026, Feuerwehr Grenchen).
    Kursdaten aus Kursaufgebot 70/26/1 und Tagesbefehl (Version 02.10.2026).
-   Fachinhalte (Zahlen, Zusammenfassung, Lernkarten, Quiz) stammen aus dem Reglement Basiswissen in dieser App. */
+   Fachinhalte (Zahlen, Zusammenfassung, Quiz) stammen aus dem Reglement Basiswissen in dieser App. */
 const AO_REGL = "https://docs.feukos.ch/Basiswissen/ReglementBasiswissenDE/";
 const AO_T0 = new Date(2026, 9, 20, 7, 30);
 /* Persönlicher Stand (Notizen, Checklisten, Klasse): pro Benutzer getrennt, angemeldet zusätzlich in der Cloud (nur eigenes Dokument) */
@@ -237,7 +237,7 @@ function aoHub() {
   const tiles = [
     ["check", "Vorbereitung", "Checkliste", "Material und Vorbereitung laut Kursaufgebot", dC, nC, dC + " von " + nC + " erledigt"],
     ["keil", "Vorstellung", "KEIL", "Persönliche Vorstellung, 2–3 Minuten: Notizen und Stoppuhr", dK, AO_KEIL.length, dK + " von " + AO_KEIL.length + " Punkten notiert"],
-    ["lek", "Fachthemen", "Lektionen", "Alle Kurs-Lektionen mit Lernkarten, Quiz und Reglement-Suche", dT, AO_T.length, dT + " von " + AO_T.length + " Themen sitzen"],
+    ["lek", "Fachthemen", "Lektionen", "Alle Kurs-Lektionen mit Quiz und Reglement-Suche", dT, AO_T.length, dT + " von " + AO_T.length + " Themen sitzen"],
     ["kq", "Quiz", "Kurs-Quiz", "Fachfragen aus dem Basiswissen zu den Lektionen jedes Kurstags", 0, 0, ""],
     ["fach", "Kursauftrag", "Fachlektionen", "Auftrag, Ziel und Rahmenbedingungen der Fachlektionen", 0, 0, ""],
     ["meth", "Methodik", "Lektion halten", "Führungsablauf und Zahlen zur Ausbildung, direkt im Reglement", 0, 0, ""],
@@ -349,7 +349,7 @@ function aoFach() {
 
 /* ---------- Lektionen ---------- */
 function aoTopics() {
-  app.innerHTML = `<section class="hero"><h1>Lektionen</h1><p>Alle Fachthemen des Kurses in der Reihenfolge des Tagesbefehls. Pro Thema: Wann und wo, Lernkarten, Quiz und Reglement.</p></section>
+  app.innerHTML = `<section class="hero"><h1>Lektionen</h1><p>Alle Fachthemen des Kurses in der Reihenfolge des Tagesbefehls. Pro Thema: Wann und wo, Quiz und Reglement.</p></section>
     <div class="grid">${AO_T.map(t => {
       const ok = AOS.chk["d:" + t.id];
       return `<button class="tile chtile" data-r="lek:${t.id}"><span class="num">${t.l.map(n => "L " + n).join(" · ")}</span><h2>${esc(t.t)}</h2><div class="facts"><span>${ok ? "sitzt" : "noch offen"}</span></div></button>`;
@@ -471,19 +471,18 @@ function aoTopic(id) {
     ${aoKlasse()}
     <h3 class="zh">Wann und wo</h3>
     <div class="ztw"><table class="zt sch">${sl.map(s => `<tr><td>${s.day}<br>${s.von}–${s.bis}</td><td>L ${s.n}<br><span class="mu">Arbeitsplatz ${s.ap}: ${esc(AO_AP[s.ap] || "")}</span></td></tr>`).join("")}</table></div>
-    <h3 class="zh">Karten und Fragen zum Thema</h3>
-    <div class="note">Direkt aus dem Reglement: alle Lernkarten und Quizfragen, in denen ${t.q.map(q => "«" + esc(q) + "»").join(", ")} vorkommt.</div>
-    <div class="row"><button class="btn primary" id="mc"${mt.cards.length ? "" : " disabled"}>Lernkarten (${mt.cards.length})</button><button class="btn primary" id="mq"${mt.quiz.length ? "" : " disabled"}>Quiz (${mt.quiz.length})</button></div>
+    <h3 class="zh">Fragen zum Thema</h3>
+    <div class="note">Direkt aus dem Reglement: alle Quizfragen, in denen ${t.q.map(q => "«" + esc(q) + "»").join(", ")} vorkommt.</div>
+    <div class="row"><button class="btn primary" id="mq"${mt.quiz.length ? "" : " disabled"}>Quiz (${mt.quiz.length})</button></div>
     <div id="dr" style="margin-top:14px"></div>
     <h3 class="zh">Im Reglement nachschlagen</h3>
     ${aoPdfRefs(t)}
-    ${t.kap.length ? `<div class="row3">${t.kap.map(k => `<button class="btn" data-o="cards:${k}">Lernkarten ${aoKap(k)}</button><button class="btn" data-o="quiz:${k}">Quiz ${aoKap(k)}</button>`).join("")}</div>` : `<div class="note">Für dieses Thema ist kein Kapitel fest zugeordnet. Nutze die Suche.</div>`}
+    ${t.kap.length ? `<div class="row3">${t.kap.map(k => `<button class="btn" data-o="quiz:${k}">Quiz ${aoKap(k)}</button>`).join("")}</div>` : `<div class="note">Für dieses Thema ist kein Kapitel fest zugeordnet. Nutze die Suche.</div>`}
     <div class="chips" role="group" aria-label="Suchbegriffe">${t.q.map(q => `<button class="chip" data-q="${esc(q)}" aria-pressed="false">${esc(q)}</button>`).join("")}</div>
     <div id="sx"></div>
     <div class="chklist">${aoChkHtml("d:" + t.id, "<b>Dieses Thema sitzt</b>")}</div>`;
   aoBind(app);
   app.querySelectorAll("[data-o]").forEach(b => b.addEventListener("click", () => { const [tab, k] = b.dataset.o.split(":"); aoOpen(tab, k); }));
-  document.getElementById("mc").onclick = () => aoDrill(document.getElementById("dr"), mt.cards);
   document.getElementById("mq").onclick = () => aoQuizRun(document.getElementById("dr"), mt.quiz);
   const box = document.getElementById("sx");
   box.addEventListener("click", () => { state.from = "ao"; state.direct = true; }, true);
