@@ -1,4 +1,4 @@
-const APP_VERSION = "1.109";
+const APP_VERSION = "1.110";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -143,7 +143,7 @@ function fireFx(btn) {
   }
   return { level(l) { lvl = l; if (!run) { run = true; last = performance.now(); requestAnimationFrame(frame); } } };
 }
-/* Feuerwehrmann löscht das brennende Logo; kommt bei jedem Update aus einer anderen Richtung */
+/* Marin, der Feuerwehrmann, löscht das brennende Logo: jedes Mal andere Position und anderer Auftritt */
 function extinguishFx(lb, fire) {
   return new Promise(done => {
     if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) { fire.level(0); done(); return; }
@@ -151,43 +151,74 @@ function extinguishFx(lb, fire) {
     const cv = document.createElement("canvas"); cv.width = VW * dpr; cv.height = VH * dpr;
     cv.style.cssText = "position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:60";
     document.body.appendChild(cv); const g = cv.getContext("2d"); g.scale(dpr, dpr);
-    /* zufällige Position: links, rechts, unten oder schräg oben */
-    const zones = [[-25, 25], [155, 205], [55, 125], [-60, -30], [210, 240]], z = zones[Math.random() * zones.length | 0], th = (z[0] + Math.random() * (z[1] - z[0])) * Math.PI / 180;
-    const R = Math.min(r.width / 2 + 70, 210);
-    const sc = Math.min(2.1, Math.max(1.5, VW / 390 * 1.8));
-    let fx = Math.min(VW - 45 * sc, Math.max(45 * sc, cx + Math.cos(th) * R * 1.15)), fy = Math.min(VH - 65 * sc, Math.max(75 * sc, cy + Math.sin(th) * R * .95));
-    const dir = cx >= fx ? 1 : -1;
-    const slideFrom = dir === 1 ? -120 * sc : VW + 120 * sc, ps = [], t0 = performance.now(), IN = 600, SPRAY = 1900, OUT = 500, TOT = IN + SPRAY + OUT; let last = t0, hit = false;
+    const pick = a => a[Math.random() * a.length | 0];
+    /* Skills: ein Hauptauftritt, dazu mit 65 % die Siegerpose */
+    const skill = window.__fxSkill || pick(["strahl", "schwenk", "salto", "eimer", "fontaene", "pirouette"]), pose = window.__fxPose !== undefined ? window.__fxPose : Math.random() < .65, say = pick(["Gelöscht!", "Alles im Griff!", "Marin ist da!", "Wasser marsch!", "Feuer aus!"]);
+    const zones = [[-25, 25], [155, 205], [55, 125], [-60, -30], [210, 240]], z = pick(zones), th = (z[0] + Math.random() * (z[1] - z[0])) * Math.PI / 180;
+    const R = Math.min(r.width / 2 + 70, 210), sc = Math.min(1.5, Math.max(1.05, VW / 390 * 1.26));
+    let fx = Math.min(VW - 45 * sc, Math.max(45 * sc, cx + Math.cos(th) * R * 1.15)), fy = Math.min(VH - 70 * sc, Math.max(95 * sc, cy + Math.sin(th) * R * .95));
+    const dir = cx >= fx ? 1 : -1, slideFrom = dir === 1 ? -120 * sc : VW + 120 * sc, ps = [], t0 = performance.now();
+    const IN = 650, SPRAY = skill === "eimer" ? 1700 : 1900, POSE = pose ? 900 : 0, OUT = 500, TOT = IN + SPRAY + POSE + OUT;
+    let last = t0, sprayT = 0, out = false, thrown = false, bucket = null;
     const ease = x => 1 - Math.pow(1 - x, 3);
-    function man(x, y, t, aim) {
+    function man(x, y, t, aim, o) {
       g.save(); g.translate(x, y); g.scale(dir * sc, sc);
-      g.fillStyle = "#222"; g.fillRect(-11, 18, 9, 30); g.fillRect(2, 18, 9, 30);           // Beine
-      g.fillStyle = "#111"; g.fillRect(-13, 46, 12, 6); g.fillRect(1, 46, 12, 6);          // Stiefel
-      g.fillStyle = "#3a3f4a"; g.beginPath(); g.roundRect(-14, -18, 28, 40, 5); g.fill();  // Jacke
-      g.fillStyle = "#e8d23a"; g.fillRect(-14, 2, 28, 4); g.fillRect(-14, 12, 28, 3);      // Reflexstreifen
-      g.fillStyle = "#f0c9a0"; g.beginPath(); g.arc(0, -28, 9, 0, 6.3); g.fill();          // Kopf
-      g.fillStyle = "#c8161d"; g.beginPath(); g.arc(0, -31, 11, Math.PI, 0); g.fill(); g.fillRect(-12, -31, 24, 4); g.fillRect(2, -29, 14, 3); // Helm
+      if (o.rot) { g.translate(0, 8); g.rotate(o.rot); g.translate(0, -8); }
+      const sw = o.walk ? Math.sin(t / 75) * .55 : 0;
+      g.fillStyle = "#222"; [[-6, sw], [6, -sw]].forEach(([lx, a]) => { g.save(); g.translate(lx, 20); g.rotate(a); g.fillRect(-5, 0, 9, 28); g.fillStyle = "#111"; g.fillRect(-6, 27, 12, 6); g.fillStyle = "#222"; g.restore(); });
+      g.fillStyle = "#3a3f4a"; g.beginPath(); g.roundRect(-14, -18, 28, 40, 5); g.fill();
+      g.fillStyle = "#e8d23a"; g.fillRect(-14, 2, 28, 4); g.fillRect(-14, 12, 28, 3);
+      g.fillStyle = "#f0c9a0"; g.beginPath(); g.arc(0, -28, 9, 0, 6.3); g.fill();
+      g.fillStyle = "#222"; g.fillRect(2, -30, 2, 2); g.fillRect(-4, -30, 2, 2);
+      if (o.smile) { g.strokeStyle = "#a55"; g.lineWidth = 1.2; g.beginPath(); g.arc(1, -25, 4, .2, Math.PI - .2); g.stroke(); }
+      g.fillStyle = "#c8161d"; g.beginPath(); g.arc(0, -31, 11, Math.PI, 0); g.fill(); g.fillRect(-12, -31, 24, 4); g.fillRect(2, -29, 14, 3);
       g.fillStyle = "#e8d23a"; g.fillRect(-2, -42, 4, 6);
-      const a = aim + Math.sin(t / 60) * .02;                                              // Arme + Strahlrohr zeigen auf das Logo
-      g.strokeStyle = "#3a3f4a"; g.lineWidth = 6; g.lineCap = "round"; g.beginPath(); g.moveTo(4, -10); g.lineTo(4 + Math.cos(a) * 22, -4 + Math.sin(a) * 22); g.stroke();
-      g.strokeStyle = "#c8a82a"; g.lineWidth = 7; g.beginPath(); g.moveTo(4 + Math.cos(a) * 20, -4 + Math.sin(a) * 20); g.lineTo(4 + Math.cos(a) * 40, -4 + Math.sin(a) * 40); g.stroke();
+      g.strokeStyle = "#3a3f4a"; g.lineWidth = 6; g.lineCap = "round";
+      if (o.thumb) {                                                                          // Siegerpose: Daumen hoch
+        g.beginPath(); g.moveTo(4, -10); g.lineTo(18, -26); g.stroke(); g.fillStyle = "#f0c9a0"; g.beginPath(); g.arc(19, -29, 4.5, 0, 6.3); g.fill(); g.fillRect(17, -39, 4, 9);
+        g.strokeStyle = "#3a3f4a"; g.beginPath(); g.moveTo(-4, -10); g.lineTo(-10, 6); g.stroke();
+      } else {
+        const a = aim + Math.sin(t / 60) * .02;
+        g.beginPath(); g.moveTo(4, -10); g.lineTo(4 + Math.cos(a) * 22, -4 + Math.sin(a) * 22); g.stroke();
+        if (o.bucket) { g.fillStyle = "#8a93a1"; g.beginPath(); const bx = 4 + Math.cos(a) * 26, by = -4 + Math.sin(a) * 26; g.moveTo(bx - 9, by - 8); g.lineTo(bx + 9, by - 8); g.lineTo(bx + 6, by + 8); g.lineTo(bx - 6, by + 8); g.fill(); g.fillStyle = "rgba(120,190,255,.9)"; g.fillRect(bx - 8, by - 8, 16, 3); }
+        else if (!o.noNozzle) { g.strokeStyle = "#c8a82a"; g.lineWidth = 7; g.beginPath(); g.moveTo(4 + Math.cos(a) * 20, -4 + Math.sin(a) * 20); g.lineTo(4 + Math.cos(a) * 40, -4 + Math.sin(a) * 40); g.stroke(); }
+      }
       g.restore();
-      g.save(); g.font = "700 " + Math.round(11 * sc) + "px system-ui, sans-serif"; g.textAlign = "center"; const tw = g.measureText("Marin").width + 12, ty = y - 58 * sc;
+      g.save(); g.font = "700 " + Math.round(11 * sc) + "px system-ui, sans-serif"; g.textAlign = "center"; const tw = g.measureText("Marin").width + 12, ty = y - 58 * sc + (o.dy || 0);
       g.fillStyle = "rgba(255,255,255,.92)"; g.strokeStyle = "#c8161d"; g.lineWidth = 1.5; g.beginPath(); g.roundRect(x - tw / 2, ty - 12 * sc, tw, 17 * sc, 8); g.fill(); g.stroke();
-      g.fillStyle = "#c8161d"; g.fillText("Marin", x, ty + 1 * sc); g.restore();
+      g.fillStyle = "#c8161d"; g.fillText("Marin", x, ty + 1 * sc);
+      if (o.say) { g.font = "700 " + Math.round(13 * sc) + "px system-ui, sans-serif"; const sw2 = g.measureText(o.say).width + 18, bx = Math.min(VW - sw2 / 2 - 6, Math.max(sw2 / 2 + 6, x)), by = Math.max(24, ty - 34 * sc);
+        g.fillStyle = "#fff"; g.strokeStyle = "#c8161d"; g.lineWidth = 2; g.beginPath(); g.roundRect(bx - sw2 / 2, by - 14, sw2, 26, 12); g.fill(); g.stroke(); g.fillStyle = "#c8161d"; g.fillText(o.say, bx, by + 5); }
+      g.restore();
       return [x + dir * sc * (4 + Math.cos(aim) * 41), y + sc * (-4 + Math.sin(aim) * 41)];
     }
+    const splash = (px, py, n) => { for (let i = 0; i < n; i++) { const d = Math.random() * 6.28, sp = 80 + Math.random() * 280; ps.push({ x: px, y: py, vx: Math.cos(d) * sp, vy: Math.sin(d) * sp - 80, w: 1, l: 0 }); } for (let i = 0; i < 8; i++) ps.push({ x: px + (Math.random() - .5) * 90, y: py + (Math.random() - .5) * 40, vx: (Math.random() - .5) * 60, vy: -20 - Math.random() * 40, w: 0, l: 0 }); };
     function frame(now) {
       const el = now - t0, dt = Math.min(.05, (now - last) / 1000); last = now;
       g.clearRect(0, 0, VW, VH);
-      const k = el < IN ? ease(el / IN) : el > IN + SPRAY ? 1 - ease((el - IN - SPRAY) / OUT) : 1, x = slideFrom + (fx - slideFrom) * k;
-      let aim = Math.atan2(cy - fy, Math.abs(cx - fx)); aim = Math.max(-.9, Math.min(.9, aim));
-      const [nx, ny] = man(x, fy, now, aim);
-      /* Schlauch vom Bildrand zum Strahlrohr */
-      g.strokeStyle = "#d4b22a"; g.lineWidth = 6 * sc / 1.2; g.lineCap = "round"; g.beginPath(); g.moveTo(slideFrom, fy + 40); g.bezierCurveTo(slideFrom + (x - slideFrom) * .4, fy + 60, x - dir * 20, fy + 50, x + dir * 4 * sc, fy + 2 * sc); g.stroke();
-      if (el > IN && el < IN + SPRAY) {
-        for (let i = 0; i < 9; i++) { const d = Math.atan2(cy - ny, cx - nx) + (Math.random() - .5) * .09, sp = 600 + Math.random() * 140; ps.push({ x: nx, y: ny, vx: Math.cos(d) * sp, vy: Math.sin(d) * sp, w: 1, l: 0 }); }
-        if (!hit && el > IN + 450) { hit = true; fire.level(0); }
+      const tOut = IN + SPRAY + POSE, k = el < IN ? ease(el / IN) : el > tOut ? 1 - ease((el - tOut) / OUT) : 1, x = slideFrom + (fx - slideFrom) * k, sp = el - IN;
+      const spraying = sp > 0 && sp < SPRAY, o = { walk: k < 1 && (el < IN || el > tOut), noNozzle: skill === "eimer" };
+      let jump = 0, tx = cx, ty = cy;
+      if (skill === "schwenk" && spraying) tx = cx + Math.sin(sp / 170) * r.width * .45;
+      if (skill === "fontaene" && spraying && sp < 700) { tx = cx + (cx - fx) * .2; ty = cy - 230; }
+      if (skill === "salto" && spraying && sp > 350 && sp < 1100) { const u = (sp - 350) / 750; jump = -Math.sin(u * Math.PI) * 75 * sc; o.rot = -dir * u * 6.283 * -1; }
+      if (skill === "pirouette" && spraying && sp > 300 && sp < 1000) { const u = (sp - 300) / 700; o.dirFlip = Math.cos(u * 6.283 * 2); }
+      let aim = Math.atan2(ty - fy, Math.abs(tx - fx)); aim = Math.max(-1.1, Math.min(1.1, aim));
+      if (skill === "eimer") { o.bucket = !thrown && el > IN * .4; if (!o.bucket) o.noNozzle = true; }
+      if (el > IN + SPRAY && pose && el < tOut) { o.thumb = true; o.smile = true; o.say = say; }
+      const flipSave = dir; if (o.dirFlip !== undefined) { /* Pirouette: Körper dreht sich um die Hochachse */ g.save(); g.translate(x, 0); g.scale(Math.abs(o.dirFlip) < .12 ? .12 : Math.abs(o.dirFlip), 1); g.translate(-x, 0); }
+      const [nx, ny] = man(x, fy + jump, now, aim, o);
+      if (o.dirFlip !== undefined) g.restore();
+      /* Schlauch vom Bildrand zum Strahlrohr (nicht beim Eimer) */
+      if (skill !== "eimer") { g.strokeStyle = "#d4b22a"; g.lineWidth = 6 * sc / 1.2; g.lineCap = "round"; g.beginPath(); g.moveTo(slideFrom, fy + 40 * sc); g.bezierCurveTo(slideFrom + (x - slideFrom) * .4, fy + 60 * sc, x - dir * 20 * sc, fy + 50 * sc, x + dir * 4 * sc, fy + 2 * sc + jump); g.stroke(); }
+      if (skill === "eimer") {
+        if (!thrown && sp > 250) { thrown = true; bucket = { x0: nx, y0: ny, t: 0 }; }
+        if (bucket) { bucket.t += dt; const u = Math.min(1, bucket.t / .65), bx = bucket.x0 + (cx - bucket.x0) * u, by = bucket.y0 + (cy - bucket.y0) * u - Math.sin(u * Math.PI) * 140;
+          if (u < 1) { g.save(); g.translate(bx, by); g.rotate(u * 9 * dir); g.fillStyle = "#8a93a1"; g.beginPath(); g.moveTo(-9, -8); g.lineTo(9, -8); g.lineTo(6, 8); g.lineTo(-6, 8); g.fill(); g.restore(); }
+          else if (!bucket.done) { bucket.done = true; splash(cx, cy, 160); fire.level(0); } }
+      } else if (spraying && !(skill === "salto" && o.rot)) {
+        for (let i = 0; i < 9; i++) { const d = Math.atan2(ty - ny, tx - nx) + (Math.random() - .5) * .09, s2 = 600 + Math.random() * 140; ps.push({ x: nx, y: ny, vx: Math.cos(d) * s2, vy: Math.sin(d) * s2, w: 1, l: 0 }); }
+        sprayT += dt; if (sprayT > .55 && !(skill === "fontaene" && sp < 700)) fire.level(0);
       }
       g.globalCompositeOperation = "source-over";
       for (let i = ps.length - 1; i >= 0; i--) {
