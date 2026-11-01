@@ -1,4 +1,4 @@
-const APP_VERSION = "1.117";
+const APP_VERSION = "1.118";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -1115,6 +1115,19 @@ async function cfgSave(msg) {
   try { await FWZ.setCfg(CFG); if (msg) msg.textContent = "Gespeichert."; }
   catch (e) { if (msg) msg.textContent = /permission|insufficient/i.test((e && e.message) || "") ? "Im Konto speichern nicht möglich (Firestore-Regeln für fwz_config fehlen). Nur auf diesem Gerät gespeichert." : "Im Konto speichern nicht möglich (offline?). Nur auf diesem Gerät gespeichert."; }
 }
+async function cfgDevices() {
+  const box = document.getElementById("cfgdev"); if (!box) return;
+  if (!FWZ.user) { box.innerHTML = '<p class="sinfo">Nur mit Anmeldung sichtbar.</p>'; return; }
+  try {
+    try { await FWZ.ping(); } catch (e) {}
+    const now = Date.now(), ds = (await FWZ.devices()).sort((a, b) => (b.seen || 0) - (a.seen || 0)), ago = t => { const m = Math.round((now - t) / 60000); return m < 2 ? "gerade eben" : m < 60 ? "vor " + m + " Min." : m < 1440 ? "vor " + Math.round(m / 60) + " Std." : "vor " + Math.round(m / 1440) + " Tagen"; };
+    const on = ds.filter(d => now - d.seen < 5 * 60000).length, wk = ds.filter(d => now - d.seen < 7 * 864e5).length;
+    box.innerHTML = `<div class="devsum"><div><b>${on}</b><span>jetzt aktiv</span></div><div><b>${wk}</b><span>letzte 7 Tage</span></div><div><b>${ds.length}</b><span>insgesamt</span></div></div>
+      <div class="devlist">${ds.map(d => `<div class="devrow${now - d.seen < 5 * 60000 ? " on" : ""}"><span class="dot"></span><span class="dn"><span><b>${esc(d.kind || "Gerät")}</b> · ${esc(d.name || "?")}${d.me ? " · dieses Gerät" : ""}</span><small>${d.v ? "V" + esc(d.v) + " · " : ""}${ago(d.seen)}</small></span>${d.me ? "" : `<button class="cfgx" data-dd="${esc(d.id)}" aria-label="Gerät entfernen" title="Gerät aus der Liste entfernen">×</button>`}</div>`).join("") || '<p class="sinfo">Noch keine Geräte erfasst.</p>'}</div>
+      <p class="foot">Ein Gerät zählt als aktiv, wenn die App in den letzten 5 Minuten geöffnet war. Gezählt werden nur angemeldete Geräte.</p>`;
+    box.querySelectorAll("[data-dd]").forEach(b => b.onclick = async () => { if (!b.dataset.c) { b.dataset.c = 1; b.textContent = "Entfernen?"; b.classList.add("sure"); return; } try { await FWZ.delDevice(b.dataset.dd); } catch (e) {} cfgDevices(); });
+  } catch (e) { box.innerHTML = '<p class="sinfo">' + (/permission|insufficient/i.test(e.message || "") ? "Keine Berechtigung: In den Firestore-Regeln fehlt <code>fwz_presence</code>." : "Geräte konnten nicht geladen werden (offline?).") + "</p>"; }
+}
 function settingsView() {
   state.mod = null; state.view = "set"; backBtn.hidden = false;
   document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
@@ -1136,11 +1149,12 @@ function settingsView() {
     ${adm ? `<h3 class="zh">Benutzer hinzufügen</h3><div class="cfgadd"><input id="cfgnu" placeholder="Anmeldename, z. B. max" autocomplete="off" autocapitalize="none"><button class="btn primary" id="cfgau">Hinzufügen</button></div>
       <h3 class="zh">Administratoren</h3><div class="cfglist">${(CFG.admins || []).map(a => `<div class="cfgrow"><span>${esc(a)}</span>${(CFG.admins.length > 1 && a !== me) ? `<button class="btn ghost" data-da="${esc(a)}">Entfernen</button>` : ""}</div>`).join("")}</div>
       <div class="cfgadd"><input id="cfgna" placeholder="Anmeldename" autocomplete="off" autocapitalize="none"><button class="btn" id="cfgaa">Administrator hinzufügen</button></div>` : ""}
+    <h3 class="zh">Geräte</h3><div id="cfgdev" class="cfgdev"><p class="sinfo">Lade …</p></div>
     ${thmHtml}${outHtml}
     <div id="cfgmsg" class="sinfo" role="status"></div>
     <p class="foot">Die Zugänge (Name und Passwort) werden in Firebase unter Authentication angelegt. Hier legst du fest, was ein Name in der App sieht. Ausgeblendete Kacheln sind weg, aber keine Zugriffssperre: Dateien und Lektionen schützt die Datenbank.</p>`;
   const msg = document.getElementById("cfgmsg"), nm = s => (s || "").trim().toLowerCase().replace(/@.*$/, "").replace(/[^a-z0-9._-]/g, "");
-  outBind();
+  outBind(); cfgDevices();
   app.querySelectorAll("input[data-id]").forEach(c => c.onchange = () => { const l = c.dataset.u ? CFG.users[c.dataset.u] : CFG.def; l.hide = l.hide.filter(x => x !== c.dataset.id); if (!c.checked) l.hide.push(c.dataset.id); cfgSave(msg); });
   app.querySelectorAll("[data-du]").forEach(b => b.onclick = () => { if (!b.dataset.c) { b.dataset.c = 1; b.textContent = "Entfernen?"; b.classList.add("sure"); return; } delete CFG.users[b.dataset.du]; cfgSave(msg).then(settingsView); });
   document.getElementById("cfgau").onclick = () => { const n = nm(document.getElementById("cfgnu").value); if (!n) { msg.textContent = "Bitte einen Anmeldenamen eingeben."; return; } if (!CFG.users[n]) CFG.users[n] = { hide: CFG.def.hide.slice() }; cfgSave(msg).then(settingsView); };
@@ -1160,6 +1174,9 @@ function settingsView() {
   FWZ.onChange(upd); upd();
 })();
 
+/* Gerätezähler: Lebenszeichen alle 2 Minuten, solange die App sichtbar ist */
+(() => { const p = () => { if (typeof FWZ !== "undefined" && FWZ.user && !document.hidden) FWZ.ping().catch(() => {}); };
+  FWZ.onChange(p); setInterval(p, 120000); document.addEventListener("visibilitychange", p); p(); })();
 start();
 
 if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {
