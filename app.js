@@ -1,4 +1,4 @@
-const APP_VERSION = "1.106";
+const APP_VERSION = "1.107";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -143,6 +143,62 @@ function fireFx(btn) {
   }
   return { level(l) { lvl = l; if (!run) { run = true; last = performance.now(); requestAnimationFrame(frame); } } };
 }
+/* Feuerwehrmann löscht das brennende Logo; kommt bei jedem Update aus einer anderen Richtung */
+function extinguishFx(lb, fire) {
+  return new Promise(done => {
+    if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) { fire.level(0); done(); return; }
+    const dpr = Math.min(window.devicePixelRatio || 1, 2), VW = innerWidth, VH = innerHeight, r = lb.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const cv = document.createElement("canvas"); cv.width = VW * dpr; cv.height = VH * dpr;
+    cv.style.cssText = "position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:60";
+    document.body.appendChild(cv); const g = cv.getContext("2d"); g.scale(dpr, dpr);
+    /* zufällige Position: links, rechts, unten oder schräg oben */
+    const zones = [[-25, 25], [155, 205], [55, 125], [-60, -30], [210, 240]], z = zones[Math.random() * zones.length | 0], th = (z[0] + Math.random() * (z[1] - z[0])) * Math.PI / 180;
+    const R = Math.min(r.width / 2 + 70, 210);
+    let fx = Math.min(VW - 40, Math.max(40, cx + Math.cos(th) * R * 1.15)), fy = Math.min(VH - 60, Math.max(70, cy + Math.sin(th) * R * .95));
+    const dir = cx >= fx ? 1 : -1, sc = Math.min(1.15, Math.max(.8, VW / 390));
+    const slideFrom = dir === 1 ? -90 : VW + 90, ps = [], t0 = performance.now(), IN = 600, SPRAY = 1900, OUT = 500, TOT = IN + SPRAY + OUT; let last = t0, hit = false;
+    const ease = x => 1 - Math.pow(1 - x, 3);
+    function man(x, y, t, aim) {
+      g.save(); g.translate(x, y); g.scale(dir * sc, sc);
+      g.fillStyle = "#222"; g.fillRect(-11, 18, 9, 30); g.fillRect(2, 18, 9, 30);           // Beine
+      g.fillStyle = "#111"; g.fillRect(-13, 46, 12, 6); g.fillRect(1, 46, 12, 6);          // Stiefel
+      g.fillStyle = "#3a3f4a"; g.beginPath(); g.roundRect(-14, -18, 28, 40, 5); g.fill();  // Jacke
+      g.fillStyle = "#e8d23a"; g.fillRect(-14, 2, 28, 4); g.fillRect(-14, 12, 28, 3);      // Reflexstreifen
+      g.fillStyle = "#f0c9a0"; g.beginPath(); g.arc(0, -28, 9, 0, 6.3); g.fill();          // Kopf
+      g.fillStyle = "#c8161d"; g.beginPath(); g.arc(0, -31, 11, Math.PI, 0); g.fill(); g.fillRect(-12, -31, 24, 4); g.fillRect(2, -29, 14, 3); // Helm
+      g.fillStyle = "#e8d23a"; g.fillRect(-2, -42, 4, 6);
+      const a = aim + Math.sin(t / 60) * .02;                                              // Arme + Strahlrohr zeigen auf das Logo
+      g.strokeStyle = "#3a3f4a"; g.lineWidth = 6; g.lineCap = "round"; g.beginPath(); g.moveTo(4, -10); g.lineTo(4 + Math.cos(a) * 22, -4 + Math.sin(a) * 22); g.stroke();
+      g.strokeStyle = "#c8a82a"; g.lineWidth = 7; g.beginPath(); g.moveTo(4 + Math.cos(a) * 20, -4 + Math.sin(a) * 20); g.lineTo(4 + Math.cos(a) * 40, -4 + Math.sin(a) * 40); g.stroke();
+      g.restore();
+      return [x + dir * sc * (4 + Math.cos(aim) * 41), y + sc * (-4 + Math.sin(aim) * 41)];
+    }
+    function frame(now) {
+      const el = now - t0, dt = Math.min(.05, (now - last) / 1000); last = now;
+      g.clearRect(0, 0, VW, VH);
+      const k = el < IN ? ease(el / IN) : el > IN + SPRAY ? 1 - ease((el - IN - SPRAY) / OUT) : 1, x = slideFrom + (fx - slideFrom) * k;
+      let aim = Math.atan2(cy - fy, Math.abs(cx - fx)); aim = Math.max(-.9, Math.min(.9, aim));
+      const [nx, ny] = man(x, fy, now, aim);
+      /* Schlauch vom Bildrand zum Strahlrohr */
+      g.strokeStyle = "#d4b22a"; g.lineWidth = 6; g.lineCap = "round"; g.beginPath(); g.moveTo(slideFrom, fy + 40); g.bezierCurveTo(slideFrom + (x - slideFrom) * .4, fy + 60, x - dir * 20, fy + 50, x + dir * 4 * sc, fy + 2 * sc); g.stroke();
+      if (el > IN && el < IN + SPRAY) {
+        for (let i = 0; i < 9; i++) { const d = Math.atan2(cy - ny, cx - nx) + (Math.random() - .5) * .09, sp = 520 + Math.random() * 120; ps.push({ x: nx, y: ny, vx: Math.cos(d) * sp, vy: Math.sin(d) * sp, w: 1, l: 0 }); }
+        if (!hit && el > IN + 450) { hit = true; fire.level(0); }
+      }
+      g.globalCompositeOperation = "source-over";
+      for (let i = ps.length - 1; i >= 0; i--) {
+        const p = ps[i]; p.l += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += (p.w ? 260 : -40) * dt;
+        const inLogo = p.w && p.x > r.left && p.x < r.right && p.y > r.top && p.y < r.bottom;
+        if (inLogo && Math.random() < .35) { p.w = 0; p.vx = (Math.random() - .5) * 120; p.vy = -30 - Math.random() * 60; p.l = 0; }
+        if (p.l > (p.w ? 1.2 : .7) || p.y > VH + 20) { ps.splice(i, 1); continue; }
+        if (p.w) { g.fillStyle = "rgba(120,190,255,.85)"; g.beginPath(); g.arc(p.x, p.y, 2.6, 0, 6.3); g.fill(); }
+        else { const a = 1 - p.l / .7; g.fillStyle = `rgba(235,240,245,${a * .5})`; g.beginPath(); g.arc(p.x, p.y, 7 + p.l * 22, 0, 6.3); g.fill(); }
+      }
+      if (el < TOT || ps.length) requestAnimationFrame(frame); else { cv.remove(); done(); }
+    }
+    requestAnimationFrame(frame);
+  });
+}
 async function appUpdate() {
   const v = document.getElementById("verf"); if (!v) return;
   const lb = document.getElementById("logoup"); if (lb.classList.contains("busy")) return;
@@ -152,11 +208,11 @@ async function appUpdate() {
   try {
     const t = await (await fetch("app.js?u=" + Date.now(), { cache: "no-store" })).text();
     const nv = (t.match(/APP_VERSION = "([^"]+)"/) || [])[1];
-    if (nv && nv === APP_VERSION) { await wait(); fire.level(0); fx("ok"); setTimeout(() => lb.classList.remove("ok"), 1200); v.textContent = "Die App ist aktuell (V" + APP_VERSION + ")"; setTimeout(() => { const e = document.getElementById("verf"); if (e) e.textContent = "V" + APP_VERSION + " · Logo antippen zum Aktualisieren"; }, 3500); return; }
+    if (nv && nv === APP_VERSION) { await wait(); await extinguishFx(lb, fire); fire.level(0); fx("ok"); setTimeout(() => lb.classList.remove("ok"), 1200); v.textContent = "Die App ist aktuell (V" + APP_VERSION + ")"; setTimeout(() => { const e = document.getElementById("verf"); if (e) e.textContent = "V" + APP_VERSION + " · Logo antippen zum Aktualisieren"; }, 3500); return; }
     await wait(); fire.level(2); fx("upd"); v.textContent = "Neue Version" + (nv ? " V" + nv : "") + " wird geladen …";
     if ("caches" in window) for (const k of await caches.keys()) await caches.delete(k);
     if ("serviceWorker" in navigator) for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
-    await new Promise(r => setTimeout(r, 2000)); location.reload();
+    await new Promise(r => setTimeout(r, 900)); await extinguishFx(lb, fire); await new Promise(r => setTimeout(r, 300)); location.reload();
   } catch (e) { fire.level(0); lb.classList.remove("busy", "ok", "upd"); v.textContent = "Keine Verbindung, Update nicht möglich."; }
 }
 
