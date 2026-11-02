@@ -575,3 +575,13 @@ body.hasgear .top .brand { font-size: 1rem; letter-spacing: .05em; white-space: 
 .simchips{display:flex;flex-wrap:wrap;gap:8px}
 .simchips .chip{padding:9px 13px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
 .simchips .chip.on{background:#c8161d;border-color:#c8161d;color:#fff}
+
+.pic{width:14px;height:25px;flex:none}
+.pic.out{fill:none;stroke:currentColor;stroke-width:1}
+.pic.fill{fill:#2f9e5b;stroke:#2f9e5b;stroke-width:.6}
+.pic.dim{fill:#7a7d84;stroke:#7a7d84;stroke-width:.6;opacity:.55}
+.simchips .chip{display:inline-flex;align-items:center;gap:2px;min-height:40px}
+.simchips .chip.on .pic.out{stroke:#fff}
+.simbel{display:flex;align-items:center;gap:6px;padding:10px 12px;border-radius:12px;background:#454547;color:#fff}
+.simbel .pic{width:20px;height:36px}.simbel .pic.out{stroke:#fff;stroke-width:1.1}
+.simkg{margin-left:auto;text-align:right;line-height:1}.simkg b{font-size:26px;color:#fff}.simkg small{display:block;font-size:8px;letter-spacing:.06em;margin-top:3px;opacity:.8}
