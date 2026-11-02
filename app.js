@@ -1,4 +1,4 @@
-const APP_VERSION = "1.132";
+const APP_VERSION = "1.134";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -811,7 +811,7 @@ function simView() {
   const PIC = (m) => `<svg class="pic ${m}" viewBox="0 0 12 22" aria-hidden="true"><circle cx="6" cy="3.4" r="2.7"/><path d="M2.4 7.4h7.2a1.4 1.4 0 0 1 1.4 1.4v6.2H9.2v6.6H6.9V16H5.1v5.6H2.8V15H1V8.8a1.4 1.4 0 0 1 1.4-1.4z"/></svg>`;
   const resList = [["500 kg", -1], ["5", 0], ["4", 1], ["3", 2], ["2", 3], ["1", 4]];
   const limOf = r => r < 0 ? SIM_LIM[0][1] : SIM_LIM[r + 1][1];
-  $("simres").innerHTML = resList.map(r => `<button type="button" class="chip" data-r="${r[1]}">${r[0] === "500 kg" ? "500 kg" : PIC("out").repeat(+r[0])}</button>`).join("");
+  $("simres").innerHTML = resList.map(r => `<button type="button" class="chip rc" data-r="${r[1]}" aria-label="${r[0] === "500 kg" ? "500 kg" : r[0] + " Personen"}">${r[0] === "500 kg" ? "500 kg" : Array.from({ length: 5 }, (_, q) => PIC(q < +r[0] ? "fill" : "dim")).join("")}</button>`).join("");
   $("simn").innerHTML = [0, 1, 2, 3, 4, 5].map(n => `<button type="button" class="chip" data-n="${n}" aria-label="${n} Personen">${n ? PIC("out").repeat(n) : "0"}</button>`).join("");
   const calc = () => {
     const al = SIM.a * Math.PI / 180, c = Math.cos(al), sn = Math.sin(al); let L = SIM.L, clamp = false;

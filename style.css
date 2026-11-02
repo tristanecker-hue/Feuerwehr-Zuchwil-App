@@ -585,3 +585,9 @@ body.hasgear .top .brand { font-size: 1rem; letter-spacing: .05em; white-space: 
 .simbel{display:flex;align-items:center;gap:6px;padding:10px 12px;border-radius:12px;background:#454547;color:#fff}
 .simbel .pic{width:20px;height:36px}.simbel .pic.out{stroke:#fff;stroke-width:1.1}
 .simkg{margin-left:auto;text-align:right;line-height:1}.simkg b{font-size:26px;color:#fff}.simkg small{display:block;font-size:8px;letter-spacing:.06em;margin-top:3px;opacity:.8}
+
+.simchips .chip.rc{background:#454547;border-color:#454547;color:#fff;padding:8px 10px;gap:3px}
+.simchips .chip.rc.on{background:#454547;border:2px solid #c8161d;box-shadow:0 0 0 2px rgba(200,22,29,.35)}
+.simchips .chip.rc .pic{width:11px;height:20px}
+.simchips .chip{aspect-ratio:auto;width:auto;height:auto}
+.simchips .chip.rc{border-radius:12px}
