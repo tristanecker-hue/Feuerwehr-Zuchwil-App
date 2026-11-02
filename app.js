@@ -1,4 +1,4 @@
-const APP_VERSION = "1.123";
+const APP_VERSION = "1.124";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -347,10 +347,11 @@ function home() {
         (sh("einsatz") ? bt("sub:einsatz", "Einsatzführung", "PDF und Quiz") : "") +
         (sh("sgv") ? bt("sgv", "Kantonale Ergänzungen (SGV)", "Original-PDF + " + SGV.length + " Merkblätter") : "") +
         (sh("abc") ? bt("sub:abc", "ABC-Handbuch", "FKS · 508 S. in 4 Teilen + Quiz") : "") +
-        (sh("veg") ? bt("sub:veg", "Vegetationsbrände", "Handbuch Spezialwissen · PDF + Quiz") : "");
+        (sh("veg") ? bt("sub:veg", "Vegetationsbrände", "Handbuch Spezialwissen · PDF + Quiz") : "") +
+        (sh("adl") ? bt("adl", "Autodrehleiter", "Vermessungsplan: Masse eigene ADL") : "");
     })()}</div>
     <p class="foot">Lernhilfe aus den FKS-Reglementen von feukos.ch. Massgebend ist immer das jeweilige Reglement in der gültigen Fassung.</p>`;
-  app.querySelectorAll(".pdfbtn").forEach(b => b.addEventListener("click", () => b.dataset.id.startsWith("sub:") ? subView(b.dataset.id.slice(4)) : b.dataset.id === "gq" ? gquizView() : b.dataset.id === "sgv" ? sgvView() : b.dataset.id === "spick" ? spickView() : b.dataset.id.startsWith("pdf:") ? rgView(b.dataset.id.slice(4)) : openMod(b.dataset.id, "quiz")));
+  app.querySelectorAll(".pdfbtn").forEach(b => b.addEventListener("click", () => b.dataset.id.startsWith("sub:") ? subView(b.dataset.id.slice(4)) : b.dataset.id === "gq" ? gquizView() : b.dataset.id === "adl" ? adlView() : b.dataset.id === "sgv" ? sgvView() : b.dataset.id === "spick" ? spickView() : b.dataset.id.startsWith("pdf:") ? rgView(b.dataset.id.slice(4)) : openMod(b.dataset.id, "quiz")));
   const qi = document.getElementById("q"), sb = document.getElementById("sbox"), mg = document.getElementById("mgrid");
   qi.addEventListener("input", () => {
     const v = qi.value.trim();
@@ -774,6 +775,30 @@ function sgvBlock(x) {
   if (t === "src") return `<p class="foot">Quelle: ${esc(x[1])}</p>`;
   return "";
 }
+/* Autodrehleiter: Vermessungsplan, Masse der eigenen ADL (beschreibbar, gespeichert) */
+const ADL_F = [["lafette", "Überhang Lafette"], ["abst", "Abstützbreite"], ["a5", "Maximale Ausladung, 5 Personen"], ["a3", "Maximale Ausladung, 3 Personen"], ["a1", "Maximale Ausladung, 1 Person"], ["ming", "Minimaler Abstand, grosse Einsatzhöhe"], ["mink", "Minimaler Abstand, kleine Einsatzhöhe"]];
+function adlLoad() { try { return JSON.parse(localStorage.getItem("fwz-adl") || "{}") || {}; } catch (e) { return {}; } }
+async function adlView() {
+  document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
+  state.mod = null; state.sub = null; state.view = "adl"; backBtn.hidden = false;
+  let d = adlLoad();
+  const draw = () => {
+    app.innerHTML = `<section class="hero"><h1>Autodrehleiter</h1><p>Vermessungsplan: Masse eigene ADL. Die Werte speichern sich automatisch.</p></section>
+    <div class="adlf">${ADL_F.map(f => `<label class="adlr"><span>${esc(f[1])}</span><span class="adli"><input data-k="${f[0]}" inputmode="decimal" autocomplete="off" value="${esc(d[f[0]] || "")}" aria-label="${esc(f[1])}"><em>m</em></span></label>`).join("")}
+    <label class="adlr adln"><span>Bemerkungen (z. B. Gewichtslimite)</span><textarea data-k="note" rows="4" aria-label="Bemerkungen">${esc(d.note || "")}</textarea></label></div>
+    <div id="adlmsg" class="sinfo" role="status"></div>
+    <p class="foot">Nach SFV-Vermessungsplan (Taschenbuch S. 24). Die Werte sind Eintragungen der Feuerwehr Zuchwil, keine Herstellerangaben.</p>`;
+    const msg = document.getElementById("adlmsg"); let tm = 0;
+    app.querySelectorAll("[data-k]").forEach(i => i.addEventListener("input", () => {
+      d[i.dataset.k] = i.value; d.t = Date.now(); try { localStorage.setItem("fwz-adl", JSON.stringify(d)); } catch (e) {}
+      msg.textContent = "Speichert …"; clearTimeout(tm);
+      tm = setTimeout(async () => { try { await FWZ.setAdl(d); msg.textContent = "Gespeichert."; } catch (e) { msg.textContent = "Gespeichert (nur auf diesem Gerät)."; } }, 700);
+    }));
+    window.scrollTo(0, 0);
+  };
+  draw();
+  try { const r = FWZ.user && await FWZ.getAdl(); if (r && (r.t || 0) > (d.t || 0) && state.view === "adl" && !document.activeElement.matches("input,textarea")) { d = r; try { localStorage.setItem("fwz-adl", JSON.stringify(d)); } catch (e) {} draw(); } } catch (e) {}
+}
 function sgvView(id) {
   state.mod = null; backBtn.hidden = false;
   document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
@@ -1067,7 +1092,7 @@ async function lektionen(m, el) {
   });
 }
 
-backBtn.addEventListener("click", () => { if (state.view === "games") { if (state.gm) gamesView(); else { gmStop(); start(); } return; } if (state.view === "les" && state.lc === "v" && state.vorHome) { state.vorHome = false; state.lc = null; start(); return; } if (state.view === "les" && (state.lc === "vl" || state.lc === "vn")) { state.lc = "v"; lesView(); window.scrollTo(0, 0); return; } if (state.view === "sub" && !state.mod) { home(); return; } if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "gq" || state.view === "sgv" || state.view === "spick") { (state.sub ? subView(state.sub) : home()); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else (state.sub ? subView(state.sub) : home()); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) (state.sub ? subView(state.sub) : home()); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
+backBtn.addEventListener("click", () => { if (state.view === "games") { if (state.gm) gamesView(); else { gmStop(); start(); } return; } if (state.view === "les" && state.lc === "v" && state.vorHome) { state.vorHome = false; state.lc = null; start(); return; } if (state.view === "les" && (state.lc === "vl" || state.lc === "vn")) { state.lc = "v"; lesView(); window.scrollTo(0, 0); return; } if (state.view === "sub" && !state.mod) { home(); return; } if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "adl" || state.view === "gq" || state.view === "sgv" || state.view === "spick") { (state.sub ? subView(state.sub) : home()); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else (state.sub ? subView(state.sub) : home()); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) (state.sub ? subView(state.sub) : home()); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
 /* ---------- Anmeldepflicht ---------- */
 let gateOffline = false;
 function gateNeeded() { return !!FWZ.enabled && !FWZ.user && !gateOffline; }
@@ -1103,7 +1128,7 @@ function gateView() {
 /* ---------- Einstellungen: Sichtbarkeit und Benutzerverwaltung ---------- */
 const CFG_ITEMS = [
   ["Startseite", [["home:reg", "Reglemente"], ["home:les", "Lektionen"], ["home:ao", "Ausbildungsoffizier"], ["home:vor", "Vorlagen"], ["home:games", "Feuerwehr Spiele"]]],
-  ["Reglemente", [["reg:basis", "Basiswissen"], ["reg:einsatz", "Einsatzführung"], ["reg:sgv", "Kantonale Ergänzungen (SGV)"], ["reg:abc", "ABC-Handbuch"], ["reg:veg", "Vegetationsbrände"]]],
+  ["Reglemente", [["reg:basis", "Basiswissen"], ["reg:einsatz", "Einsatzführung"], ["reg:sgv", "Kantonale Ergänzungen (SGV)"], ["reg:abc", "ABC-Handbuch"], ["reg:veg", "Vegetationsbrände"], ["reg:adl", "Autodrehleiter (Vermessungsplan)"]]],
   ["Ausbildungsoffizier", [["ao:check", "Checkliste"], ["ao:keil", "KEIL"], ["ao:lek", "Lektionen"], ["ao:kq", "Kurs-Quiz"], ["ao:fach", "Fachlektionen"], ["ao:meth", "Lektion halten"], ["ao:zahl", "Zahlen-Trainer"], ["ao:bil", "Erfolgsauswertung / Bilanz"], ["ao:prog", "Kursprogramm"], ["ao:regl", "Reglement Basiswissen"]]]
 ];
 const CFG_DEF = () => ({ v: 1, t: 0, admins: ["tristan"], def: { hide: ["ao:check", "ao:keil", "ao:lek", "ao:kq", "ao:prog"] }, users: {} });

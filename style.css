@@ -561,3 +561,12 @@ body.hasgear .top .brand { font-size: 1rem; letter-spacing: .05em; white-space: 
 .logday { font-family: var(--font-display); text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin-top: 8px; }
 .logrow { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; padding: 8px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
 .logrow span { color: var(--muted); font-size: .88rem; } .logrow .lt { grid-column: 1 / -1; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+.adlf{display:flex;flex-direction:column;gap:10px;margin:14px 0}
+.adlr{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:14px;background:var(--card,#fff);border:1px solid rgba(128,128,128,.25);font-weight:600}
+.adlr>span:first-child{flex:1;min-width:0}
+.adli{display:flex;align-items:center;gap:6px}
+.adli input{width:96px;padding:10px;border-radius:10px;border:1px solid rgba(128,128,128,.4);background:transparent;color:inherit;font:inherit;text-align:right}
+.adli em{font-style:normal;opacity:.7}
+.adln{flex-direction:column;align-items:stretch}
+.adln textarea{width:100%;box-sizing:border-box;padding:10px;border-radius:10px;border:1px solid rgba(128,128,128,.4);background:transparent;color:inherit;font:inherit;resize:vertical}
