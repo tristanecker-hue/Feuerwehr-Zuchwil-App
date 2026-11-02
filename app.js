@@ -1,4 +1,4 @@
-const APP_VERSION = "1.124";
+const APP_VERSION = "1.126";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -776,18 +776,54 @@ function sgvBlock(x) {
   return "";
 }
 /* Autodrehleiter: Vermessungsplan, Masse der eigenen ADL (beschreibbar, gespeichert) */
-const ADL_F = [["lafette", "Überhang Lafette"], ["abst", "Abstützbreite"], ["a5", "Maximale Ausladung, 5 Personen"], ["a3", "Maximale Ausladung, 3 Personen"], ["a1", "Maximale Ausladung, 1 Person"], ["ming", "Minimaler Abstand, grosse Einsatzhöhe"], ["mink", "Minimaler Abstand, kleine Einsatzhöhe"]];
+const ADL_F = [["lafette", "Überhang Lafette", "A"], ["abst", "Abstützbreite", "B"], ["a5", "Maximale Ausladung, 5 Personen", "C"], ["a3", "Maximale Ausladung, 3 Personen", "D"], ["a1", "Maximale Ausladung, 1 Person", "E"], ["ming", "Minimaler Abstand, grosse Einsatzhöhe", "F"], ["mink", "Minimaler Abstand, kleine Einsatzhöhe", "G"]];
+function adlSvg(n) {
+  const R = "#c8161d", ln = (a, b, c, d, w, col, ex) => `<line x1="${a}" y1="${b}" x2="${c}" y2="${d}" stroke="${col || "currentColor"}" stroke-width="${w || 1.4}" ${ex || ""}/>`;
+  const bd = (x, y, t) => `<circle cx="${x}" cy="${y}" r="8" fill="${R}"/><text x="${x}" y="${y + 3.6}" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">${t}</text>`;
+  const dim = (x1, x2, y, t) => `${ln(x1, y, x2, y)}<path d="M${x1} ${y} l7 -3.5 v7z M${x2} ${y} l-7 -3.5 v7z" fill="currentColor"/>${bd((x1 + x2) / 2, y - 11, t)}`;
+  const vl = (x, y1, y2) => ln(x, y1, x, y2, 1, "currentColor", 'stroke-dasharray="3 3" opacity=".55"');
+  const ground = (y) => ln(8, y, 312, y, 2);
+  const lad = (x1, y1, x2, y2, o) => `<g opacity="${o || 1}">${ln(x1, y1, x2, y2, 9, "#8a8f98")}${ln(x1, y1, x2, y2, 5, "#fff", 'stroke-dasharray="4 3"')}<rect x="${x2 - 8}" y="${y2 - 11}" width="16" height="12" rx="2" fill="#fff" stroke="currentColor" stroke-width="1.6"/></g>`;
+  const car = (x, y) => `<g><rect x="${x - 44}" y="${y - 14}" width="50" height="22" rx="3" fill="${R}"/><rect x="${x - 56}" y="${y - 6}" width="14" height="14" rx="2" fill="${R}"/><rect x="${x - 54}" y="${y - 4}" width="9" height="6" fill="#fff" opacity=".85"/><circle cx="${x - 40}" cy="${y + 10}" r="6" fill="#222"/><circle cx="${x}" cy="${y + 10}" r="6" fill="#222"/><rect x="${x - 40}" y="${y + 8}" width="40" height="4" fill="#555"/></g>`;
+  const ppl = (x, y, k) => Array.from({ length: k }, (_, q) => `<circle cx="${x + q * 7}" cy="${y}" r="2.1" fill="currentColor"/><rect x="${x - 2.1 + q * 7}" y="${y + 3}" width="4.2" height="7" rx="2" fill="currentColor"/>`).join("");
+  const wrap = b => `<svg class="adlsvg" viewBox="0 -6 320 178" role="img" aria-hidden="true">${b}</svg>`;
+  if (n === 1) { // Rückansicht
+    return wrap(`${ground(150)}
+      <rect x="128" y="104" width="64" height="36" rx="4" fill="${R}"/><circle cx="140" cy="142" r="8" fill="#222"/><circle cx="180" cy="142" r="8" fill="#222"/>
+      ${ln(70, 138, 250, 138, 5, "#555")}
+      <g><rect x="56" y="112" width="14" height="38" rx="2" fill="#fff" stroke="${R}" stroke-width="2"/>${ln(56, 148, 70, 114, 3, R)}${ln(56, 136, 70, 126, 3, R)}</g>
+      <g><rect x="250" y="112" width="14" height="38" rx="2" fill="#fff" stroke="${R}" stroke-width="2"/>${ln(250, 148, 264, 114, 3, R)}${ln(250, 136, 264, 126, 3, R)}</g>
+      <rect x="140" y="92" width="40" height="14" rx="3" fill="#b3121a"/>
+      ${lad(160, 96, 262, 42)}
+      ${vl(98, 56, 96)}${vl(262, 30, 60)}${dim(98, 262, 52, "A")}
+      ${vl(63, 118, 164)}${vl(257, 118, 164)}${dim(63, 257, 163, "B")}`);
+  }
+  if (n === 2) { // Seitenansicht, drei Stellungen
+    return wrap(`${ground(150)}${vl(40, 10, 150)}
+      <rect x="22" y="128" width="56" height="14" rx="3" fill="${R}"/><circle cx="32" cy="144" r="6" fill="#222"/><circle cx="68" cy="144" r="6" fill="#222"/>
+      ${lad(52, 124, 292, 108, .9)}${lad(52, 124, 238, 70, .9)}${lad(52, 124, 150, 36, .9)}
+      ${ppl(298, 98, 1)}${ppl(248, 62, 3)}${ppl(160, 28, 5)}
+      ${vl(150, 8, 36)}${dim(40, 150, 14, "C")}
+      ${vl(238, 40, 62)}${dim(40, 238, 46, "D")}
+      ${vl(292, 78, 100)}${dim(40, 292, 82, "E")}`);
+  }
+  return wrap(`${ground(150)}${vl(40, 10, 150)}
+    <rect x="22" y="128" width="56" height="14" rx="3" fill="${R}"/><circle cx="32" cy="144" r="6" fill="#222"/><circle cx="68" cy="144" r="6" fill="#222"/>
+    ${lad(50, 124, 108, 30)}${vl(108, 10, 30)}${dim(40, 108, 16, "F")}
+    ${lad(50, 126, 224, 104, .85)}${vl(224, 104, 166)}${vl(40, 150, 166)}${dim(40, 224, 165, "G")}`);
+}
 function adlLoad() { try { return JSON.parse(localStorage.getItem("fwz-adl") || "{}") || {}; } catch (e) { return {}; } }
 async function adlView() {
   document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
   state.mod = null; state.sub = null; state.view = "adl"; backBtn.hidden = false;
   let d = adlLoad();
   const draw = () => {
+    const card = (n, ks, t) => `<section class="adlc"><h3 class="zh">${t}</h3>${adlSvg(n)}${ks.map(k => { const f = ADL_F.find(x => x[0] === k); return `<label class="adlr"><span><b class="adlb">${f[2]}</b>${esc(f[1])}</span><span class="adli"><input data-k="${k}" inputmode="decimal" autocomplete="off" value="${esc(d[k] || "")}" aria-label="${esc(f[1])}"><em>m</em></span></label>`; }).join("")}</section>`;
     app.innerHTML = `<section class="hero"><h1>Autodrehleiter</h1><p>Vermessungsplan: Masse eigene ADL. Die Werte speichern sich automatisch.</p></section>
-    <div class="adlf">${ADL_F.map(f => `<label class="adlr"><span>${esc(f[1])}</span><span class="adli"><input data-k="${f[0]}" inputmode="decimal" autocomplete="off" value="${esc(d[f[0]] || "")}" aria-label="${esc(f[1])}"><em>m</em></span></label>`).join("")}
+    <div class="adlf">${card(1, ["lafette", "abst"], "Abstützung (Rückansicht)")}${card(2, ["a5", "a3", "a1"], "Maximale Ausladung")}${card(3, ["ming", "mink"], "Minimaler Abstand zum Gebäude")}
     <label class="adlr adln"><span>Bemerkungen (z. B. Gewichtslimite)</span><textarea data-k="note" rows="4" aria-label="Bemerkungen">${esc(d.note || "")}</textarea></label></div>
     <div id="adlmsg" class="sinfo" role="status"></div>
-    <p class="foot">Nach SFV-Vermessungsplan (Taschenbuch S. 24). Die Werte sind Eintragungen der Feuerwehr Zuchwil, keine Herstellerangaben.</p>`;
+    <p class="foot">Schematische Skizze, nicht massstäblich. Nach SFV-Vermessungsplan (Taschenbuch S. 24). Die Werte sind Eintragungen der Feuerwehr Zuchwil, keine Herstellerangaben.</p>`;
     const msg = document.getElementById("adlmsg"); let tm = 0;
     app.querySelectorAll("[data-k]").forEach(i => i.addEventListener("input", () => {
       d[i.dataset.k] = i.value; d.t = Date.now(); try { localStorage.setItem("fwz-adl", JSON.stringify(d)); } catch (e) {}

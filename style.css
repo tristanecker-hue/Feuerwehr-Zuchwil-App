@@ -570,3 +570,9 @@ body.hasgear .top .brand { font-size: 1rem; letter-spacing: .05em; white-space: 
 .adli em{font-style:normal;opacity:.7}
 .adln{flex-direction:column;align-items:stretch}
 .adln textarea{width:100%;box-sizing:border-box;padding:10px;border-radius:10px;border:1px solid rgba(128,128,128,.4);background:transparent;color:inherit;font:inherit;resize:vertical}
+
+.adlc{display:flex;flex-direction:column;gap:10px}
+.adlsvg{width:100%;height:auto;max-height:230px;color:#2a2d33;background:var(--card,#fff);border:1px solid rgba(128,128,128,.25);border-radius:14px}
+html:not(.zw) .adlsvg{color:#e6e8ec;background:#1b1e25}
+.adlb{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;margin-right:8px;border-radius:50%;background:#c8161d;color:#fff;font-size:12px}
+.adlf{gap:18px}
