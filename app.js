@@ -1,4 +1,4 @@
-const APP_VERSION = "1.130";
+const APP_VERSION = "1.131";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -783,13 +783,69 @@ function adlView() {
   state.mod = null; state.sub = null; state.view = "adl"; backBtn.hidden = false;
   app.innerHTML = `<section class="hero"><h1>Autodrehleiter</h1><p>Anleitungen zur Drehleiter L32A-XS der Feuerwehr Zuchwil.</p></section>
     <div class="menu rgmenu">
+      <button class="mbtn main pdfbtn" id="adlsim"><span>Drehleiter-Simulator</span><small>Ausladung, Personen, Zuladungsreserve interaktiv</small></button>
       <button class="mbtn main pdfbtn" id="adlpdf"><span>Betriebsanleitung L32A-XS</span><small>PDF · ${RGDEF.adl.pages} S.</small></button>
       <button class="mbtn main pdfbtn" id="adlpdf2"><span>Einweisungsunterlage</span><small>PDF · ${RGDEF.adl2.pages} S. · Kurzfassung zum Lernen</small></button>
     </div>
     <p class="foot">Unterlagen des Herstellers Rosenbauer, Ausgabe 12/2022, nur zur internen Verwendung.</p>`;
+  document.getElementById("adlsim").onclick = () => simView();
   document.getElementById("adlpdf").onclick = () => { state.pdfBack = () => adlView(); rgView("adl"); };
   document.getElementById("adlpdf2").onclick = () => { state.pdfBack = () => adlView(); rgView("adl2"); };
   window.scrollTo(0, 0);
+}
+/* Drehleiter-Simulator L32A-XS nach Ausladungsdiagramm (Betriebsanleitung S. 260, Prinzipdarstellung) */
+const SIM_LIM = [["500 kg", 16.7, 5], ["5", 17.4, 5], ["4", 18.2, 4], ["3", 19.3, 3], ["2", 20.9, 2], ["1", 22.7, 1]], SIM_USE = 24.7, SIM = { a: 45, L: 20, res: 0, n: 2 };
+function simView() {
+  document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
+  state.mod = null; state.sub = null; state.view = "sim"; backBtn.hidden = false;
+  app.innerHTML = `<section class="hero"><h1>Drehleiter-Simulator</h1><p>L32A-XS: Leiter bewegen, Zuladungsreserve wählen, Personen in den Korb setzen.</p></section>
+    <div class="simbox"><svg id="simsvg" viewBox="0 0 333 380" role="img" aria-label="Seitenansicht Drehleiter"></svg></div>
+    <div class="simro" id="simro" role="status"></div>
+    <div class="simc"><label>Aufrichtewinkel <b id="sva"></b><input type="range" id="sia" min="-20" max="76" step="1"></label>
+      <label>Auszug <b id="svl"></b><input type="range" id="sil" min="12" max="29.9" step="0.1"></label>
+      <div class="simg"><span>Zuladungsreserve wählen</span><div id="simres" class="simchips"></div></div>
+      <div class="simg"><span>Personen im Korb</span><div id="simn" class="simchips"></div></div>
+      <div class="simg"><span>Schnellwahl</span><div class="simchips"><button type="button" class="chip" data-p="h">Max. Höhe</button><button type="button" class="chip" data-p="r">Max. Ausladung</button><button type="button" class="chip" data-p="t">Ablage</button></div></div></div>
+    <p class="foot">Prinzipdarstellung nach dem Ausladungsdiagramm der Betriebsanleitung (S. 260), aus dem Diagramm abgelesen und gerundet; volle Abstützbreite. Pro Person werden 100 kg gerechnet (500 kg / 5 Personen). Nur zur Ausbildung, nicht für den Einsatz. Massgebend ist immer die Anzeige am Fahrzeug.</p>`;
+  const P0 = { x: -1.8, h: 2.3 }, CX = .6, CY = -1.0, X = x => 81 + 9 * x, Y = h => 300 - 9 * h, $ = id => document.getElementById(id);
+  const resList = [["500 kg", -1], ["5", 0], ["4", 1], ["3", 2], ["2", 3], ["1", 4]];
+  const limOf = r => r < 0 ? SIM_LIM[0][1] : SIM_LIM[r + 1][1];
+  $("simres").innerHTML = resList.map(r => `<button type="button" class="chip" data-r="${r[1]}">${r[0] === "500 kg" ? "500 kg" : r[0] + (r[0] === "1" ? " Pers." : " Pers.")}</button>`).join("");
+  $("simn").innerHTML = [0, 1, 2, 3, 4, 5].map(n => `<button type="button" class="chip" data-n="${n}">${n}</button>`).join("");
+  const calc = () => {
+    const al = SIM.a * Math.PI / 180, c = Math.cos(al), sn = Math.sin(al); let L = SIM.L, clamp = false;
+    let cx = P0.x + L * c + CX; const lm = limOf(SIM.res);
+    if (cx > lm && c > .05) { L = Math.max(12, (lm - P0.x - CX) / c); cx = P0.x + L * c + CX; clamp = true; }
+    const tx = P0.x + L * c, th = P0.h + L * sn, fx = tx + CX, fh = th + CY;
+    return { al, L, tx, th, fx, fh, clamp, lm };
+  };
+  const allowed = r => r <= SIM_LIM[0][1] ? { p: 5, kg: 500, t: "500 kg" } : r <= SIM_LIM[1][1] ? { p: 5, kg: 500, t: "5 Pers." } : r <= SIM_LIM[2][1] ? { p: 4, kg: 400 } : r <= SIM_LIM[3][1] ? { p: 3, kg: 300 } : r <= SIM_LIM[4][1] ? { p: 2, kg: 200 } : r <= SIM_LIM[5][1] ? { p: 1, kg: 100 } : r <= SIM_USE ? { p: 0, kg: 100, nb: 1 } : { p: -1, kg: 0 };
+  const draw = () => {
+    const k = calc(), A = allowed(k.fx), res = A.p - SIM.n, over = res < 0 || A.p < 0 || (A.nb && SIM.n > 0), reserveOk = !over;
+    $("sia").value = SIM.a; $("sil").value = k.L; $("sva").textContent = Math.round(SIM.a) + "°"; $("svl").textContent = k.L.toFixed(1) + " m";
+    document.querySelectorAll("#simres .chip").forEach(b => b.classList.toggle("on", +b.dataset.r === SIM.res));
+    document.querySelectorAll("#simn .chip").forEach(b => b.classList.toggle("on", +b.dataset.n === SIM.n));
+    const lines = SIM_LIM.map((l, i) => { const sel = (i - 1) === SIM.res, ly = 9 + (i % 3) * 9; return `<line x1="${X(l[1])}" y1="${ly + 2}" x2="${X(l[1])}" y2="${Y(-7)}" stroke="${sel ? "#c8161d" : "currentColor"}" stroke-width="${sel ? 1.6 : .8}" stroke-dasharray="${sel ? "0" : "3 3"}" opacity="${sel ? 1 : .45}"/><text x="${X(l[1])}" y="${ly}" font-size="8" text-anchor="middle" fill="${sel ? "#c8161d" : "currentColor"}" font-weight="${sel ? 700 : 400}">${l[0] === "500 kg" ? "500kg" : l[0] + "P"}</text>`; }).join("");
+    const sel = limOf(SIM.res);
+    const ticks = [0, 5, 10, 15, 20, 25].map(x => `<line x1="${X(x)}" y1="${Y(0)}" x2="${X(x)}" y2="${Y(0) + 4}" stroke="currentColor"/><text x="${X(x)}" y="${Y(0) + 13}" font-size="8" text-anchor="middle" fill="currentColor" opacity=".7">${x}</text>`).join("") + [10, 20, 30].map(h => `<line x1="318" y1="${Y(h)}" x2="323" y2="${Y(h)}" stroke="currentColor"/><text x="316" y="${Y(h) + 3}" font-size="8" text-anchor="end" fill="currentColor" opacity=".7">${h}m</text>`).join("");
+    const trk = `<g><rect x="${X(-8.6)}" y="${Y(3.3)}" width="${9 * 10.3}" height="${9 * 2.4}" rx="3" fill="#c8161d"/><rect x="${X(-10.2)}" y="${Y(3.1)}" width="${9 * 2}" height="${9 * 2.6}" rx="3" fill="#c8161d"/><rect x="${X(-10)}" y="${Y(3)}" width="${9 * 1.3}" height="${9 * 1.1}" fill="#fff" opacity=".85"/><circle cx="${X(-8.4)}" cy="${Y(.65)}" r="${9 * .65}" fill="#222"/><circle cx="${X(-1.2)}" cy="${Y(.65)}" r="${9 * .65}" fill="#222"/><circle cx="${X(.6)}" cy="${Y(.65)}" r="${9 * .65}" fill="#222"/><rect x="${X(-2.6)}" y="${Y(2.6)}" width="${9 * 2.6}" height="${9 * .5}" fill="#8a1015"/></g>`;
+    const px = X(P0.x), py = Y(P0.h), tx = X(k.tx), ty = Y(k.th);
+    const cage = `<g><line x1="${tx}" y1="${ty}" x2="${X(k.fx)}" y2="${Y(k.fh + 1.2)}" stroke="currentColor" stroke-width="2"/><rect x="${X(k.fx) - 8}" y="${Y(k.fh + 1.1)}" width="16" height="${9 * 1.1}" rx="1.5" fill="${reserveOk ? "#fff" : "#fdd"}" stroke="${reserveOk ? "currentColor" : "#c8161d"}" stroke-width="1.6"/>${Array.from({ length: SIM.n }, (_, i) => `<circle cx="${X(k.fx) - 6 + i * 3}" cy="${Y(k.fh + 1.1) + 4}" r="1.7" fill="#2a2d33"/><rect x="${X(k.fx) - 7.5 + i * 3}" y="${Y(k.fh + 1.1) + 6.2}" width="3" height="${9 * 1.1 - 6.5}" rx="1.2" fill="#2a2d33"/>`).join("")}</g>`;
+    $("simsvg").innerHTML = `<rect x="${X(-9)}" y="${Y(33)}" width="${X(sel) - X(-9)}" height="${Y(-7) - Y(33)}" fill="#2f7d4f" opacity=".09"/>
+      <line x1="${X(0)}" y1="${Y(-7)}" x2="${X(0)}" y2="${Y(33)}" stroke="currentColor" stroke-dasharray="6 3 1 3" opacity=".5"/>${lines}
+      <line x1="${X(-9)}" y1="${Y(0)}" x2="${X(28)}" y2="${Y(0)}" stroke="currentColor" stroke-width="2"/><rect x="${X(-9)}" y="${Y(0)}" width="${X(28) - X(-9)}" height="${Y(-7) - Y(0)}" fill="currentColor" opacity=".05"/>${ticks}${trk}
+      <line x1="${px}" y1="${py}" x2="${tx}" y2="${ty}" stroke="#8a8f98" stroke-width="7" stroke-linecap="round"/><line x1="${px}" y1="${py}" x2="${tx}" y2="${ty}" stroke="#fff" stroke-width="3" stroke-dasharray="4 3"/><circle cx="${px}" cy="${py}" r="4" fill="#c8161d" stroke="#fff" stroke-width="1.5"/>${cage}
+      <line x1="${X(0)}" y1="${Y(k.fh) + 14}" x2="${X(k.fx)}" y2="${Y(k.fh) + 14}" stroke="${reserveOk ? "#2f7d4f" : "#c8161d"}" stroke-width="1.5"/><text x="${(X(0) + X(k.fx)) / 2}" y="${Y(k.fh) + 11}" font-size="9" font-weight="700" text-anchor="middle" fill="${reserveOk ? "#2f7d4f" : "#c8161d"}">${k.fx.toFixed(1)} m</text>`;
+    const msg = A.p < 0 ? "Ausserhalb der Benutzungsgrenze." : A.nb ? "Nur noch eine Person ohne Korb (Benutzungsgrenze)." : over ? "ÜBERLAST: " + SIM.n + " Pers. im Korb, hier max. " + A.p + "." : res === 0 ? "Keine Reserve mehr: Korb voll belastet." : "Alles im grünen Bereich.";
+    $("simro").innerHTML = `<div class="simrow"><span>Ausladung</span><b>${k.fx.toFixed(1)} m</b></div><div class="simrow"><span>Rettungshöhe</span><b>${(k.fh + 1.7).toFixed(1)} m</b></div><div class="simrow"><span>Max. Zuladung hier</span><b>${A.p < 0 ? "–" : A.nb ? "100 kg, ohne Korb" : (A.t === "500 kg" ? "500 kg" : A.p + " Pers. · " + A.kg + " kg")}</b></div><div class="simrow"><span>Zuladungsreserve</span><b class="${over ? "bad" : "ok"}">${A.p < 0 || A.nb ? "–" : (res >= 0 ? res + " Pers. · " + res * 100 + " kg" : "Überlast " + (-res) + " Pers.")}</b></div><div class="simmsg ${over ? "bad" : "ok"}">${k.clamp ? "Ausladungsgrenze der gewählten Zuladungsreserve erreicht: Auszug begrenzt. " : ""}${msg}</div>`;
+    SIM.L = k.L;
+  };
+  $("sia").oninput = e => { SIM.a = +e.target.value; draw(); };
+  $("sil").oninput = e => { SIM.L = +e.target.value; draw(); };
+  app.querySelectorAll("#simres .chip").forEach(b => b.onclick = () => { SIM.res = +b.dataset.r; draw(); });
+  app.querySelectorAll("#simn .chip").forEach(b => b.onclick = () => { SIM.n = +b.dataset.n; draw(); });
+  app.querySelectorAll("[data-p]").forEach(b => b.onclick = () => { const p = b.dataset.p; if (p === "h") { SIM.a = 76; SIM.L = 29.9; } else if (p === "r") { SIM.a = 5; SIM.L = 29.9; } else { SIM.a = 0; SIM.L = 14; } draw(); });
+  draw(); window.scrollTo(0, 0);
 }
 function sgvView(id) {
   state.mod = null; backBtn.hidden = false;
@@ -1084,7 +1140,7 @@ async function lektionen(m, el) {
   });
 }
 
-backBtn.addEventListener("click", () => { if (state.view === "games") { if (state.gm) gamesView(); else { gmStop(); start(); } return; } if (state.view === "les" && state.lc === "v" && state.vorHome) { state.vorHome = false; state.lc = null; start(); return; } if (state.view === "les" && (state.lc === "vl" || state.lc === "vn")) { state.lc = "v"; lesView(); window.scrollTo(0, 0); return; } if (state.view === "sub" && !state.mod) { home(); return; } if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "adl" || state.view === "gq" || state.view === "sgv" || state.view === "spick") { (state.sub ? subView(state.sub) : home()); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else (state.sub ? subView(state.sub) : home()); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) (state.sub ? subView(state.sub) : home()); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
+backBtn.addEventListener("click", () => { if (state.view === "games") { if (state.gm) gamesView(); else { gmStop(); start(); } return; } if (state.view === "les" && state.lc === "v" && state.vorHome) { state.vorHome = false; state.lc = null; start(); return; } if (state.view === "les" && (state.lc === "vl" || state.lc === "vn")) { state.lc = "v"; lesView(); window.scrollTo(0, 0); return; } if (state.view === "sub" && !state.mod) { home(); return; } if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "sim") { adlView(); return; } if (state.view === "adl" || state.view === "gq" || state.view === "sgv" || state.view === "spick") { (state.sub ? subView(state.sub) : home()); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else (state.sub ? subView(state.sub) : home()); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) (state.sub ? subView(state.sub) : home()); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
 /* ---------- Anmeldepflicht ---------- */
 let gateOffline = false;
 function gateNeeded() { return !!FWZ.enabled && !FWZ.user && !gateOffline; }
