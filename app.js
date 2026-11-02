@@ -1,4 +1,4 @@
-const APP_VERSION = "1.128";
+const APP_VERSION = "1.129";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -370,6 +370,7 @@ document.addEventListener("click", e => {
   rgJump(id, p, () => { state.mod = id; state.tab = "sum"; state.ch = ch; renderMod(); window.scrollTo(0, 0); if (sec != null) { const d = document.getElementById("sec-" + sec); if (d) { d.open = true; d.scrollIntoView({ block: "start" }); } } });
 });
 const RGDEF = {
+  adl2: { pages: 138, short: "ADL Einweisung", enc: "reglement-adl2.enc", file: "Einweisungsunterlage L32A-XS Zuchwil.pdf", c: "© Rosenbauer", tile: "", hero: "Einweisungsunterlage (Teilnehmerunterlage) Drehleiter L32A-XS, CAN Safety 3.2, 138 Seiten.", online: "" },
   adl: { pages: 265, short: "Autodrehleiter", enc: "reglement-adl.enc", file: "Betriebsanleitung L32A-XS Zuchwil.pdf", c: "© Rosenbauer", tile: "", hero: "Betriebsanleitung Autodrehleiter L32A-XS, Feuerwehr Zuchwil (265 Seiten).", online: "" },
   basis: { pages: 296, short: "Basiswissen", enc: "reglement-basiswissen.enc", file: "Reglement Basiswissen FKS.pdf", tile: "Das ganze Reglement mit allen 296 Seiten (FKS 07/2026), direkt in der App zum Blättern.", hero: "Das ganze Reglement Basiswissen, FKS 07/2026.", online: "https://docs.feukos.ch/Basiswissen/ReglementBasiswissenDE/" },
   sgv: { pages: 10, short: "Kantonale Ergänzungen", enc: "reglement-sgv.enc", file: "Kantonale Ergänzungen SGV 14.10.2026.pdf", c: "© SGV Solothurn", tile: "", hero: "Basiswissen Kantonale Ergänzungen SGV Solothurn, Version 14.10.2026.", online: "" },
@@ -822,11 +823,13 @@ async function adlView() {
     const card = (n, ks, t) => `<section class="adlc"><h3 class="zh">${t}</h3>${adlSvg(n)}${ks.map(k => { const f = ADL_F.find(x => x[0] === k); return `<label class="adlr"><span><b class="adlb">${f[2]}</b>${esc(f[1])}</span><span class="adli"><input data-k="${k}" inputmode="decimal" autocomplete="off" value="${esc(d[k] || "")}" aria-label="${esc(f[1])}"><em>m</em></span></label>`; }).join("")}</section>`;
     app.innerHTML = `<section class="hero"><h1>Autodrehleiter</h1><p>Vermessungsplan: Masse eigene ADL. Die Werte speichern sich automatisch.</p></section>
     <button class="mbtn main pdfbtn" id="adlpdf"><span>Betriebsanleitung L32A-XS</span><small>PDF · ${RGDEF.adl.pages} S.</small></button>
+    <button class="mbtn main pdfbtn" id="adlpdf2"><span>Einweisungsunterlage</span><small>PDF · ${RGDEF.adl2.pages} S. · Kurzfassung zum Lernen</small></button>
     <div class="adlf">${card(1, ["lafette", "abst"], "Abstützung (Rückansicht)")}${card(2, ["a5", "a3", "a1"], "Maximale Ausladung")}${card(3, ["ming", "mink"], "Minimaler Abstand zum Gebäude")}
     <label class="adlr adln"><span>Bemerkungen (z. B. Gewichtslimite)</span><textarea data-k="note" rows="4" aria-label="Bemerkungen">${esc(d.note || "")}</textarea></label></div>
     <div id="adlmsg" class="sinfo" role="status"></div>
     <p class="foot">Schematische Skizze, nicht massstäblich. Nach SFV-Vermessungsplan (Taschenbuch S. 24). Die Werte sind Eintragungen der Feuerwehr Zuchwil, keine Herstellerangaben.</p>`;
     document.getElementById("adlpdf").onclick = () => { state.pdfBack = () => adlView(); rgView("adl"); };
+    document.getElementById("adlpdf2").onclick = () => { state.pdfBack = () => adlView(); rgView("adl2"); };
     const msg = document.getElementById("adlmsg"); let tm = 0;
     app.querySelectorAll("[data-k]").forEach(i => i.addEventListener("input", () => {
       d[i.dataset.k] = i.value; d.t = Date.now(); try { localStorage.setItem("fwz-adl", JSON.stringify(d)); } catch (e) {}
