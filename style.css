@@ -591,3 +591,5 @@ body.hasgear .top .brand { font-size: 1rem; letter-spacing: .05em; white-space: 
 .simchips .chip.rc .pic{width:11px;height:20px}
 .simchips .chip{aspect-ratio:auto;width:auto;height:auto}
 .simchips .chip.rc{border-radius:12px}
+
+.simbox{background:#eef1f4}.simbox svg{color:#23262b}
