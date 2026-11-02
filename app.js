@@ -1,4 +1,4 @@
-const APP_VERSION = "1.134";
+const APP_VERSION = "1.135";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -794,7 +794,7 @@ function adlView() {
   window.scrollTo(0, 0);
 }
 /* Drehleiter-Simulator L32A-XS nach Ausladungsdiagramm (Betriebsanleitung S. 260, Prinzipdarstellung) */
-const SIM_LIM = [["500 kg", 16.7, 5], ["5", 17.4, 5], ["4", 18.2, 4], ["3", 19.3, 3], ["2", 20.9, 2], ["1", 22.7, 1]], SIM_USE = 24.7, SIM = { a: 45, L: 20, res: 0, n: 2 };
+const SIM_LIM = [["500 kg", 16.7, 5], ["5", 17.4, 5], ["4", 18.2, 4], ["3", 19.3, 3], ["2", 20.9, 2], ["1", 22.7, 1]], SIM_USE = 24.7, SIM = { a: 45, L: 20, res: 0, n: 2, tr: false };
 function simView() {
   document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
   state.mod = null; state.sub = null; state.view = "sim"; backBtn.hidden = false;
@@ -802,12 +802,13 @@ function simView() {
     <div class="simbox"><svg id="simsvg" viewBox="0 0 333 380" role="img" aria-label="Seitenansicht Drehleiter"></svg></div>
     <div class="simro" id="simro" role="status"></div>
     <div class="simc"><label>Aufrichtewinkel <b id="sva"></b><input type="range" id="sia" min="-20" max="76" step="1"></label>
-      <label>Auszug <b id="svl"></b><input type="range" id="sil" min="12" max="29.9" step="0.1"></label>
+      <label>Auszug <b id="svl"></b><input type="range" id="sil" min="12" max="29.7" step="0.1"></label>
       <div class="simg"><span>Zuladungsreserve wählen</span><div id="simres" class="simchips"></div></div>
       <div class="simg"><span>Personen im Korb</span><div id="simn" class="simchips"></div></div>
+      <div class="simg"><span>Zusätzliches Gewicht</span><div class="simchips"><button type="button" class="chip" id="simtr">Rettungstrage montiert · ca. 40 kg</button></div></div>
       <div class="simg"><span>Schnellwahl</span><div class="simchips"><button type="button" class="chip" data-p="h">Max. Höhe</button><button type="button" class="chip" data-p="r">Max. Ausladung</button><button type="button" class="chip" data-p="t">Ablage</button></div></div></div>
     <p class="foot">Prinzipdarstellung nach dem Ausladungsdiagramm der Betriebsanleitung (S. 260), aus dem Diagramm abgelesen und gerundet; volle Abstützbreite. Pro Person werden 100 kg gerechnet (500 kg / 5 Personen). Nur zur Ausbildung, nicht für den Einsatz. Massgebend ist immer die Anzeige am Fahrzeug.</p>`;
-  const P0 = { x: -1.8, h: 2.3 }, CX = .6, CY = -1.0, X = x => 81 + 9 * x, Y = h => 300 - 9 * h, $ = id => document.getElementById(id);
+  const P0 = { x: -1.2, h: 2.5 }, CX = .6, CY = -1.0, X = x => 81 + 9 * x, Y = h => 300 - 9 * h, $ = id => document.getElementById(id);
   const PIC = (m) => `<svg class="pic ${m}" viewBox="0 0 12 22" aria-hidden="true"><circle cx="6" cy="3.4" r="2.7"/><path d="M2.4 7.4h7.2a1.4 1.4 0 0 1 1.4 1.4v6.2H9.2v6.6H6.9V16H5.1v5.6H2.8V15H1V8.8a1.4 1.4 0 0 1 1.4-1.4z"/></svg>`;
   const resList = [["500 kg", -1], ["5", 0], ["4", 1], ["3", 2], ["2", 3], ["1", 4]];
   const limOf = r => r < 0 ? SIM_LIM[0][1] : SIM_LIM[r + 1][1];
@@ -822,47 +823,42 @@ function simView() {
   };
   const allowed = r => r <= SIM_LIM[0][1] ? { p: 5, kg: 500, t: "500 kg" } : r <= SIM_LIM[1][1] ? { p: 5, kg: 500, t: "5 Pers." } : r <= SIM_LIM[2][1] ? { p: 4, kg: 400 } : r <= SIM_LIM[3][1] ? { p: 3, kg: 300 } : r <= SIM_LIM[4][1] ? { p: 2, kg: 200 } : r <= SIM_LIM[5][1] ? { p: 1, kg: 100 } : r <= SIM_USE ? { p: 0, kg: 100, nb: 1 } : { p: -1, kg: 0 };
   const draw = () => {
-    const k = calc(), A = allowed(k.fx), res = A.p - SIM.n, over = res < 0 || A.p < 0 || (A.nb && SIM.n > 0), reserveOk = !over;
+    const k = calc(), A = allowed(k.fx), extra = SIM.tr ? 40 : 0, resKg = (A.p < 0 || A.nb) ? 0 : A.kg - SIM.n * 100 - extra, res = Math.floor(resKg / 100), over = A.p < 0 || resKg < 0 || (A.nb && (SIM.n > 0 || SIM.tr)) || (SIM.tr && SIM.n > 2), reserveOk = !over;
     $("sia").value = SIM.a; $("sil").value = k.L; $("sva").textContent = Math.round(SIM.a) + "°"; $("svl").textContent = k.L.toFixed(1) + " m";
     document.querySelectorAll("#simres .chip").forEach(b => b.classList.toggle("on", +b.dataset.r === SIM.res));
-    document.querySelectorAll("#simn .chip").forEach(b => b.classList.toggle("on", +b.dataset.n === SIM.n));
+    document.querySelectorAll("#simn .chip").forEach(b => b.classList.toggle("on", +b.dataset.n === SIM.n)); $("simtr").classList.toggle("on", SIM.tr);
     const lines = SIM_LIM.map((l, i) => { const sel = (i - 1) === SIM.res, ly = 9 + (i % 3) * 9; return `<line x1="${X(l[1])}" y1="${ly + 2}" x2="${X(l[1])}" y2="${Y(-7)}" stroke="${sel ? "#c8161d" : "currentColor"}" stroke-width="${sel ? 1.6 : .8}" stroke-dasharray="${sel ? "0" : "3 3"}" opacity="${sel ? 1 : .45}"/><text x="${X(l[1])}" y="${ly}" font-size="8" text-anchor="middle" fill="${sel ? "#c8161d" : "currentColor"}" font-weight="${sel ? 700 : 400}">${l[0] === "500 kg" ? "500kg" : l[0] + "P"}</text>`; }).join("");
     const sel = limOf(SIM.res);
     const ticks = [0, 5, 10, 15, 20, 25].map(x => `<line x1="${X(x)}" y1="${Y(0)}" x2="${X(x)}" y2="${Y(0) + 4}" stroke="currentColor"/><text x="${X(x)}" y="${Y(0) + 13}" font-size="8" text-anchor="middle" fill="currentColor" opacity=".7">${x}</text>`).join("") + [10, 20, 30].map(h => `<line x1="318" y1="${Y(h)}" x2="323" y2="${Y(h)}" stroke="currentColor"/><text x="316" y="${Y(h) + 3}" font-size="8" text-anchor="end" fill="currentColor" opacity=".7">${h}m</text>`).join("");
-    const U = 9, wheel = x => `<g><circle cx="${X(x)}" cy="${Y(.55)}" r="${U * .55}" fill="#1c1d20"/><circle cx="${X(x)}" cy="${Y(.55)}" r="${U * .3}" fill="#b9bdc4"/><circle cx="${X(x)}" cy="${Y(.55)}" r="${U * .1}" fill="#6b6f76"/></g>`;
-    const shut = (x0, x1) => `<rect x="${X(x0)}" y="${Y(2.05)}" width="${U * (x1 - x0)}" height="${U * 1.35}" rx="1" fill="#9aa0a8" stroke="#6b6f76" stroke-width=".6"/>` + Array.from({ length: 6 }, (_, q) => `<line x1="${X(x0)}" y1="${Y(1.95 - q * .22)}" x2="${X(x1)}" y2="${Y(1.95 - q * .22)}" stroke="#6b6f76" stroke-width=".4"/>`).join("") + `<rect x="${X(x1) - 3}" y="${Y(1.25)}" width="2" height="${U * .3}" fill="#444"/>`;
-    const leg = x => `<g><rect x="${X(x) - 1.6}" y="${Y(1.3)}" width="3.2" height="${U * 1.2}" fill="#6b6f76"/><rect x="${X(x) - 1}" y="${Y(1.3)}" width="2" height="${U * .6}" fill="#b9bdc4"/><rect x="${X(x) - 6}" y="${Y(.18)}" width="12" height="${U * .18}" fill="#fff" stroke="#c8161d" stroke-width=".8"/><path d="M${X(x) - 6} ${Y(.18)} l3 ${U * .18} M${X(x)- 2} ${Y(.18)} l3 ${U * .18} M${X(x) + 2} ${Y(.18)} l3 ${U * .18}" stroke="#c8161d" stroke-width="1"/></g>`;
-    const trk = `<g>${leg(-6)}${leg(1.5)}
-      <rect x="${X(-6.7)}" y="${Y(2.25)}" width="${U * 8.1}" height="${U * 1.75}" rx="2" fill="#c8161d"/>${shut(-6.4, -3.7)}${shut(-3.4, -.7)}${shut(-.5, 1.1)}
-      <rect x="${X(-6.7)}" y="${Y(.95)}" width="${U * 8.1}" height="${U * .22}" fill="#fff" opacity=".9"/><rect x="${X(-6.7)}" y="${Y(.55)}" width="${U * 8.1}" height="${U * .3}" fill="#222"/>
-      <path d="M${X(-6.8)} ${Y(.5)} V${Y(3.15)} H${X(-9.7)} L${X(-10.5)} ${Y(2.3)} V${Y(.5)} Z" fill="#c8161d"/>
-      <path d="M${X(-9.75)} ${Y(3)} L${X(-10.3)} ${Y(2.35)} V${Y(1.75)} H${X(-9.2)} V${Y(3)} Z" fill="#9fc3df" stroke="#23262b" stroke-width=".6"/><rect x="${X(-9.05)}" y="${Y(3)}" width="${U * 1.8}" height="${U * 1.25}" rx="1.5" fill="#9fc3df" stroke="#23262b" stroke-width=".6"/>
-      <line x1="${X(-8.15)}" y1="${Y(3.15)}" x2="${X(-8.15)}" y2="${Y(.6)}" stroke="#8a1015" stroke-width=".8"/><rect x="${X(-8.5)}" y="${Y(1.5)}" width="5" height="1.6" fill="#8a1015"/>
-      <rect x="${X(-10.6)}" y="${Y(1.6)}" width="3" height="${U * .55}" fill="#23262b"/><rect x="${X(-10.65)}" y="${Y(2.2)}" width="3.5" height="${U * .3}" fill="#ffd54a"/><rect x="${X(-10.7)}" y="${Y(.9)}" width="${U * .5}" height="${U * .3}" fill="#444"/>
-      <rect x="${X(-9.4)}" y="${Y(3.55)}" width="${U * 1.4}" height="${U * .35}" rx="1.5" fill="#2f6bd6"/><rect x="${X(-9.4)}" y="${Y(3.55)}" width="${U * .7}" height="${U * .35}" rx="1.5" fill="#6aa2ff" opacity="${(Date.now() >> 8) & 1 ? 1 : .5}"/>
-      ${wheel(-8.3)}${wheel(-3.8)}${wheel(-2.3)}
-      <path d="M${X(-4.4)} ${Y(2.2)} h${U * 4.2} v${-U * .55} h${-U * 4.2} Z" fill="#8a1015"/><rect x="${X(-4.1)}" y="${Y(2.7)}" width="${U * 3.2}" height="${U * .5}" fill="#6b6f76"/><path d="M${X(P0.x) - 7} ${Y(2.7)} L${X(P0.x)} ${Y(P0.h)} L${X(P0.x) + 7} ${Y(2.7)} Z" fill="#555"/></g>`;
+    const U = 9, K = "#23262b", W = 1.1, stz = x => `<g><rect x="${X(x) - 1.6}" y="${Y(2.2)}" width="3.2" height="${U * 2.05}" fill="#d4d7dc" stroke="${K}" stroke-width=".7"/><rect x="${X(x) - 5}" y="${Y(.15)}" width="10" height="${U * .15}" fill="${K}"/></g>`;
+    const trk = `<g>${stz(-2.4)}${stz(2.4)}
+      <rect x="${X(-2.4)}" y="${Y(.95)}" width="${U * 4.8}" height="${U * .3}" fill="#d4d7dc" stroke="${K}" stroke-width=".7"/>
+      <rect x="${X(-.95) - 2.5}" y="${Y(.6)}" width="5" height="${U * .6}" rx="2" fill="${K}"/><rect x="${X(-.55) - 2.5}" y="${Y(.6)}" width="5" height="${U * .6}" rx="2" fill="${K}"/><rect x="${X(.55) - 2.5}" y="${Y(.6)}" width="5" height="${U * .6}" rx="2" fill="${K}"/><rect x="${X(.95) - 2.5}" y="${Y(.6)}" width="5" height="${U * .6}" rx="2" fill="${K}"/>
+      <rect x="${X(-1.45)}" y="${Y(2.15)}" width="${U * 2.9}" height="${U * 1.5}" fill="#fff" stroke="${K}" stroke-width="${W}"/>
+      <rect x="${X(-1.1)}" y="${Y(1.65)}" width="${U * .8}" height="${U * .5}" fill="#fff" stroke="${K}" stroke-width=".8"/><rect x="${X(.3)}" y="${Y(1.65)}" width="${U * .8}" height="${U * .5}" fill="#fff" stroke="${K}" stroke-width=".8"/><rect x="${X(-.4)}" y="${Y(1.7)}" width="${U * .8}" height="${U * .55}" fill="#fff" stroke="${K}" stroke-width=".8"/><rect x="${X(-.35)}" y="${Y(1.0)}" width="${U * .7}" height="${U * .2}" fill="#fff" stroke="${K}" stroke-width=".8"/>
+      <rect x="${X(-1.15)}" y="${Y(2.8)}" width="${U * 2.3}" height="${U * .72}" fill="#fff" stroke="${K}" stroke-width="${W}"/><path d="M${X(-1.25)} ${Y(2.7)} L${X(-1.9)} ${Y(3.05)} L${X(-.7)} ${Y(3.3)} L${X(-.15)} ${Y(2.8)} Z" fill="#fff" stroke="${K}" stroke-width="${W}"/><rect x="${X(-1.45)}" y="${Y(2.2)}" width="${U * 2.9}" height="${U * .06}" fill="${K}"/></g>`;
     const px = X(P0.x), py = Y(P0.h), tx = X(k.tx), ty = Y(k.th), e = k.L - 12, H = [1.5, 1.25, 1.05, .85], st = [0, 1 + e / 3, 2 + 2 * e / 3, 3 + e], ln0 = [9.5, 9, 9, 9];
-    const truss = (s0, l, h, i) => { const n = Math.max(3, Math.round(l / (h * 1.05))), w = l / n; let d = `M${s0} ${-h / 2}`; for (let q = 0; q < n; q++) d += ` L${s0 + w * (q + .5)} ${h / 2} L${s0 + w * (q + 1)} ${-h / 2}`; return `<rect x="${s0}" y="${-h / 2}" width="${l}" height="${h}" fill="${i === 0 ? "#e7e9ec" : "#fff"}" fill-opacity=".95" stroke="#b3121a" stroke-width=".16"/><path d="${d}" fill="none" stroke="#8a8f98" stroke-width=".09"/><line x1="${s0}" y1="${-h / 2}" x2="${s0 + l}" y2="${-h / 2}" stroke="#c8161d" stroke-width=".2"/><line x1="${s0}" y1="${h / 2}" x2="${s0 + l}" y2="${h / 2}" stroke="#c8161d" stroke-width=".2"/>`; };
-    const ladder = `<g transform="translate(${px} ${py}) rotate(${-SIM.a}) scale(${U})">${st.map((s0, i) => truss(s0, ln0[i], H[i], i)).join("")}<rect x="-.3" y="-.75" width="1.2" height="1.5" rx=".2" fill="#6b6f76"/></g><circle cx="${px}" cy="${py}" r="3.2" fill="#c8161d" stroke="#fff" stroke-width="1.2"/>`;
+    const truss = (s0, l, h, i) => { const n = Math.max(3, Math.round(l / (h * 1.05))), w = l / n; let d = `M${s0} ${-h / 2}`; for (let q = 0; q < n; q++) d += ` L${s0 + w * (q + .5)} ${h / 2} L${s0 + w * (q + 1)} ${-h / 2}`; return `<rect x="${s0}" y="${-h / 2}" width="${l}" height="${h}" fill="#fff" stroke="#23262b" stroke-width=".13"/><path d="${d}" fill="none" stroke="#23262b" stroke-width=".07"/>`; };
+    const ladder = `<g transform="translate(${px} ${py}) rotate(${-SIM.a}) scale(${U})">${st.map((s0, i) => truss(s0, ln0[i], H[i], i)).join("")}</g><circle cx="${px}" cy="${py}" r="2" fill="#fff" stroke="#23262b" stroke-width="1"/>`;
     const cxp = X(k.fx), cyp = Y(k.fh), cw = U * 1.7, chh = U * 1.15, pc = ["#23262b", "#2b3a55", "#3b3f46", "#23262b", "#2b3a55"];
-    const cage = `<g><polyline points="${tx},${ty} ${cxp - cw / 2 - 1},${Y(k.fh + 1.3)} ${cxp - cw / 2},${Y(k.fh + 1.1)}" fill="none" stroke="#6b6f76" stroke-width="2.4" stroke-linejoin="round"/>
+    const cage = `<g><polyline points="${tx},${ty} ${cxp - cw / 2 - 1},${Y(k.fh + 1.3)} ${cxp - cw / 2},${Y(k.fh + 1.1)}" fill="none" stroke="#23262b" stroke-width="1.6" stroke-linejoin="round"/>${SIM.tr ? `<g><rect x="${cxp - cw / 2 - 3}" y="${cyp - U * .5}" width="${cw + 14}" height="3" rx="1.5" fill="#fff" stroke="#23262b" stroke-width=".9"/><line x1="${cxp + cw / 2 + 11}" y1="${cyp - U * .5 - 2}" x2="${cxp + cw / 2 + 11}" y2="${cyp - U * .5 + 3}" stroke="#23262b" stroke-width=".9"/><path d="M${cxp - cw / 2 + 2} ${cyp - U * .5 - 1} h${cw + 6}" stroke="#c8161d" stroke-width="1.2" stroke-dasharray="2 2"/></g>` : ""}
       ${Array.from({ length: SIM.n }, (_, i) => { const hx = cxp - cw / 2 + 6 + i * (cw - 10) / 4; return `<rect x="${hx - 2}" y="${cyp - U * 1.55}" width="4" height="${U * 1.3}" rx="1.6" fill="${pc[i]}"/><circle cx="${hx}" cy="${cyp - U * 1.7}" r="2.2" fill="#f0c9a4"/><path d="M${hx - 2.5} ${cyp - U * 1.75} a2.5 2.5 0 0 1 5 0 z" fill="${reserveOk ? "#c8161d" : "#ffd54a"}"/>`; }).join("")}
-      <rect x="${cxp - cw / 2}" y="${cyp - chh}" width="${cw}" height="${chh}" rx="1.5" fill="${reserveOk ? "#fff" : "#fdd"}" fill-opacity=".35" stroke="${reserveOk ? "#6b6f76" : "#c8161d"}" stroke-width="1.4"/><rect x="${cxp - cw / 2}" y="${cyp - U * .55}" width="${cw}" height="${U * .55}" rx="1.5" fill="#c8161d"/><line x1="${cxp - cw / 2}" y1="${cyp - U * .9}" x2="${cxp + cw / 2}" y2="${cyp - U * .9}" stroke="#6b6f76" stroke-width=".6"/></g>`;
+      <rect x="${cxp - cw / 2}" y="${cyp - chh}" width="${cw}" height="${chh}" rx="1.5" fill="${reserveOk ? "#fff" : "#fdd"}" fill-opacity=".35" stroke="${reserveOk ? "#23262b" : "#c8161d"}" stroke-width="1.2"/><rect x="${cxp - cw / 2}" y="${cyp - U * .55}" width="${cw}" height="${U * .55}" rx="1.5" fill="#fff" stroke="#23262b" stroke-width="1"/><line x1="${cxp - cw / 2}" y1="${cyp - U * .9}" x2="${cxp + cw / 2}" y2="${cyp - U * .9}" stroke="#6b6f76" stroke-width=".6"/></g>`;
     $("simsvg").innerHTML = `<rect x="${X(-9)}" y="${Y(33)}" width="${X(sel) - X(-9)}" height="${Y(-7) - Y(33)}" fill="#2f7d4f" opacity=".09"/>
       <line x1="${X(0)}" y1="${Y(-7)}" x2="${X(0)}" y2="${Y(33)}" stroke="currentColor" stroke-dasharray="6 3 1 3" opacity=".5"/>${lines}
       <line x1="${X(-9)}" y1="${Y(0)}" x2="${X(28)}" y2="${Y(0)}" stroke="currentColor" stroke-width="2"/><rect x="${X(-9)}" y="${Y(0)}" width="${X(28) - X(-9)}" height="${Y(-7) - Y(0)}" fill="currentColor" opacity=".05"/>${ticks}${trk}
       ${ladder}${cage}
       <line x1="${X(0)}" y1="${Y(k.fh) + 14}" x2="${X(k.fx)}" y2="${Y(k.fh) + 14}" stroke="${reserveOk ? "#2f7d4f" : "#c8161d"}" stroke-width="1.5"/><text x="${(X(0) + X(k.fx)) / 2}" y="${Y(k.fh) + 11}" font-size="9" font-weight="700" text-anchor="middle" fill="${reserveOk ? "#2f7d4f" : "#c8161d"}">${k.fx.toFixed(1)} m</text>`;
-    const msg = A.p < 0 ? "Ausserhalb der Benutzungsgrenze." : A.nb ? "Nur noch eine Person ohne Korb (Benutzungsgrenze)." : over ? "ÜBERLAST: " + SIM.n + " Pers. im Korb, hier max. " + A.p + "." : res === 0 ? "Keine Reserve mehr: Korb voll belastet." : "Alles im grünen Bereich.";
-    $("simro").innerHTML = `<div class="simrow"><span>Ausladung</span><b>${k.fx.toFixed(1)} m</b></div><div class="simrow"><span>Rettungshöhe</span><b>${(k.fh + 1.7).toFixed(1)} m</b></div><div class="simrow"><span>Max. Zuladung hier</span><b>${A.p < 0 ? "–" : A.nb ? "100 kg, ohne Korb" : (A.t === "500 kg" ? "500 kg" : A.p + " Pers. · " + A.kg + " kg")}</b></div><div class="simbel" aria-label="Belastungsanzeige">${[0, 1, 2, 3, 4].map(i => PIC(i < SIM.n ? "out" : (A.p > 0 && i < SIM.n + Math.max(0, res) && i < 5) ? "fill" : "dim")).join("")}<div class="simkg"><b>${A.p < 0 || A.nb ? 0 : Math.max(0, res) * 100 + (A.t === "500 kg" ? 0 : 0)}</b> kg<small>ZULADUNGSRESERVE</small></div></div><div class="simrow"><span>Zuladungsreserve</span><b class="${over ? "bad" : "ok"}">${A.p < 0 || A.nb ? "–" : (res >= 0 ? res + " Pers. · " + res * 100 + " kg" : "Überlast " + (-res) + " Pers.")}</b></div><div class="simmsg ${over ? "bad" : "ok"}">${k.clamp ? "Ausladungsgrenze der gewählten Zuladungsreserve erreicht: Auszug begrenzt. " : ""}${msg}</div>`;
+    const msg = A.p < 0 ? "Ausserhalb der Benutzungsgrenze." : A.nb ? "Nur noch eine Person ohne Korb (Benutzungsgrenze)." : over ? (SIM.tr && SIM.n > 2 ? "Mit Krankentragenhalterung max. 2 Personen im Korb." : A.nb ? "Korb mit Trage/Personen hier nicht zulässig." : "ÜBERLAST: " + (SIM.n * 100 + extra) + " kg im Korb, hier max. " + A.kg + " kg.") : resKg < 100 ? "Fast keine Reserve mehr: Korb voll belastet." : "Alles im grünen Bereich.";
+    $("simro").innerHTML = `<div class="simrow"><span>Ausladung</span><b>${k.fx.toFixed(1)} m</b></div><div class="simrow"><span>Rettungshöhe</span><b>${(k.fh + 1.7).toFixed(1)} m</b></div><div class="simrow"><span>Max. Zuladung hier</span><b>${A.p < 0 ? "–" : A.nb ? "100 kg, ohne Korb" : (A.t === "500 kg" ? "500 kg" : A.p + " Pers. · " + A.kg + " kg")}</b></div><div class="simbel" aria-label="Belastungsanzeige">${[0, 1, 2, 3, 4].map(i => PIC(i < SIM.n ? "out" : (A.p > 0 && i < SIM.n + Math.max(0, res) && i < 5) ? "fill" : "dim")).join("")}<div class="simkg"><b>${A.p < 0 || A.nb ? 0 : Math.max(0, resKg)}</b> kg<small>ZULADUNGSRESERVE</small></div></div><div class="simrow"><span>Zuladungsreserve</span><b class="${over ? "bad" : "ok"}">${A.p < 0 || A.nb ? "–" : (resKg >= 0 ? res + " Pers. · " + resKg + " kg" : "Überlast " + (-resKg) + " kg")}</b></div><div class="simmsg ${over ? "bad" : "ok"}">${k.clamp ? "Ausladungsgrenze der gewählten Zuladungsreserve erreicht: Auszug begrenzt. " : ""}${msg}</div>`;
     SIM.L = k.L;
   };
   $("sia").oninput = e => { SIM.a = +e.target.value; draw(); };
   $("sil").oninput = e => { SIM.L = +e.target.value; draw(); };
   app.querySelectorAll("#simres .chip").forEach(b => b.onclick = () => { SIM.res = +b.dataset.r; draw(); });
   app.querySelectorAll("#simn .chip").forEach(b => b.onclick = () => { SIM.n = +b.dataset.n; draw(); });
-  app.querySelectorAll("[data-p]").forEach(b => b.onclick = () => { const p = b.dataset.p; if (p === "h") { SIM.a = 76; SIM.L = 29.9; } else if (p === "r") { SIM.a = 5; SIM.L = 29.9; } else { SIM.a = 0; SIM.L = 14; } draw(); });
+  $("simtr").onclick = () => { SIM.tr = !SIM.tr; draw(); };
+  app.querySelectorAll("[data-p]").forEach(b => b.onclick = () => { const p = b.dataset.p; if (p === "h") { SIM.a = 76; SIM.L = 29.7; } else if (p === "r") { SIM.a = 5; SIM.L = 29.7; } else { SIM.a = 0; SIM.L = 14; } draw(); });
   draw(); window.scrollTo(0, 0);
 }
 function sgvView(id) {
