@@ -1,4 +1,4 @@
-const APP_VERSION = "1.122";
+const APP_VERSION = "1.123";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -1173,19 +1173,29 @@ function settingsView() {
   app.innerHTML = `<section class="hero"><h1>Einstellungen</h1><p>Benutzerverwaltung: Wer kann was sehen.</p></section>${who}
     <div class="cfgtw"><table class="cfgt"><thead><tr><th></th>${head}</tr></thead><tbody>${rows}</tbody></table></div>
     <p class="foot">Spalte «Alle» gilt für jeden Benutzer ohne eigene Spalte.</p>
-    ${adm ? `<h3 class="zh">Benutzer hinzufügen</h3><div class="cfgadd"><input id="cfgnu" placeholder="Anmeldename, z. B. max" autocomplete="off" autocapitalize="none"><button class="btn primary" id="cfgau">Hinzufügen</button></div>
+    ${adm ? `<h3 class="zh">Benutzer hinzufügen</h3><div class="cfgadd"><input id="cfgnu" placeholder="Anmeldename, z. B. max" autocomplete="off" autocapitalize="none"><input id="cfgnp" type="text" placeholder="Passwort (mind. 6 Zeichen)" autocomplete="off" autocapitalize="none"><button class="btn primary" id="cfgau">Benutzer erstellen</button></div>
       <h3 class="zh">Administratoren</h3><div class="cfglist">${(CFG.admins || []).map(a => `<div class="cfgrow"><span>${esc(a)}</span>${(CFG.admins.length > 1 && a !== me) ? `<button class="btn ghost" data-da="${esc(a)}">Entfernen</button>` : ""}</div>`).join("")}</div>
       <div class="cfgadd"><input id="cfgna" placeholder="Anmeldename" autocomplete="off" autocapitalize="none"><button class="btn" id="cfgaa">Administrator hinzufügen</button></div>` : ""}
     <h3 class="zh">Geräte</h3><div id="cfgdev" class="cfgdev"><p class="sinfo">Lade …</p></div>
     <h3 class="zh">Protokoll: wer war wann online</h3><div id="cfglog" class="cfgdev"><p class="sinfo">Lade …</p></div>
     ${thmHtml}${outHtml}
     <div id="cfgmsg" class="sinfo" role="status"></div>
-    <p class="foot">Die Zugänge (Name und Passwort) werden in Firebase unter Authentication angelegt. Hier legst du fest, was ein Name in der App sieht. Ausgeblendete Kacheln sind weg, aber keine Zugriffssperre: Dateien und Lektionen schützt die Datenbank.</p>`;
+    <p class="foot">Bestehende Passwörter lassen sich in der App nicht ändern; bei Vergessen: Zugang in Firebase löschen und hier mit neuem Passwort neu erstellen. Neue Benutzer legst du oben direkt an (Name und Passwort). Hier legst du fest, was ein Name in der App sieht. Ausgeblendete Kacheln sind weg, aber keine Zugriffssperre: Dateien und Lektionen schützt die Datenbank.</p>`;
   const msg = document.getElementById("cfgmsg"), nm = s => (s || "").trim().toLowerCase().replace(/@.*$/, "").replace(/[^a-z0-9._-]/g, "");
   outBind(); cfgDevices(); cfgLog();
   app.querySelectorAll("input[data-id]").forEach(c => c.onchange = () => { const l = c.dataset.u ? CFG.users[c.dataset.u] : CFG.def; l.hide = l.hide.filter(x => x !== c.dataset.id); if (!c.checked) l.hide.push(c.dataset.id); cfgSave(msg); });
   app.querySelectorAll("[data-du]").forEach(b => b.onclick = () => { if (!b.dataset.c) { b.dataset.c = 1; b.textContent = "Entfernen?"; b.classList.add("sure"); return; } delete CFG.users[b.dataset.du]; cfgSave(msg).then(settingsView); });
-  document.getElementById("cfgau").onclick = () => { const n = nm(document.getElementById("cfgnu").value); if (!n) { msg.textContent = "Bitte einen Anmeldenamen eingeben."; return; } if (!CFG.users[n]) CFG.users[n] = { hide: CFG.def.hide.slice() }; cfgSave(msg).then(settingsView); };
+  document.getElementById("cfgau").onclick = async () => {
+    const n = nm(document.getElementById("cfgnu").value), pw = document.getElementById("cfgnp").value, bt = document.getElementById("cfgau");
+    if (!n) { msg.textContent = "Bitte einen Anmeldenamen eingeben."; return; }
+    if (pw.length < 6) { msg.textContent = "Das Passwort braucht mindestens 6 Zeichen."; return; }
+    bt.disabled = true; msg.textContent = "Erstelle Benutzer …";
+    let note = "";
+    try { await FWZ.createUser(n, pw); note = "Benutzer «" + n + "» erstellt. Passwort: " + pw; }
+    catch (e) { const c = (e && e.code) || ""; if (/email-already-in-use/.test(c)) note = "Den Zugang «" + n + "» gab es schon, er wurde zur Liste hinzugefügt (Passwort unverändert)."; else { bt.disabled = false; msg.textContent = /weak-password/.test(c) ? "Passwort zu schwach." : /operation-not-allowed/.test(c) ? "In Firebase ist die Anmeldung per E-Mail/Passwort nicht aktiviert." : "Fehler beim Erstellen" + (c ? " (" + c + ")" : "") + "."; return; } }
+    if (!CFG.users[n]) CFG.users[n] = { hide: CFG.def.hide.slice() };
+    await cfgSave(msg); settingsView(); document.getElementById("cfgmsg").textContent = note;
+  };
   document.getElementById("cfgaa").onclick = () => { const n = nm(document.getElementById("cfgna").value); if (!n) { msg.textContent = "Bitte einen Anmeldenamen eingeben."; return; } if (!CFG.admins.includes(n)) CFG.admins.push(n); cfgSave(msg).then(settingsView); };
   app.querySelectorAll("[data-da]").forEach(b => b.onclick = () => { CFG.admins = CFG.admins.filter(x => x !== b.dataset.da); cfgSave(msg).then(settingsView); });
   window.scrollTo(0, 0);

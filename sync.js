@@ -37,6 +37,12 @@ const FWZ = (function () {
     else { try { await firebase.auth().signInWithEmailAndPassword(name + "@" + DOMAIN, pw); } catch (e) { if (!/user-not-found|invalid-credential|invalid-login/.test((e && e.code) || "")) throw e; await firebase.auth().signInWithEmailAndPassword(name + "@feuerwehr-zuchwil.ch", pw); } }
     try { localStorage.setItem(FLAG, "1"); } catch (e) {}
   };
+  api.createUser = async (name, pw) => {
+    await init();
+    let app2; try { app2 = firebase.app("fwz-new"); } catch (e) { app2 = firebase.initializeApp(CFG, "fwz-new"); }
+    const au = app2.auth();
+    try { await au.createUserWithEmailAndPassword(name + "@" + DOMAIN, pw); } finally { try { await au.signOut(); } catch (e) {} }
+  };
   api.logout = async () => { try { await firebase.auth().signOut(); } catch (e) {} try { localStorage.removeItem(FLAG); } catch (e) {} api.user = null; emit(); };
   api.pullProgress = async () => { const s = await db().collection("fwz_progress").doc(api.user.uid).get(); return s.exists ? JSON.parse(s.data().data) : null; };
   api.pushProgress = o => db().collection("fwz_progress").doc(api.user.uid).set({ data: JSON.stringify(o), updatedAt: Date.now() });
