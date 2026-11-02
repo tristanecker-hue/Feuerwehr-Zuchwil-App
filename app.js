@@ -1,4 +1,4 @@
-const APP_VERSION = "1.135";
+const APP_VERSION = "1.136";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -794,7 +794,7 @@ function adlView() {
   window.scrollTo(0, 0);
 }
 /* Drehleiter-Simulator L32A-XS nach Ausladungsdiagramm (Betriebsanleitung S. 260, Prinzipdarstellung) */
-const SIM_LIM = [["500 kg", 16.7, 5], ["5", 17.4, 5], ["4", 18.2, 4], ["3", 19.3, 3], ["2", 20.9, 2], ["1", 22.7, 1]], SIM_USE = 24.7, SIM = { a: 45, L: 20, res: 0, n: 2, tr: false };
+const SIM_LIM = [["500 kg", 16.7, 5], ["4", 18.2, 4], ["3", 19.3, 3], ["2", 20.9, 2], ["1", 22.7, 1]], SIM_USE = 24.7, SIM = { a: 45, L: 20, res: -1, n: 2, tr: false };
 function simView() {
   document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
   state.mod = null; state.sub = null; state.view = "sim"; backBtn.hidden = false;
@@ -810,8 +810,9 @@ function simView() {
     <p class="foot">Prinzipdarstellung nach dem Ausladungsdiagramm der Betriebsanleitung (S. 260), aus dem Diagramm abgelesen und gerundet; volle Abstützbreite. Pro Person werden 100 kg gerechnet (500 kg / 5 Personen). Nur zur Ausbildung, nicht für den Einsatz. Massgebend ist immer die Anzeige am Fahrzeug.</p>`;
   const P0 = { x: -1.2, h: 2.5 }, CX = .6, CY = -1.0, X = x => 81 + 9 * x, Y = h => 300 - 9 * h, $ = id => document.getElementById(id);
   const PIC = (m) => `<svg class="pic ${m}" viewBox="0 0 12 22" aria-hidden="true"><circle cx="6" cy="3.4" r="2.7"/><path d="M2.4 7.4h7.2a1.4 1.4 0 0 1 1.4 1.4v6.2H9.2v6.6H6.9V16H5.1v5.6H2.8V15H1V8.8a1.4 1.4 0 0 1 1.4-1.4z"/></svg>`;
-  const resList = [["500 kg", -1], ["5", 0], ["4", 1], ["3", 2], ["2", 3], ["1", 4]];
-  const limOf = r => r < 0 ? SIM_LIM[0][1] : SIM_LIM[r + 1][1];
+  const resList = [["500 kg", -1], ["4", 1], ["3", 2], ["2", 3], ["1", 4]];
+  const limKg = [[100, 22.7], [200, 20.9], [300, 19.3], [400, 18.2], [500, 16.7]];
+  const limOf = r => { let kg = r < 0 ? 500 : (5 - r) * 100; if (SIM.tr) kg = Math.min(500, kg + 40); for (let q = 0; q < 4; q++) if (kg <= limKg[q + 1][0]) { const a = limKg[q], b = limKg[q + 1]; return a[1] + (b[1] - a[1]) * (kg - a[0]) / (b[0] - a[0]); } return limKg[4][1]; };
   $("simres").innerHTML = resList.map(r => `<button type="button" class="chip rc" data-r="${r[1]}" aria-label="${r[0] === "500 kg" ? "500 kg" : r[0] + " Personen"}">${r[0] === "500 kg" ? "500 kg" : Array.from({ length: 5 }, (_, q) => PIC(q < +r[0] ? "fill" : "dim")).join("")}</button>`).join("");
   $("simn").innerHTML = [0, 1, 2, 3, 4, 5].map(n => `<button type="button" class="chip" data-n="${n}" aria-label="${n} Personen">${n ? PIC("out").repeat(n) : "0"}</button>`).join("");
   const calc = () => {
@@ -821,14 +822,13 @@ function simView() {
     const tx = P0.x + L * c, th = P0.h + L * sn, fx = tx + CX, fh = th + CY;
     return { al, L, tx, th, fx, fh, clamp, lm };
   };
-  const allowed = r => r <= SIM_LIM[0][1] ? { p: 5, kg: 500, t: "500 kg" } : r <= SIM_LIM[1][1] ? { p: 5, kg: 500, t: "5 Pers." } : r <= SIM_LIM[2][1] ? { p: 4, kg: 400 } : r <= SIM_LIM[3][1] ? { p: 3, kg: 300 } : r <= SIM_LIM[4][1] ? { p: 2, kg: 200 } : r <= SIM_LIM[5][1] ? { p: 1, kg: 100 } : r <= SIM_USE ? { p: 0, kg: 100, nb: 1 } : { p: -1, kg: 0 };
+  const allowed = r => r <= SIM_LIM[0][1] ? { p: 5, kg: 500, t: "500 kg" } : r <= SIM_LIM[1][1] ? { p: 4, kg: 400 } : r <= SIM_LIM[2][1] ? { p: 3, kg: 300 } : r <= SIM_LIM[3][1] ? { p: 2, kg: 200 } : r <= SIM_LIM[4][1] ? { p: 1, kg: 100 } : r <= SIM_USE ? { p: 0, kg: 100, nb: 1 } : { p: -1, kg: 0 };
   const draw = () => {
     const k = calc(), A = allowed(k.fx), extra = SIM.tr ? 40 : 0, resKg = (A.p < 0 || A.nb) ? 0 : A.kg - SIM.n * 100 - extra, res = Math.floor(resKg / 100), over = A.p < 0 || resKg < 0 || (A.nb && (SIM.n > 0 || SIM.tr)) || (SIM.tr && SIM.n > 2), reserveOk = !over;
     $("sia").value = SIM.a; $("sil").value = k.L; $("sva").textContent = Math.round(SIM.a) + "°"; $("svl").textContent = k.L.toFixed(1) + " m";
     document.querySelectorAll("#simres .chip").forEach(b => b.classList.toggle("on", +b.dataset.r === SIM.res));
     document.querySelectorAll("#simn .chip").forEach(b => b.classList.toggle("on", +b.dataset.n === SIM.n)); $("simtr").classList.toggle("on", SIM.tr);
-    const lines = SIM_LIM.map((l, i) => { const sel = (i - 1) === SIM.res, ly = 9 + (i % 3) * 9; return `<line x1="${X(l[1])}" y1="${ly + 2}" x2="${X(l[1])}" y2="${Y(-7)}" stroke="${sel ? "#c8161d" : "currentColor"}" stroke-width="${sel ? 1.6 : .8}" stroke-dasharray="${sel ? "0" : "3 3"}" opacity="${sel ? 1 : .45}"/><text x="${X(l[1])}" y="${ly}" font-size="8" text-anchor="middle" fill="${sel ? "#c8161d" : "currentColor"}" font-weight="${sel ? 700 : 400}">${l[0] === "500 kg" ? "500kg" : l[0] + "P"}</text>`; }).join("");
-    const sel = limOf(SIM.res);
+    const sel = limOf(SIM.res), lines = SIM_LIM.map((l, i) => { const ly = 9 + (i % 3) * 9; return `<line x1="${X(l[1])}" y1="${ly + 2}" x2="${X(l[1])}" y2="${Y(-7)}" stroke="currentColor" stroke-width=".8" stroke-dasharray="3 3" opacity=".45"/><text x="${X(l[1])}" y="${ly}" font-size="8" text-anchor="middle" fill="currentColor">${l[0] === "500 kg" ? "500kg" : l[0] + "P"}</text>`; }).join("") + `<line x1="${X(sel)}" y1="${Y(32)}" x2="${X(sel)}" y2="${Y(-7)}" stroke="#c8161d" stroke-width="1.8"/>`;
     const ticks = [0, 5, 10, 15, 20, 25].map(x => `<line x1="${X(x)}" y1="${Y(0)}" x2="${X(x)}" y2="${Y(0) + 4}" stroke="currentColor"/><text x="${X(x)}" y="${Y(0) + 13}" font-size="8" text-anchor="middle" fill="currentColor" opacity=".7">${x}</text>`).join("") + [10, 20, 30].map(h => `<line x1="318" y1="${Y(h)}" x2="323" y2="${Y(h)}" stroke="currentColor"/><text x="316" y="${Y(h) + 3}" font-size="8" text-anchor="end" fill="currentColor" opacity=".7">${h}m</text>`).join("");
     const U = 9, K = "#23262b", W = 1.1, stz = x => `<g><rect x="${X(x) - 1.6}" y="${Y(2.2)}" width="3.2" height="${U * 2.05}" fill="#d4d7dc" stroke="${K}" stroke-width=".7"/><rect x="${X(x) - 5}" y="${Y(.15)}" width="10" height="${U * .15}" fill="${K}"/></g>`;
     const trk = `<g>${stz(-2.4)}${stz(2.4)}
