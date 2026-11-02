@@ -10,7 +10,7 @@
   }
   function run(code) {
     const s = document.createElement("script"); s.text = code; document.head.appendChild(s);
-    const y = document.createElement("script"); y.src = "sync.js?v=1.126"; y.onload = () => { const o = document.createElement("script"); o.src = "ao.js?v=1.126"; o.onload = () => { const q = document.createElement("script"); q.src = "games.js?v=1.126"; q.onload = () => { const a = document.createElement("script"); a.src = "app.js?v=1.126"; document.body.appendChild(a); }; document.body.appendChild(q); }; document.body.appendChild(o); }; document.body.appendChild(y);
+    const y = document.createElement("script"); y.src = "sync.js?v=1.127"; y.onload = () => { const o = document.createElement("script"); o.src = "ao.js?v=1.127"; o.onload = () => { const q = document.createElement("script"); q.src = "games.js?v=1.127"; q.onload = () => { const a = document.createElement("script"); a.src = "app.js?v=1.127"; document.body.appendChild(a); }; document.body.appendChild(q); }; document.body.appendChild(o); }; document.body.appendChild(y);
   }
   async function tryCode(code, remember) {
     const plain = await decrypt(code);
