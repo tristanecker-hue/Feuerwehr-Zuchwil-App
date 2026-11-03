@@ -1,4 +1,4 @@
-const APP_VERSION = "1.147";
+const APP_VERSION = "1.148";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -936,7 +936,7 @@ function masseView() {
         if (hw > 60) wall += `<text x="334" y="${y0 - 3}" text-anchor="end" font-size="6.5" fill="#6b645d">${f === 0 ? "Erdgeschoss" : f + ". Stock"}</text>`;
       }
       const px = X(MS_P.x), py = Y(MS_P.h), tx = X(sel.tx), ty = Y(sel.th), d = (sel.a - sel.b) * Math.PI / 180, kx = tx + MS_KA * U * Math.cos(d) * 1, ky = ty - MS_KA * U * Math.sin(d), cxp = X(sel.x) - .85 * U, cyp = ky + 1 * U;
-      g += wall + adlLadder(px, py, sel.a, sel.L, U) + `<line x1="${tx}" y1="${ty}" x2="${tx + MS_KA * U * Math.cos(d)}" y2="${ty - MS_KA * U * Math.sin(d)}" stroke="#23262b" stroke-width="3"/><circle cx="${tx}" cy="${ty}" r="2.4" fill="#fff" stroke="#23262b" stroke-width="1.2"/>
+      g += wall + adlLadder(px, py, sel.a, sel.L, U) + `<line x1="${tx}" y1="${ty}" x2="${cxp}" y2="${cyp - 1.15 * U}" stroke="#23262b" stroke-width="3" stroke-linecap="round"/><rect x="${cxp - 5}" y="${cyp - 1.15 * U - 2}" width="10" height="3" rx="1" fill="#23262b"/><circle cx="${cxp}" cy="${cyp - 1.15 * U}" r="2.2" fill="#fff" stroke="#23262b" stroke-width="1.2"/><circle cx="${tx}" cy="${ty}" r="2.4" fill="#fff" stroke="#23262b" stroke-width="1.2"/>
         <rect x="${cxp - .85 * U}" y="${cyp - 1.15 * U}" width="${1.7 * U}" height="${1.15 * U}" rx="2" fill="#fff" fill-opacity=".6" stroke="#23262b" stroke-width="1.3"/><rect x="${cxp + .85 * U - 4}" y="${cyp - 1.15 * U}" width="4" height="${1.15 * U}" fill="#c8161d"/>
         <line x1="${wx}" y1="${gy}" x2="${wx}" y2="${gy + 22}" stroke="#2f7d4f" stroke-dasharray="3 2"/>` + tick(X(0), wx, gy + 20, f1(sel.x) + " m", "#2f7d4f");
       g += `<line x1="8" y1="${Y(H)}" x2="${cxp - .85 * U}" y2="${Y(H)}" stroke="#c8161d" stroke-dasharray="3 3" opacity=".6"/><text x="10" y="${Y(H) - 3}" font-size="9" fill="#c8161d">${f1(H)} m</text>`;
