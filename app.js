@@ -1,4 +1,4 @@
-const APP_VERSION = "1.151";
+const APP_VERSION = "1.152";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -898,8 +898,10 @@ function masseView() {
   document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
   state.mod = null; state.sub = null; state.view = "masse"; backBtn.hidden = false;
   const $ = id => document.getElementById(id), f1 = n => n.toFixed(1).replace(".", ",");
-  app.innerHTML = `<section class="hero"><h1>Drehleiter Masse</h1><p>L32A-XS der Feuerwehr Zuchwil: Abstützung und Wandabstand.</p></section>
+  app.innerHTML = `<section class="hero"><h1>Drehleiter Masse</h1><p>L32A-XS der Feuerwehr Zuchwil: Länge, Gewicht, Abstützung und Wandabstand.</p></section>
     <div class="adlf">
+    <section class="adlc"><h3 class="zh">Länge und Gewicht</h3><div class="simbox"><svg viewBox="0 0 1100 480" role="img" aria-label="Seitenansicht Drehleiter Zuchwil mit Länge"><image href="adl-seite.jpg" x="0" y="0" width="1284" height="430"/><g stroke="#23262b" stroke-width="2"><line x1="18" y1="150" x2="18" y2="455" stroke-dasharray="6 4" opacity=".5"/><line x1="1062" y1="330" x2="1062" y2="455" stroke-dasharray="6 4" opacity=".5"/><line x1="18" y1="448" x2="1062" y2="448" stroke-width="3"/></g><path d="M18 448 l16 -8 v16z M1062 448 l-16 -8 v16z" fill="#23262b"/><text x="540" y="436" font-size="34" font-weight="700" text-anchor="middle" fill="#23262b">ca. 10,5 m inkl. Korb</text></svg></div>
+      <div class="simro"><div class="simrow"><span>Länge inkl. Korb (Fahrstellung)</span><b>ca. 10,5 m</b></div><div class="simrow"><span>Breite · Höhe</span><b>2,5 m · 3,4 m</b></div><div class="simrow"><span>Gewicht (laut Typenschild)</span><b><input id="msKg" type="number" inputmode="numeric" placeholder="eintragen" style="width:110px;text-align:right;font:inherit;padding:2px 6px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink)"> kg</b></div></div></section>
     <section class="adlc"><h3 class="zh">Abstützbreite</h3><div class="simbox"><svg id="msA" viewBox="0 0 433 330" role="img" aria-label="Heckansicht der Zuchwil-Drehleiter mit Abstützung"></svg></div>
       <div class="simc"><label>Abstützbreite <b id="msAv"></b><input type="range" id="msAi" min="2.5" max="4.8" step="0.1"></label><div class="simchips"><button type="button" class="chip" data-w="2.5">Minimal 2,5 m</button><button type="button" class="chip" data-w="4.8">Maximal 4,8 m</button></div></div>
       <div class="simro"><div class="simrow"><span>Abstützbreite (Aussenkante Stützteller)</span><b id="msAr"></b></div><div class="simrow"><span>Fahrzeugbreite</span><b>2,5 m</b></div><div class="simrow"><span>Platzbedarf je Seite über das Fahrzeug hinaus</span><b id="msAs"></b></div><div id="msAm" class="simmsg ok"></div></div></section>
@@ -907,7 +909,9 @@ function masseView() {
       <div class="simc"><label>Einsatzhöhe (Korbboden) <b id="msCv"></b><input type="range" id="msCi" min="3" max="29" step="0.5"></label>
       <div class="simg"><span>Gelenkarm (Korbarm)</span><div class="simchips"><button type="button" class="chip" data-ko="1">Abgeneigt (Gelenk genutzt)</button><button type="button" class="chip" data-ko="0">Gestreckt</button></div></div></div>
       <div class="simro" id="msCr"></div></section></div>
-    <p class="foot">Bild Abstützbreite: Heckansicht der Zuchwil-Drehleiter aus der Fahrzeugvorlage, Stützen verstellbar nachgezeichnet. Quellen: Betriebsanleitung L32A-XS, Technische Daten (S. 259): Abstützbreite 2 500 bis 4 800 mm, Fahrzeug ca. 10 500 × 2 500 × 3 400 mm; Korbarm-Grenzen (S. 109): max. 75° zum Leitersatz, max. 40° unter der Horizontalen; Leiterlänge ab 12 m (Ausladungsdiagramm S. 260). Nicht als Zahl in der Anleitung: Lage des Leiterdrehpunkts und Länge des Korbarms (ca. 1,5 m, geschätzt). Die Anleitung verlangt mindestens 1 m Abstand zu Gebäuden. Nur zur Ausbildung, massgebend ist die Anzeige am Fahrzeug.</p>`;
+    <p class="foot">Bild Abstützbreite: Heckansicht der Zuchwil-Drehleiter aus der Fahrzeugvorlage, Stützen verstellbar nachgezeichnet. Länge/Breite/Höhe aus Betriebsanleitung S. 259 (Länge ca.); das Gewicht steht in der Anleitung nicht, nur «siehe Fahrgestelltypenschild», darum selbst eintragen. Quellen: Betriebsanleitung L32A-XS, Technische Daten (S. 259): Abstützbreite 2 500 bis 4 800 mm, Fahrzeug ca. 10 500 × 2 500 × 3 400 mm; Korbarm-Grenzen (S. 109): max. 75° zum Leitersatz, max. 40° unter der Horizontalen; Leiterlänge ab 12 m (Ausladungsdiagramm S. 260). Nicht als Zahl in der Anleitung: Lage des Leiterdrehpunkts und Länge des Korbarms (ca. 1,5 m, geschätzt). Die Anleitung verlangt mindestens 1 m Abstand zu Gebäuden. Nur zur Ausbildung, massgebend ist die Anzeige am Fahrzeug.</p>`;
+  try { $("msKg").value = localStorage.getItem("fwz-adlkg") || ""; } catch (e) { }
+  $("msKg").oninput = e => { try { localStorage.setItem("fwz-adlkg", e.target.value); } catch (e2) { } };
   const tick = (x1, x2, y, t, col) => `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="${col || "#23262b"}" stroke-width="1.3"/><path d="M${x1} ${y} l6 -3 v6z M${x2} ${y} l-6 -3 v6z" fill="${col || "#23262b"}"/><text x="${(x1 + x2) / 2}" y="${y - 5}" font-size="11" font-weight="700" text-anchor="middle" fill="${col || "#23262b"}">${t}</text>`;
   const drawA = () => {
     const w = MS.w, C = 216.5, E = w * 40, gy = 277;
