@@ -601,3 +601,27 @@ body.hasgear .top .brand { font-size: 1rem; letter-spacing: .05em; white-space: 
 .simc .simchips .chip{padding:6px 9px;font-size:13px;min-height:0}.simc .simchips .chip.rc{padding:6px 7px}.simc .simchips .chip.rc .pic{width:11px;height:20px}
 .simbox{margin-bottom:0}
 .simc #simn .chip{padding:4px 8px}.simc #simn .pic{width:10px;height:19px}
+/* Desktop-Ansicht (html.dv): automatisch ab 1000 px oder per Einstellung */
+html.dv body{padding-inline:40px}
+html.dv .wrap{max-width:1280px}
+html.dv .top .wrap{max-width:1280px}
+html.dv .hero h1{font-size:2.6rem}
+html.dv .hero p{max-width:70ch;font-size:1.05rem}
+html.dv .adlf{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:36px 40px;align-items:start}
+html.dv .adlf>.adlc:last-child{grid-column:1/-1}
+html.dv .adlf>.adlc:last-child{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);grid-template-rows:auto auto auto 1fr;column-gap:40px;align-items:start}
+html.dv .adlf>.adlc:last-child>.zh{grid-column:1/-1}
+html.dv .adlf>.adlc:last-child>.simbox{grid-column:1;grid-row:2/5}
+html.dv .adlf>.adlc:last-child>.simc{grid-column:2;grid-row:2}
+html.dv .adlf>.adlc:last-child>.simro{grid-column:2;grid-row:3}
+html.dv #app:has(#simsvg){display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);column-gap:40px;align-items:start}
+html.dv #app:has(#simsvg)>.hero,html.dv #app:has(#simsvg)>.foot{grid-column:1/-1}
+html.dv #app:has(#simsvg)>.simbox{grid-column:1;grid-row:2/5}
+html.dv #app:has(#simsvg)>.simro{grid-column:2;grid-row:2;margin-top:0}
+html.dv #app:has(#simsvg)>.simc{grid-column:2;grid-row:3}
+html.dv .rgmenu,html.dv .aomenu{max-width:none!important;margin:18px 0 0!important;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px!important}
+html.dv .rgmenu>*,html.dv .aomenu>*{width:auto;min-height:84px;grid-column:auto!important}
+html.dv .srch{max-width:560px}
+html.dv .gmgrid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+html.dv .loginbox,html.dv .sinfo,html.dv .lgrp{max-width:none}
+html.dv #app>.lgrp,html.dv #app>details{max-width:none}

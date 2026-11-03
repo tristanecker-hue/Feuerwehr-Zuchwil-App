@@ -1,4 +1,7 @@
-const APP_VERSION = "1.152";
+const APP_VERSION = "1.153";
+const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
+const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
+fwzViewApply(); window.addEventListener("resize", fwzViewApply);
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -1349,8 +1352,8 @@ function settingsView() {
   const rows = CFG_ITEMS.map(g => `<tr class="cfgg"><th colspan="${cols.length + 1}">${g[0]}</th></tr>` + g[1].map(i => `<tr><td class="cfgl">${esc(i[1])}</td>${cols.map(c => `<td><input type="checkbox" data-id="${i[0]}" data-u="${esc(c.k)}" aria-label="${esc(i[1])} für ${esc(c.n)}"${c.hide.includes(i[0]) ? "" : " checked"}${dis}></td>`).join("")}</tr>`).join("")).join("");
   const outHtml = FWZ.user ? `<h3 class="zh">Konto</h3><div class="cfgadd"><button class="btn" id="outb">Abmelden (${esc(FWZ.label())})</button></div>` : "";
   const zwOn = document.documentElement.classList.contains("zw");
-  const thmHtml = `<h3 class="zh">Darstellung</h3><div class="cfgadd"><button class="btn thm" id="thm">Design: ${zwOn ? "Zuchwil hell · auf Dunkel wechseln" : "Dunkel · auf Zuchwil hell wechseln"}</button></div>`;
-  const thmBind = () => { const tb = document.getElementById("thm"); if (tb) tb.onclick = () => { const h = document.documentElement.classList, z = h.toggle("zw"); try { localStorage.setItem("fwz-theme", z ? "zw" : "dark"); } catch (e) {} const m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = z ? "#c8161d" : "#121419"; tb.textContent = z ? "Design: Zuchwil hell · auf Dunkel wechseln" : "Design: Dunkel · auf Zuchwil hell wechseln"; }; };
+  const thmHtml = `<h3 class="zh">Darstellung</h3><div class="cfgadd"><button class="btn thm" id="thm">Design: ${zwOn ? "Zuchwil hell · auf Dunkel wechseln" : "Dunkel · auf Zuchwil hell wechseln"}</button></div><div class="cfgadd" id="vwm">${[["auto", "Ansicht: Automatisch"], ["desktop", "Desktop"], ["mobile", "Handy"]].map(v => `<button class="btn ${fwzViewMode() === v[0] ? "" : "ghost"}" data-vw="${v[0]}">${fwzViewMode() === v[0] ? "✓ " : ""}${v[1]}</button>`).join("")}</div>`;
+  const thmBind = () => { document.querySelectorAll("[data-vw]").forEach(b => b.onclick = () => { try { localStorage.setItem("fwz-view", b.dataset.vw); } catch (e) { } fwzViewApply(); settingsView(); }); const tb = document.getElementById("thm"); if (tb) tb.onclick = () => { const h = document.documentElement.classList, z = h.toggle("zw"); try { localStorage.setItem("fwz-theme", z ? "zw" : "dark"); } catch (e) {} const m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = z ? "#c8161d" : "#121419"; tb.textContent = z ? "Design: Zuchwil hell · auf Dunkel wechseln" : "Design: Dunkel · auf Zuchwil hell wechseln"; }; };
   const outBind = () => { thmBind(); const ob = document.getElementById("outb"); if (ob) ob.onclick = () => FWZ.logout().then(() => start()); };
   if (!adm) { app.innerHTML = `<section class="hero"><h1>Einstellungen</h1><p>${me ? "Angemeldet als " + esc(me) + "." : "Nicht angemeldet."}</p></section>${thmHtml}${outHtml}`; outBind(); window.scrollTo(0, 0); return; }
   app.innerHTML = `<section class="hero"><h1>Einstellungen</h1><p>Benutzerverwaltung: Wer kann was sehen.</p></section>${who}
