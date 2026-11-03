@@ -1,4 +1,4 @@
-const APP_VERSION = "1.149";
+const APP_VERSION = "1.150";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -822,20 +822,22 @@ const SIM_LIM = [["500 kg", 16.7, 5], ["4", 18.2, 4], ["3", 19.3, 3], ["2", 20.9
 function simView() {
   document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
   state.mod = null; state.sub = null; state.view = "sim"; backBtn.hidden = false;
-  app.innerHTML = `<section class="hero"><h1>Drehleiter-Simulator</h1><p>L32A-XS: Leiter bewegen, Zuladungsreserve wählen (1 Person im Korb).</p></section>
+  app.innerHTML = `<section class="hero"><h1>Drehleiter-Simulator</h1><p>L32A-XS: Leiter bewegen, Zuladungsreserve wählen, Personen in den Korb setzen.</p></section>
     <div class="simbox"><svg id="simsvg" viewBox="0 0 333 380" role="img" aria-label="Seitenansicht Drehleiter"></svg></div>
     <div class="simro" id="simro" role="status"></div>
     <div class="simc"><label>Aufrichtewinkel <b id="sva"></b><input type="range" id="sia" min="-20" max="76" step="1"></label>
       <label>Auszug <b id="svl"></b><input type="range" id="sil" min="12" max="28.4" step="0.1"></label>
       <div class="simg"><span>Zuladungsreserve wählen</span><div id="simres" class="simchips"></div></div>
-      <div class="simg"><span>Zusatz · Schnellwahl</span><div class="simchips"><button type="button" class="chip" id="simtr">Trage +40 kg</button><button type="button" class="chip" data-p="h">Max. Höhe</button><button type="button" class="chip" data-p="r">Max. Ausl.</button><button type="button" class="chip" data-p="t">Ablage</button></div></div></div>
+      <div class="simg"><span>Personen im Korb</span><div id="simn" class="simchips"></div></div>
+      <div class="simg"><span>Zusatz · Schnellwahl</span><div class="simchips"><button type="button" class="chip" id="simtr">Trage +50 kg</button><button type="button" class="chip" data-p="h">Max. Höhe</button><button type="button" class="chip" data-p="r">Max. Ausl.</button><button type="button" class="chip" data-p="t">Ablage</button></div></div></div>
     <p class="foot">Prinzipdarstellung nach dem Ausladungsdiagramm der Betriebsanleitung (S. 260), aus dem Diagramm abgelesen und gerundet; volle Abstützbreite. Pro Person werden 100 kg gerechnet (500 kg / 5 Personen). Nur zur Ausbildung, nicht für den Einsatz. Massgebend ist immer die Anzeige am Fahrzeug.</p>`;
   const P0 = { x: -2.14, h: 3.73 }, CX = .6, CY = -1.0, X = x => 81 + 9 * x, Y = h => 300 - 9 * h, $ = id => document.getElementById(id);
   const PIC = (m) => `<svg class="pic ${m}" viewBox="0 0 12 22" aria-hidden="true"><circle cx="6" cy="3.4" r="2.7"/><path d="M2.4 7.4h7.2a1.4 1.4 0 0 1 1.4 1.4v6.2H9.2v6.6H6.9V16H5.1v5.6H2.8V15H1V8.8a1.4 1.4 0 0 1 1.4-1.4z"/></svg>`;
   const resList = [["4", 1], ["3", 2], ["2", 3], ["1", 4]];
   const limKg = [[100, 22.7], [200, 20.9], [300, 19.3], [400, 18.2], [500, 16.7]];
-  const limOf = r => { let kg = r < 0 ? 500 : (5 - r) * 100; if (SIM.tr) kg = Math.min(500, kg + 40); for (let q = 0; q < 4; q++) if (kg <= limKg[q + 1][0]) { const a = limKg[q], b = limKg[q + 1]; return a[1] + (b[1] - a[1]) * (kg - a[0]) / (b[0] - a[0]); } return limKg[4][1]; };
+  const limOf = r => { let kg = r < 0 ? 500 : (5 - r) * 100; if (SIM.tr) kg = Math.min(500, kg + 50); for (let q = 0; q < 4; q++) if (kg <= limKg[q + 1][0]) { const a = limKg[q], b = limKg[q + 1]; return a[1] + (b[1] - a[1]) * (kg - a[0]) / (b[0] - a[0]); } return limKg[4][1]; };
   $("simres").innerHTML = resList.map(r => `<button type="button" class="chip rc" data-r="${r[1]}" aria-label="${r[0] === "500 kg" ? "500 kg" : r[0] + " Personen"}">${r[0] === "500 kg" ? "500 kg" : Array.from({ length: 5 }, (_, q) => PIC(q < +r[0] ? "fill" : "dim")).join("")}</button>`).join("");
+  $("simn").innerHTML = [0, 1, 2, 3, 4, 5].map(n => `<button type="button" class="chip" data-n="${n}" aria-label="${n} Personen">${n ? PIC("out").repeat(n) : "0"}</button>`).join("");
   const calc = () => {
     const al = SIM.a * Math.PI / 180, c = Math.cos(al), sn = Math.sin(al); let L = SIM.L, clamp = false;
     let cx = P0.x + L * c + CX; const lm = limOf(SIM.res);
@@ -845,9 +847,10 @@ function simView() {
   };
   const allowed = r => r <= SIM_LIM[0][1] ? { p: 5, kg: 500, t: "500 kg" } : r <= SIM_LIM[1][1] ? { p: 4, kg: 400 } : r <= SIM_LIM[2][1] ? { p: 3, kg: 300 } : r <= SIM_LIM[3][1] ? { p: 2, kg: 200 } : r <= SIM_LIM[4][1] ? { p: 1, kg: 100 } : r <= SIM_USE ? { p: 0, kg: 100, nb: 1 } : { p: -1, kg: 0 };
   const draw = () => {
-    const k = calc(), A = allowed(k.fx), extra = SIM.tr ? 40 : 0, resKg = (A.p < 0 || A.nb) ? 0 : A.kg - SIM.n * 100 - extra, res = Math.floor(resKg / 100), over = A.p < 0 || resKg < 0 || (A.nb && (SIM.n > 0 || SIM.tr)) || (SIM.tr && SIM.n > 2), reserveOk = !over;
+    const k = calc(), A = allowed(k.fx), extra = SIM.tr ? 50 : 0, resKg = (A.p < 0 || A.nb) ? 0 : A.kg - SIM.n * 100 - extra, res = Math.floor(resKg / 100), over = A.p < 0 || resKg < 0 || (A.nb && (SIM.n > 0 || SIM.tr)) || (SIM.tr && SIM.n > 2), reserveOk = !over;
     $("sia").value = SIM.a; $("sil").value = k.L; $("sva").textContent = Math.round(SIM.a) + "°"; $("svl").textContent = k.L.toFixed(1) + " m";
     document.querySelectorAll("#simres .chip").forEach(b => b.classList.toggle("on", +b.dataset.r === SIM.res));
+    document.querySelectorAll("#simn .chip").forEach(b => b.classList.toggle("on", +b.dataset.n === SIM.n));
     $("simtr").classList.toggle("on", SIM.tr);
     const sel = limOf(SIM.res), lines = SIM_LIM.map((l, i) => { const ly = 9 + (i % 3) * 9; return `<line x1="${X(l[1])}" y1="${ly + 2}" x2="${X(l[1])}" y2="${Y(-7)}" stroke="currentColor" stroke-width=".8" stroke-dasharray="3 3" opacity=".45"/><text x="${X(l[1])}" y="${ly}" font-size="8" text-anchor="middle" fill="currentColor">${l[0] === "500 kg" ? "500kg" : l[0] + "P"}</text>`; }).join("") + `<line x1="${X(sel)}" y1="${Y(32)}" x2="${X(sel)}" y2="${Y(-7)}" stroke="#c8161d" stroke-width="1.8"/>`;
     const ticks = [0, 5, 10, 15, 20, 25].map(x => `<line x1="${X(x)}" y1="${Y(0)}" x2="${X(x)}" y2="${Y(0) + 4}" stroke="currentColor"/><text x="${X(x)}" y="${Y(0) + 13}" font-size="8" text-anchor="middle" fill="currentColor" opacity=".7">${x}</text>`).join("") + [10, 20, 30].map(h => `<line x1="318" y1="${Y(h)}" x2="323" y2="${Y(h)}" stroke="currentColor"/><text x="316" y="${Y(h) + 3}" font-size="8" text-anchor="end" fill="currentColor" opacity=".7">${h}m</text>`).join("");
@@ -871,6 +874,7 @@ function simView() {
   $("sia").oninput = e => { SIM.a = +e.target.value; draw(); };
   $("sil").oninput = e => { SIM.L = +e.target.value; draw(); };
   app.querySelectorAll("#simres .chip").forEach(b => b.onclick = () => { SIM.res = +b.dataset.r; draw(); });
+  app.querySelectorAll("#simn .chip").forEach(b => b.onclick = () => { SIM.n = +b.dataset.n; draw(); });
   $("simtr").onclick = () => { SIM.tr = !SIM.tr; draw(); };
   app.querySelectorAll("[data-p]").forEach(b => b.onclick = () => { const p = b.dataset.p; if (p === "h") { SIM.a = 76; SIM.L = 28.4; } else if (p === "r") { SIM.a = 5; SIM.L = 28.4; } else { SIM.a = 0; SIM.L = 14; } draw(); });
   draw(); window.scrollTo(0, 0);

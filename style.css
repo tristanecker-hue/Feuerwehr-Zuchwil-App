@@ -600,3 +600,4 @@ body.hasgear .top .brand { font-size: 1rem; letter-spacing: .05em; white-space: 
 .simc .simchips{gap:6px}
 .simc .simchips .chip{padding:6px 9px;font-size:13px;min-height:0}.simc .simchips .chip.rc{padding:6px 7px}.simc .simchips .chip.rc .pic{width:11px;height:20px}
 .simbox{margin-bottom:0}
+.simc #simn .chip{padding:4px 8px}.simc #simn .pic{width:10px;height:19px}
