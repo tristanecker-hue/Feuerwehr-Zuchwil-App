@@ -594,3 +594,9 @@ body.hasgear .top .brand { font-size: 1rem; letter-spacing: .05em; white-space: 
 
 .simbox{background:#eef1f4}.simbox svg{color:#23262b}
 .simrow b{white-space:nowrap;text-align:right}.simrow span{min-width:0}
+.simro{gap:4px;margin:8px 0;padding:8px 12px}.simrow{font-size:14px}.simmsg{padding:6px 10px;font-size:13px}
+.simbel{padding:6px 10px}.simbel .pic{width:15px;height:28px}.simkg b{font-size:22px}
+.simc{gap:8px;margin:4px 0 10px}.simg>span{margin-bottom:3px;font-size:13px}.simc label{gap:2px;font-size:14px}
+.simc .simchips{gap:6px}
+.simc .simchips .chip{padding:6px 9px;font-size:13px;min-height:0}.simc .simchips .chip.rc{padding:6px 7px}.simc .simchips .chip.rc .pic{width:11px;height:20px}
+.simbox{margin-bottom:0}
