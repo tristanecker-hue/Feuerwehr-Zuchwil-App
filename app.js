@@ -879,7 +879,7 @@ function simView() {
   app.querySelectorAll("[data-p]").forEach(b => b.onclick = () => { const p = b.dataset.p; if (p === "h") { SIM.a = 76; SIM.L = 28.4; } else if (p === "r") { SIM.a = 5; SIM.L = 28.4; } else { SIM.a = 0; SIM.L = 14; } draw(); });
   draw(); window.scrollTo(0, 0);
 }
-/* Drehleiter Masse L32A-XS: Abstützbreite, Überhang Lafette, minimaler Wandabstand (Gelenkarm) */
+/* Drehleiter Masse L32A-XS: Abstützbreite, minimaler Wandabstand (Gelenkarm) */
 const MS = { w: 4.8, H: 15, ko: true, ov: 4.4 }, MS_P = { x: -2.14, h: 3.73 }, MS_KA = 1.5;
 function masseMin(H, free) {
   let best = null; const R = Math.PI / 180;
@@ -895,7 +895,7 @@ function masseView() {
   document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
   state.mod = null; state.sub = null; state.view = "masse"; backBtn.hidden = false;
   const $ = id => document.getElementById(id), f1 = n => n.toFixed(1).replace(".", ",");
-  app.innerHTML = `<section class="hero"><h1>Drehleiter Masse</h1><p>L32A-XS der Feuerwehr Zuchwil: Abstützung, Lafette und Wandabstand.</p></section>
+  app.innerHTML = `<section class="hero"><h1>Drehleiter Masse</h1><p>L32A-XS der Feuerwehr Zuchwil: Abstützung und Wandabstand.</p></section>
     <div class="adlf">
     <section class="adlc"><h3 class="zh">Abstützbreite</h3><div class="simbox"><svg id="msA" viewBox="0 0 340 215" role="img" aria-label="Heckansicht mit Abstützung"></svg></div>
       <div class="simc"><label>Abstützbreite <b id="msAv"></b><input type="range" id="msAi" min="2.5" max="4.8" step="0.1"></label><div class="simchips"><button type="button" class="chip" data-w="2.5">Minimal 2,5 m</button><button type="button" class="chip" data-w="4.8">Maximal 4,8 m</button></div></div>
