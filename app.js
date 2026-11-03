@@ -1,4 +1,4 @@
-const APP_VERSION = "1.137";
+const APP_VERSION = "1.138";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -348,10 +348,11 @@ function home() {
         (sh("sgv") ? bt("sgv", "Kantonale Ergänzungen (SGV)", "Original-PDF + " + SGV.length + " Merkblätter") : "") +
         (sh("abc") ? bt("sub:abc", "ABC-Handbuch", "FKS · 508 S. in 4 Teilen + Quiz") : "") +
         (sh("veg") ? bt("sub:veg", "Vegetationsbrände", "Handbuch Spezialwissen · PDF + Quiz") : "") +
-        (sh("adl") ? bt("adl", "Autodrehleiter", "Vermessungsplan: Masse eigene ADL") : "");
+        (sh("adl") ? bt("adl", "Autodrehleiter", "Anleitungen und Simulator") : "") +
+        (sh("adlm") ? bt("adlm", "Drehleiter Masse", "Abstützbreite, Lafette, Wandabstand") : "");
     })()}</div>
     <p class="foot">Lernhilfe aus den FKS-Reglementen von feukos.ch. Massgebend ist immer das jeweilige Reglement in der gültigen Fassung.</p>`;
-  app.querySelectorAll(".pdfbtn").forEach(b => b.addEventListener("click", () => b.dataset.id.startsWith("sub:") ? subView(b.dataset.id.slice(4)) : b.dataset.id === "gq" ? gquizView() : b.dataset.id === "adl" ? adlView() : b.dataset.id === "sgv" ? sgvView() : b.dataset.id === "spick" ? spickView() : b.dataset.id.startsWith("pdf:") ? rgView(b.dataset.id.slice(4)) : openMod(b.dataset.id, "quiz")));
+  app.querySelectorAll(".pdfbtn").forEach(b => b.addEventListener("click", () => b.dataset.id.startsWith("sub:") ? subView(b.dataset.id.slice(4)) : b.dataset.id === "gq" ? gquizView() : b.dataset.id === "adlm" ? masseView() : b.dataset.id === "adl" ? adlView() : b.dataset.id === "sgv" ? sgvView() : b.dataset.id === "spick" ? spickView() : b.dataset.id.startsWith("pdf:") ? rgView(b.dataset.id.slice(4)) : openMod(b.dataset.id, "quiz")));
   const qi = document.getElementById("q"), sb = document.getElementById("sbox"), mg = document.getElementById("mgrid");
   qi.addEventListener("input", () => {
     const v = qi.value.trim();
@@ -793,6 +794,28 @@ function adlView() {
   document.getElementById("adlpdf2").onclick = () => { state.pdfBack = () => adlView(); rgView("adl2"); };
   window.scrollTo(0, 0);
 }
+/* Zuchwil-Drehleiter (Seitenansicht) nach Fahrzeugvorlage: ox/oy = Pixelposition der Drehachse am Boden, kk = Pixel pro Vorlageneinheit */
+function adlTruck(ox, oy, kk) {
+    const R = "#c0141b", D = "#3b3e44";
+    const wh = (cx) => `<circle cx="${cx}" cy="362" r="52" fill="#1a1b1e"/><circle cx="${cx}" cy="362" r="35" fill="#c9ccd1" stroke="#8a8f98" stroke-width="3"/><circle cx="${cx}" cy="362" r="12" fill="#7d8189"/>${[0, 1, 2, 3, 4, 5].map(q => `<circle cx="${cx + 23 * Math.cos(q * 1.047)}" cy="${362 + 23 * Math.sin(q * 1.047)}" r="4" fill="#8a8f98"/>`).join("")}`;
+    const shut = (x, y, w, h) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#1f2024"/>` + Array.from({ length: Math.floor(h / 9) }, (_, q) => `<line x1="${x}" y1="${y + 6 + q * 9}" x2="${x + w}" y2="${y + 6 + q * 9}" stroke="#3a3c42" stroke-width="2"/>`).join("");
+    const leg = x => `<rect x="${x - 9}" y="318" width="18" height="90" fill="#9aa0a8" stroke="${D}" stroke-width="3"/><rect x="${x - 5}" y="318" width="10" height="45" fill="#d4d7dc"/><rect x="${x - 34}" y="402" width="68" height="10" fill="#1f2024"/><path d="M${x - 34} 402 l14 10 M${x - 12} 402 l14 10 M${x + 10} 402 l14 10" stroke="#d9322f" stroke-width="4"/>`;
+    const turm = `<g transform="translate(1670 0) scale(-1 1)"><rect x="776" y="244" width="110" height="20" fill="#6b6f76"/>${Array.from({ length: 11 }, (_, q) => `<line x1="${780 + q * 10}" y1="246" x2="${780 + q * 10}" y2="262" stroke="#9aa0a8" stroke-width="3"/>`).join("")}<path d="M752 240 L775 213 L862 216 L880 150 L842 96 L836 82 L1015 74 L1060 98 L1078 180 L1052 190 L1034 232 L985 250 L905 246 L860 246 Z" fill="${R}" stroke="#7d0e13" stroke-width="3"/><path d="M880 150 L842 96 L1015 74 L1000 150 Z" fill="#a30f15" opacity=".5"/><rect x="882" y="108" width="40" height="22" fill="#d4d7dc" stroke="${D}" stroke-width="2"/><rect x="822" y="100" width="12" height="38" fill="#222"/><path d="M1010 90 L1040 96 L1052 200" fill="none" stroke="#7d0e13" stroke-width="3"/></g>`;
+    const trk = `<g transform="translate(${ox - 835 * kk} ${oy - 412 * kk}) scale(${kk})">${leg(1000)}${leg(500)}
+      <rect x="410" y="262" width="650" height="112" fill="${R}"/><rect x="622" y="262" width="436" height="12" fill="${D}"/><rect x="405" y="150" width="112" height="224" fill="${R}"/>${shut(422, 152, 84, 194)}${shut(637, 276, 126, 98)}${shut(887, 276, 54, 98)}${shut(1006, 276, 40, 98)}<rect x="765" y="276" width="120" height="98" fill="${R}"/><rect x="415" y="346" width="650" height="28" fill="${R}"/>
+      <path d="M760 292 H1058" stroke="#f08a5d" stroke-width="10"/><path d="M425 360 H760" stroke="#9c0f15" stroke-width="3"/>
+      <path d="M203 332 V225 L214 198 L240 150 L392 138 L400 372 L292 372 L284 335 Z" fill="${R}" stroke="#7d0e13" stroke-width="3"/><path d="M255 160 L336 160 L336 236 L242 236 Z" fill="#b9c3cc" stroke="#23262b" stroke-width="3"/><path d="M200 175 L240 165 L245 215 L205 222 Z" fill="#9aa4ad" stroke="#23262b" stroke-width="3"/>
+      <path d="M245 266 L300 248 L395 244 L395 252 L304 258 L252 276 Z" fill="#f4f1ee"/><path d="M262 280 L346 244 L392 241 L392 236 L344 238 Z" fill="#e8663a"/><path d="M215 300 L285 262 L300 262 L225 306 Z" fill="#e8663a"/>
+      <text x="233" y="283" font-size="17" font-weight="700" fill="#fff" font-family="system-ui,sans-serif">Feuerwehr</text><text x="233" y="296" font-size="17" font-weight="700" fill="#fff" font-family="system-ui,sans-serif">ZUCHWIL</text>
+      <path d="M203 322 H298 L308 372 H210 Z" fill="#4a4d52"/><path d="M205 345 L225 330 L255 336 L215 360 Z" fill="#c9ccd1"/>
+      <path d="M288 372 A52 52 0 0 1 392 372 Z" fill="#33353a"/><path d="M768 372 A52 52 0 0 1 872 372 Z" fill="#33353a"/>${wh(340)}${wh(820)}</g>${turm.replace("<g ", `<g transform-origin="0 0" `).replace('transform="translate(1670 0) scale(-1 1)"', `transform="translate(${ox - 835 * kk} ${oy - 412 * kk}) scale(${kk}) translate(1670 0) scale(-1 1)"`)}`;
+  return trk;
+}
+function adlLadder(px, py, a, L, U) {
+  const e = L - 12, H = [1.5, 1.25, 1.05, .85], st = [0, 1 + e / 3, 2 + 2 * e / 3, 3 + e], ln0 = [9.5, 9, 9, 9];
+  const truss = (s0, l, h) => { const n = Math.max(3, Math.round(l / (h * 1.05))), w = l / n; let d = `M${s0} ${-h / 2}`; for (let q = 0; q < n; q++) d += ` L${s0 + w * (q + .5)} ${h / 2} L${s0 + w * (q + 1)} ${-h / 2}`; return `<rect x="${s0}" y="${-h / 2}" width="${l}" height="${h}" fill="none" stroke="#2a2d33" stroke-width=".2"/><path d="${d}" fill="none" stroke="#5b5f66" stroke-width=".09"/>`; };
+  return `<g transform="translate(${px} ${py}) rotate(${-a}) scale(${U})">${st.map((s0, q) => truss(s0, ln0[q], H[q])).join("")}</g><circle cx="${px}" cy="${py}" r="2.2" fill="#c9ccd1" stroke="#23262b" stroke-width="1"/>`;
+}
 /* Drehleiter-Simulator L32A-XS nach Ausladungsdiagramm (Betriebsanleitung S. 260, Prinzipdarstellung) */
 const SIM_LIM = [["500 kg", 16.7, 5], ["4", 18.2, 4], ["3", 19.3, 3], ["2", 20.9, 2], ["1", 22.7, 1]], SIM_USE = 24.7, SIM = { a: 45, L: 20, res: -1, n: 2, tr: false };
 function simView() {
@@ -830,19 +853,7 @@ function simView() {
     document.querySelectorAll("#simn .chip").forEach(b => b.classList.toggle("on", +b.dataset.n === SIM.n)); $("simtr").classList.toggle("on", SIM.tr);
     const sel = limOf(SIM.res), lines = SIM_LIM.map((l, i) => { const ly = 9 + (i % 3) * 9; return `<line x1="${X(l[1])}" y1="${ly + 2}" x2="${X(l[1])}" y2="${Y(-7)}" stroke="currentColor" stroke-width=".8" stroke-dasharray="3 3" opacity=".45"/><text x="${X(l[1])}" y="${ly}" font-size="8" text-anchor="middle" fill="currentColor">${l[0] === "500 kg" ? "500kg" : l[0] + "P"}</text>`; }).join("") + `<line x1="${X(sel)}" y1="${Y(32)}" x2="${X(sel)}" y2="${Y(-7)}" stroke="#c8161d" stroke-width="1.8"/>`;
     const ticks = [0, 5, 10, 15, 20, 25].map(x => `<line x1="${X(x)}" y1="${Y(0)}" x2="${X(x)}" y2="${Y(0) + 4}" stroke="currentColor"/><text x="${X(x)}" y="${Y(0) + 13}" font-size="8" text-anchor="middle" fill="currentColor" opacity=".7">${x}</text>`).join("") + [10, 20, 30].map(h => `<line x1="318" y1="${Y(h)}" x2="323" y2="${Y(h)}" stroke="currentColor"/><text x="316" y="${Y(h) + 3}" font-size="8" text-anchor="end" fill="currentColor" opacity=".7">${h}m</text>`).join("");
-    const U = 9, kk = 9 / 81.6, R = "#c0141b", D = "#3b3e44";
-    const wh = (cx) => `<circle cx="${cx}" cy="362" r="52" fill="#1a1b1e"/><circle cx="${cx}" cy="362" r="35" fill="#c9ccd1" stroke="#8a8f98" stroke-width="3"/><circle cx="${cx}" cy="362" r="12" fill="#7d8189"/>${[0, 1, 2, 3, 4, 5].map(q => `<circle cx="${cx + 23 * Math.cos(q * 1.047)}" cy="${362 + 23 * Math.sin(q * 1.047)}" r="4" fill="#8a8f98"/>`).join("")}`;
-    const shut = (x, y, w, h) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#1f2024"/>` + Array.from({ length: Math.floor(h / 9) }, (_, q) => `<line x1="${x}" y1="${y + 6 + q * 9}" x2="${x + w}" y2="${y + 6 + q * 9}" stroke="#3a3c42" stroke-width="2"/>`).join("");
-    const leg = x => `<rect x="${x - 9}" y="318" width="18" height="90" fill="#9aa0a8" stroke="${D}" stroke-width="3"/><rect x="${x - 5}" y="318" width="10" height="45" fill="#d4d7dc"/><rect x="${x - 34}" y="402" width="68" height="10" fill="#1f2024"/><path d="M${x - 34} 402 l14 10 M${x - 12} 402 l14 10 M${x + 10} 402 l14 10" stroke="#d9322f" stroke-width="4"/>`;
-    const turm = `<g transform="translate(1670 0) scale(-1 1)"><rect x="776" y="244" width="110" height="20" fill="#6b6f76"/>${Array.from({ length: 11 }, (_, q) => `<line x1="${780 + q * 10}" y1="246" x2="${780 + q * 10}" y2="262" stroke="#9aa0a8" stroke-width="3"/>`).join("")}<path d="M752 240 L775 213 L862 216 L880 150 L842 96 L836 82 L1015 74 L1060 98 L1078 180 L1052 190 L1034 232 L985 250 L905 246 L860 246 Z" fill="${R}" stroke="#7d0e13" stroke-width="3"/><path d="M880 150 L842 96 L1015 74 L1000 150 Z" fill="#a30f15" opacity=".5"/><rect x="882" y="108" width="40" height="22" fill="#d4d7dc" stroke="${D}" stroke-width="2"/><rect x="822" y="100" width="12" height="38" fill="#222"/><path d="M1010 90 L1040 96 L1052 200" fill="none" stroke="#7d0e13" stroke-width="3"/></g>`;
-    const trk = `<g transform="translate(${X(0) - 835 * kk} ${Y(0) - 412 * kk}) scale(${kk})">${leg(1000)}${leg(500)}
-      <rect x="410" y="262" width="650" height="112" fill="${R}"/><rect x="622" y="262" width="436" height="12" fill="${D}"/><rect x="405" y="150" width="112" height="224" fill="${R}"/>${shut(422, 152, 84, 194)}${shut(637, 276, 126, 98)}${shut(887, 276, 54, 98)}${shut(1006, 276, 40, 98)}<rect x="765" y="276" width="120" height="98" fill="${R}"/><rect x="415" y="346" width="650" height="28" fill="${R}"/>
-      <path d="M760 292 H1058" stroke="#f08a5d" stroke-width="10"/><path d="M425 360 H760" stroke="#9c0f15" stroke-width="3"/>
-      <path d="M203 332 V225 L214 198 L240 150 L392 138 L400 372 L292 372 L284 335 Z" fill="${R}" stroke="#7d0e13" stroke-width="3"/><path d="M255 160 L336 160 L336 236 L242 236 Z" fill="#b9c3cc" stroke="#23262b" stroke-width="3"/><path d="M200 175 L240 165 L245 215 L205 222 Z" fill="#9aa4ad" stroke="#23262b" stroke-width="3"/>
-      <path d="M245 266 L300 248 L395 244 L395 252 L304 258 L252 276 Z" fill="#f4f1ee"/><path d="M262 280 L346 244 L392 241 L392 236 L344 238 Z" fill="#e8663a"/><path d="M215 300 L285 262 L300 262 L225 306 Z" fill="#e8663a"/>
-      <text x="233" y="283" font-size="17" font-weight="700" fill="#fff" font-family="system-ui,sans-serif">Feuerwehr</text><text x="233" y="296" font-size="17" font-weight="700" fill="#fff" font-family="system-ui,sans-serif">ZUCHWIL</text>
-      <path d="M203 322 H298 L308 372 H210 Z" fill="#4a4d52"/><path d="M205 345 L225 330 L255 336 L215 360 Z" fill="#c9ccd1"/>
-      <path d="M288 372 A52 52 0 0 1 392 372 Z" fill="#33353a"/><path d="M768 372 A52 52 0 0 1 872 372 Z" fill="#33353a"/>${wh(340)}${wh(820)}</g>${turm.replace("<g ", `<g transform-origin="0 0" `).replace('transform="translate(1670 0) scale(-1 1)"', `transform="translate(${X(0) - 835 * kk} ${Y(0) - 412 * kk}) scale(${kk}) translate(1670 0) scale(-1 1)"`)}`;
+    const U = 9, kk = 9 / 81.6, trk = adlTruck(X(0), Y(0), kk);
     const px = X(P0.x), py = Y(P0.h), tx = X(k.tx), ty = Y(k.th), e = k.L - 12, H = [1.5, 1.25, 1.05, .85], st = [0, 1 + e / 3, 2 + 2 * e / 3, 3 + e], ln0 = [9.5, 9, 9, 9];
     const truss = (s0, l, h, i) => { const n = Math.max(3, Math.round(l / (h * 1.05))), w = l / n; let d = `M${s0} ${-h / 2}`; for (let q = 0; q < n; q++) d += ` L${s0 + w * (q + .5)} ${h / 2} L${s0 + w * (q + 1)} ${-h / 2}`; return `<rect x="${s0}" y="${-h / 2}" width="${l}" height="${h}" fill="none" stroke="#2a2d33" stroke-width=".2"/><path d="${d}" fill="none" stroke="#5b5f66" stroke-width=".09"/>`; };
     const ladder = `<g transform="translate(${px} ${py}) rotate(${-SIM.a}) scale(${U})">${st.map((s0, i) => truss(s0, ln0[i], H[i], i)).join("")}</g><circle cx="${px}" cy="${py}" r="2.2" fill="#c9ccd1" stroke="#23262b" stroke-width="1"/>`;
@@ -866,6 +877,81 @@ function simView() {
   $("simtr").onclick = () => { SIM.tr = !SIM.tr; draw(); };
   app.querySelectorAll("[data-p]").forEach(b => b.onclick = () => { const p = b.dataset.p; if (p === "h") { SIM.a = 76; SIM.L = 28.4; } else if (p === "r") { SIM.a = 5; SIM.L = 28.4; } else { SIM.a = 0; SIM.L = 14; } draw(); });
   draw(); window.scrollTo(0, 0);
+}
+/* Drehleiter Masse L32A-XS: Abstützbreite, Überhang Lafette, minimaler Wandabstand (Gelenkarm) */
+const MS = { w: 4.8, H: 15, ko: true }, MS_P = { x: -2.14, h: 3.73 }, MS_KA = 1.5;
+function masseMin(H, free) {
+  let best = null; const R = Math.PI / 180;
+  for (let a = -20; a <= 76; a += .5) for (let L = 12; L <= 28.4; L += .2) for (let b = 0; b <= (free ? 75 : 0); b += 2.5) {
+    const d = a - b; if (d < -40) continue;
+    const tx = MS_P.x + L * Math.cos(a * R) + MS_KA * Math.cos(d * R), th = MS_P.h + L * Math.sin(a * R) + MS_KA * Math.sin(d * R), fl = th - 1;
+    if (Math.abs(fl - H) > .07 || fl < .3) continue;
+    const front = tx + .6 + .85; if (!best || front < best.x) best = { x: front, a, L, b, tx, th };
+  }
+  return best;
+}
+function masseView() {
+  document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
+  state.mod = null; state.sub = null; state.view = "masse"; backBtn.hidden = false;
+  const $ = id => document.getElementById(id), f1 = n => n.toFixed(1).replace(".", ",");
+  app.innerHTML = `<section class="hero"><h1>Drehleiter Masse</h1><p>L32A-XS der Feuerwehr Zuchwil: Abstützung, Lafette und Wandabstand.</p></section>
+    <div class="adlf">
+    <section class="adlc"><h3 class="zh">Abstützbreite</h3><div class="simbox"><svg id="msA" viewBox="0 0 340 215" role="img" aria-label="Heckansicht mit Abstützung"></svg></div>
+      <div class="simc"><label>Abstützbreite <b id="msAv"></b><input type="range" id="msAi" min="2.5" max="4.8" step="0.1"></label><div class="simchips"><button type="button" class="chip" data-w="2.5">Minimal 2,5 m</button><button type="button" class="chip" data-w="4.8">Maximal 4,8 m</button></div></div>
+      <div class="simro"><div class="simrow"><span>Abstützbreite (Aussenkante Stützteller)</span><b id="msAr"></b></div><div class="simrow"><span>Fahrzeugbreite</span><b>2,5 m</b></div><div class="simrow"><span>Platzbedarf je Seite über das Fahrzeug hinaus</span><b id="msAs"></b></div><div id="msAm" class="simmsg ok"></div></div></section>
+    <section class="adlc"><h3 class="zh">Überhang Lafette</h3><div class="simbox"><svg id="msB" viewBox="0 -26 340 196" role="img" aria-label="Seitenansicht mit Lafette"></svg></div>
+      <div class="simro"><div class="simrow"><span>Lafette (Leiterdrehpunkt) vor der Drehachse</span><b>ca. 2,1 m</b></div><div class="simrow"><span>Höhe Leiterdrehpunkt über Boden</span><b>ca. 3,7 m</b></div><div class="simrow"><span>Fahrzeug Länge · Breite · Höhe</span><b>10,5 · 2,5 · 3,4 m</b></div></div></section>
+    <section class="adlc"><h3 class="zh">Minimaler Abstand zur Wand</h3><div class="simbox"><svg id="msC" viewBox="0 0 340 298" role="img" aria-label="Mindestabstand zur Wand"></svg></div>
+      <div class="simc"><label>Einsatzhöhe (Korbboden) <b id="msCv"></b><input type="range" id="msCi" min="3" max="29" step="0.5"></label>
+      <div class="simg"><span>Gelenkarm (Korbarm)</span><div class="simchips"><button type="button" class="chip" data-ko="1">Abgeneigt (Gelenk genutzt)</button><button type="button" class="chip" data-ko="0">Gestreckt</button></div></div></div>
+      <div class="simro" id="msCr"></div></section></div>
+    <p class="foot">Quellen: Betriebsanleitung L32A-XS, Technische Daten (S. 259): Abstützbreite 2 500 bis 4 800 mm, Fahrzeug ca. 10 500 × 2 500 × 3 400 mm; Korbarm-Grenzen (S. 109): max. 75° zum Leitersatz, max. 40° unter der Horizontalen; Leiterlänge ab 12 m (Ausladungsdiagramm S. 260). Nicht als Zahl in der Anleitung: Lage der Lafette und Länge des Korbarms. Sie sind aus den Zeichnungen abgelesen bzw. geschätzt (Korbarm ca. 1,5 m). Die Anleitung verlangt mindestens 1 m Abstand zu Gebäuden. Nur zur Ausbildung, massgebend ist die Anzeige am Fahrzeug.</p>`;
+  const tick = (x1, x2, y, t, col) => `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="${col || "#23262b"}" stroke-width="1.3"/><path d="M${x1} ${y} l6 -3 v6z M${x2} ${y} l-6 -3 v6z" fill="${col || "#23262b"}"/><text x="${(x1 + x2) / 2}" y="${y - 5}" font-size="11" font-weight="700" text-anchor="middle" fill="${col || "#23262b"}">${t}</text>`;
+  const drawA = () => {
+    const w = MS.w, P = 40, cx = 170, gy = 178, x0 = cx - w * P / 2, x1 = cx + w * P / 2, bw = 2.5 * P / 2;
+    $("msAi").value = w; $("msAv").textContent = f1(w) + " m"; $("msAr").textContent = f1(w) + " m"; $("msAs").textContent = f1((w - 2.5) / 2) + " m";
+    document.querySelectorAll("[data-w]").forEach(b => b.classList.toggle("on", Math.abs(+b.dataset.w - w) < .05));
+    $("msAm").textContent = w >= 4.75 ? "Volle Abstützbreite: voller Arbeitsbereich." : w <= 2.55 ? "Minimale Breite: Stützen innerhalb der Fahrzeugkontur, Arbeitsbereich stark eingeschränkt." : "Verringerte Breite: Arbeitsbereich eingeschränkt (Anzeige am Fahrzeug beachten).";
+    const leg = x => `<rect x="${x - 4}" y="${gy - 46}" width="8" height="46" fill="#d4d7dc" stroke="#23262b" stroke-width="1"/><rect x="${x - 13}" y="${gy - 4}" width="26" height="4" fill="#1f2024"/><rect x="${x - 4}" y="${gy - 46}" width="8" height="18" fill="#9aa0a8"/>`;
+    const chev = Array.from({ length: 8 }, (_, q) => `<path d="M${cx - bw + 6 + q * 14} ${gy - 50} l10 0 l-24 40 l-10 0 z" fill="#fff" opacity=".9"/>`).join("");
+    $("msA").innerHTML = `<line x1="8" y1="${gy}" x2="332" y2="${gy}" stroke="#23262b" stroke-width="2"/>
+      <line x1="${x0}" y1="${gy - 34}" x2="${x1}" y2="${gy - 34}" stroke="#6b6f76" stroke-width="7"/>${leg(x0)}${leg(x1)}
+      <rect x="${cx - bw - 5}" y="${gy - 78}" width="${bw * 2 + 10}" height="26" fill="#9aa0a8"/><rect x="${cx - bw}" y="${gy - 80}" width="${bw * 2}" height="46" rx="3" fill="#c0141b" stroke="#7d0e13" stroke-width="1.5"/>
+      <clipPath id="cpA"><rect x="${cx - bw}" y="${gy - 80}" width="${bw * 2}" height="46"/></clipPath><g clip-path="url(#cpA)">${chev}</g>
+      <rect x="${cx - 14}" y="${gy - 70}" width="28" height="20" rx="2" fill="#fff" stroke="#7d0e13" stroke-width="1"/>
+      <rect x="${cx - bw + 4}" y="${gy - 34}" width="14" height="30" rx="5" fill="#1a1b1e"/><rect x="${cx + bw - 18}" y="${gy - 34}" width="14" height="30" rx="5" fill="#1a1b1e"/>
+      <rect x="${cx - bw - 4}" y="${gy - 112}" width="${bw * 2 + 8}" height="34" rx="5" fill="#c0141b" stroke="#7d0e13" stroke-width="1.5"/><rect x="${cx - 18}" y="${gy - 126}" width="36" height="16" rx="3" fill="#6b6f76"/>
+      ${tick(cx - bw, cx + bw, gy - 134, "2,5 m", "#6b6f76")}${tick(x0, x1, gy + 22, f1(w) + " m", "#c8161d")}
+      <line x1="${x0}" y1="${gy + 4}" x2="${x0}" y2="${gy + 26}" stroke="#c8161d" stroke-dasharray="3 2"/><line x1="${x1}" y1="${gy + 4}" x2="${x1}" y2="${gy + 26}" stroke="#c8161d" stroke-dasharray="3 2"/>`;
+  };
+  const drawB = () => {
+    const U = 29.5, kk = U / 81.6, ox = 233 - 0, gy = 150, pivx = ox + MS_P.x * U;
+    $("msB").innerHTML = `<line x1="8" y1="${gy}" x2="332" y2="${gy}" stroke="#23262b" stroke-width="2"/>${adlTruck(ox, gy, kk)}
+      <line x1="${ox}" y1="${gy + 4}" x2="${ox}" y2="14" stroke="#23262b" stroke-dasharray="6 3 1 3" opacity=".6"/><text x="${ox + 4}" y="22" font-size="9" fill="#23262b" opacity=".8">Drehachse</text>
+      <line x1="${pivx}" y1="${gy - MS_P.h * U}" x2="${pivx}" y2="${gy - MS_P.h * U - 20}" stroke="#c8161d"/><circle cx="${pivx}" cy="${gy - MS_P.h * U}" r="3.5" fill="#c8161d"/>
+      ${tick(pivx, ox, gy - MS_P.h * U - 24, "ca. 2,1 m", "#c8161d")}<text x="${pivx}" y="${gy - MS_P.h * U - 36}" font-size="9" text-anchor="middle" fill="#c8161d">Lafette</text>`;
+  };
+  const drawC = () => {
+    const U = 8.2, gy = 275, ox = 118, X = x => ox + U * x, Y = h => gy - U * h, kk = U / 81.6, H = MS.H;
+    const bg = masseMin(H, true), bs = masseMin(H, false), sel = MS.ko ? bg : bs;
+    $("msCi").value = H; $("msCv").textContent = f1(H) + " m"; document.querySelectorAll("[data-ko]").forEach(b => b.classList.toggle("on", (b.dataset.ko === "1") === MS.ko));
+    let g = `<line x1="8" y1="${gy}" x2="332" y2="${gy}" stroke="#23262b" stroke-width="2"/>${adlTruck(X(0), gy, kk)}<line x1="${X(0)}" y1="${gy}" x2="${X(0)}" y2="10" stroke="#23262b" stroke-dasharray="6 3 1 3" opacity=".5"/>`;
+    if (sel) {
+      const wx = X(sel.x), wall = `<rect x="${wx}" y="6" width="${Math.max(6, 336 - wx)}" height="${gy - 6}" fill="#d9d5d0" stroke="#23262b" stroke-width="1.2"/>${Array.from({ length: 14 }, (_, q) => `<line x1="${wx}" y1="${12 + q * 19}" x2="${Math.min(336, wx + 34)}" y2="${12 + q * 19 - 8}" stroke="#9a948d" stroke-width="1"/>`).join("")}`;
+      const px = X(MS_P.x), py = Y(MS_P.h), tx = X(sel.tx), ty = Y(sel.th), d = (sel.a - sel.b) * Math.PI / 180, kx = tx + MS_KA * U * Math.cos(d) * 1, ky = ty - MS_KA * U * Math.sin(d), cxp = X(sel.x) - .85 * U, cyp = ky + 1 * U;
+      g += wall + adlLadder(px, py, sel.a, sel.L, U) + `<line x1="${tx}" y1="${ty}" x2="${tx + MS_KA * U * Math.cos(d)}" y2="${ty - MS_KA * U * Math.sin(d)}" stroke="#23262b" stroke-width="3"/><circle cx="${tx}" cy="${ty}" r="2.4" fill="#fff" stroke="#23262b" stroke-width="1.2"/>
+        <rect x="${cxp - .85 * U}" y="${cyp - 1.15 * U}" width="${1.7 * U}" height="${1.15 * U}" rx="2" fill="#fff" fill-opacity=".6" stroke="#23262b" stroke-width="1.3"/><rect x="${cxp + .85 * U - 4}" y="${cyp - 1.15 * U}" width="4" height="${1.15 * U}" fill="#c8161d"/>
+        <line x1="${wx}" y1="${gy}" x2="${wx}" y2="${gy + 22}" stroke="#2f7d4f" stroke-dasharray="3 2"/>` + tick(X(0), wx, gy + 20, f1(sel.x) + " m", "#2f7d4f");
+      g += `<line x1="8" y1="${Y(H)}" x2="${cxp - .85 * U}" y2="${Y(H)}" stroke="#c8161d" stroke-dasharray="3 3" opacity=".6"/><text x="10" y="${Y(H) - 3}" font-size="9" fill="#c8161d">${f1(H)} m</text>`;
+    }
+    $("msC").innerHTML = g;
+    $("msCr").innerHTML = sel ? `<div class="simrow"><span>Min. Abstand Drehachse – Wand</span><b>${f1(sel.x)} m</b></div><div class="simrow"><span>Mit 1 m Sicherheitsabstand</span><b>${f1(sel.x + 1)} m</b></div><div class="simrow"><span>Aufrichtewinkel · Auszug</span><b>${Math.round(sel.a)}° · ${f1(sel.L)} m</b></div><div class="simrow"><span>Korbarm zum Leitersatz</span><b>${Math.round(sel.b)}°${sel.b ? "" : " (gestreckt)"}</b></div>${bg && bs && bs.x - bg.x > .05 ? `<div class="simmsg ok">Mit Gelenkarm ${f1(bs.x - bg.x)} m näher an die Wand als mit gestrecktem Korbarm (${f1(bs.x)} m).</div>` : `<div class="simmsg ok">Auf dieser Höhe bringt der Gelenkarm keinen Vorteil.</div>`}` : `<div class="simmsg bad">Diese Einsatzhöhe ist mit den Leitergrenzen (Auszug 12–28,4 m, Winkel bis 76°) nicht erreichbar.</div>`;
+  };
+  $("msAi").oninput = e => { MS.w = +e.target.value; drawA(); };
+  app.querySelectorAll("[data-w]").forEach(b => b.onclick = () => { MS.w = +b.dataset.w; drawA(); });
+  $("msCi").oninput = e => { MS.H = +e.target.value; drawC(); };
+  app.querySelectorAll("[data-ko]").forEach(b => b.onclick = () => { MS.ko = b.dataset.ko === "1"; drawC(); });
+  drawA(); drawB(); drawC(); window.scrollTo(0, 0);
 }
 function sgvView(id) {
   state.mod = null; backBtn.hidden = false;
@@ -1160,7 +1246,7 @@ async function lektionen(m, el) {
   });
 }
 
-backBtn.addEventListener("click", () => { if (state.view === "games") { if (state.gm) gamesView(); else { gmStop(); start(); } return; } if (state.view === "les" && state.lc === "v" && state.vorHome) { state.vorHome = false; state.lc = null; start(); return; } if (state.view === "les" && (state.lc === "vl" || state.lc === "vn")) { state.lc = "v"; lesView(); window.scrollTo(0, 0); return; } if (state.view === "sub" && !state.mod) { home(); return; } if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "sim") { adlView(); return; } if (state.view === "adl" || state.view === "gq" || state.view === "sgv" || state.view === "spick") { (state.sub ? subView(state.sub) : home()); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else (state.sub ? subView(state.sub) : home()); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) (state.sub ? subView(state.sub) : home()); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
+backBtn.addEventListener("click", () => { if (state.view === "games") { if (state.gm) gamesView(); else { gmStop(); start(); } return; } if (state.view === "les" && state.lc === "v" && state.vorHome) { state.vorHome = false; state.lc = null; start(); return; } if (state.view === "les" && (state.lc === "vl" || state.lc === "vn")) { state.lc = "v"; lesView(); window.scrollTo(0, 0); return; } if (state.view === "sub" && !state.mod) { home(); return; } if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "sim") { adlView(); return; } if (state.view === "masse") { home(); return; } if (state.view === "adl" || state.view === "gq" || state.view === "sgv" || state.view === "spick") { (state.sub ? subView(state.sub) : home()); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else (state.sub ? subView(state.sub) : home()); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) (state.sub ? subView(state.sub) : home()); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
 /* ---------- Anmeldepflicht ---------- */
 let gateOffline = false;
 function gateNeeded() { return !!FWZ.enabled && !FWZ.user && !gateOffline; }
@@ -1196,7 +1282,7 @@ function gateView() {
 /* ---------- Einstellungen: Sichtbarkeit und Benutzerverwaltung ---------- */
 const CFG_ITEMS = [
   ["Startseite", [["home:reg", "Reglemente"], ["home:les", "Lektionen"], ["home:ao", "Ausbildungsoffizier"], ["home:vor", "Vorlagen"], ["home:games", "Feuerwehr Spiele"]]],
-  ["Reglemente", [["reg:basis", "Basiswissen"], ["reg:einsatz", "Einsatzführung"], ["reg:sgv", "Kantonale Ergänzungen (SGV)"], ["reg:abc", "ABC-Handbuch"], ["reg:veg", "Vegetationsbrände"], ["reg:adl", "Autodrehleiter (Vermessungsplan)"]]],
+  ["Reglemente", [["reg:basis", "Basiswissen"], ["reg:einsatz", "Einsatzführung"], ["reg:sgv", "Kantonale Ergänzungen (SGV)"], ["reg:abc", "ABC-Handbuch"], ["reg:veg", "Vegetationsbrände"], ["reg:adl", "Autodrehleiter"], ["reg:adlm", "Drehleiter Masse"], ["reg:adlm", "Drehleiter Masse"]]],
   ["Ausbildungsoffizier", [["ao:check", "Checkliste"], ["ao:keil", "KEIL"], ["ao:lek", "Lektionen"], ["ao:kq", "Kurs-Quiz"], ["ao:fach", "Fachlektionen"], ["ao:meth", "Lektion halten"], ["ao:zahl", "Zahlen-Trainer"], ["ao:bil", "Erfolgsauswertung / Bilanz"], ["ao:prog", "Kursprogramm"], ["ao:regl", "Reglement Basiswissen"]]]
 ];
 const CFG_DEF = () => ({ v: 1, t: 0, admins: ["tristan"], def: { hide: ["ao:check", "ao:keil", "ao:lek", "ao:kq", "ao:prog"] }, users: {} });
