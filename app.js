@@ -1,4 +1,4 @@
-const APP_VERSION = "1.139";
+const APP_VERSION = "1.140";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -784,7 +784,7 @@ function adlView() {
   app.innerHTML = `<section class="hero"><h1>Autodrehleiter</h1><p>Anleitungen zur Drehleiter L32A-XS der Feuerwehr Zuchwil.</p></section>
     <div class="menu rgmenu">
       <button class="mbtn main pdfbtn" id="adlsim"><span>Drehleiter-Simulator</span><small>Ausladung, Personen, Zuladungsreserve interaktiv</small></button>
-      <button class="mbtn main pdfbtn" id="adlmas"><span>Drehleiter Masse</span><small>Abstützbreite, Lafette, Wandabstand (vorne und seitlich)</small></button>
+      <button class="mbtn main pdfbtn" id="adlmas"><span>Drehleiter Masse</span><small>Abstützbreite, Überhang Lafette, Wandabstand</small></button>
       <button class="mbtn main pdfbtn" id="adlpdf"><span>Betriebsanleitung L32A-XS</span><small>PDF · ${RGDEF.adl.pages} S.</small></button>
       <button class="mbtn main pdfbtn" id="adlpdf2"><span>Einweisungsunterlage</span><small>PDF · ${RGDEF.adl2.pages} S. · Kurzfassung zum Lernen</small></button>
     </div>
@@ -880,7 +880,7 @@ function simView() {
   draw(); window.scrollTo(0, 0);
 }
 /* Drehleiter Masse L32A-XS: Abstützbreite, Überhang Lafette, minimaler Wandabstand (Gelenkarm) */
-const MS = { w: 4.8, H: 15, ko: true }, MS_P = { x: -2.14, h: 3.73 }, MS_KA = 1.5;
+const MS = { w: 4.8, H: 15, ko: true, ov: 4.4 }, MS_P = { x: -2.14, h: 3.73 }, MS_KA = 1.5;
 function masseMin(H, free) {
   let best = null; const R = Math.PI / 180;
   for (let a = -20; a <= 76; a += .5) for (let L = 12; L <= 28.4; L += .2) for (let b = 0; b <= (free ? 75 : 0); b += 2.5) {
@@ -897,19 +897,14 @@ function masseView() {
   const $ = id => document.getElementById(id), f1 = n => n.toFixed(1).replace(".", ",");
   app.innerHTML = `<section class="hero"><h1>Drehleiter Masse</h1><p>L32A-XS der Feuerwehr Zuchwil: Abstützung, Lafette und Wandabstand.</p></section>
     <div class="adlf">
-    <section class="adlc"><h3 class="zh">Abstützbreite</h3><div class="simbox"><svg id="msA" viewBox="0 0 340 215" role="img" aria-label="Heckansicht mit Abstützung"></svg></div>
-      <div class="simc"><label>Abstützbreite <b id="msAv"></b><input type="range" id="msAi" min="2.5" max="4.8" step="0.1"></label><div class="simchips"><button type="button" class="chip" data-w="2.5">Minimal 2,5 m</button><button type="button" class="chip" data-w="4.8">Maximal 4,8 m</button></div></div>
-      <div class="simro"><div class="simrow"><span>Abstützbreite (Aussenkante Stützteller)</span><b id="msAr"></b></div><div class="simrow"><span>Fahrzeugbreite</span><b>2,5 m</b></div><div class="simrow"><span>Platzbedarf je Seite über das Fahrzeug hinaus</span><b id="msAs"></b></div><div id="msAm" class="simmsg ok"></div></div></section>
-    <section class="adlc"><h3 class="zh">Überhang Lafette</h3><div class="simbox"><svg id="msB" viewBox="0 -26 340 196" role="img" aria-label="Seitenansicht mit Lafette"></svg></div>
-      <div class="simro"><div class="simrow"><span>Lafette (Leiterdrehpunkt) vor der Drehachse</span><b>ca. 2,1 m</b></div><div class="simrow"><span>Höhe Leiterdrehpunkt über Boden</span><b>ca. 3,7 m</b></div><div class="simrow"><span>Fahrzeug Länge · Breite · Höhe</span><b>10,5 · 2,5 · 3,4 m</b></div></div></section>
+    <section class="adlc"><h3 class="zh">Abstützbreite</h3><div class="simbox"><svg id="msA" viewBox="0 -12 340 227" role="img" aria-label="Heckansicht mit Abstützung und Lafette"></svg></div>
+      <div class="simc"><label>Abstützbreite <b id="msAv"></b><input type="range" id="msAi" min="2.5" max="4.8" step="0.1"></label><label>Überhang Lafette seitlich (ca.) <b id="msOv"></b><input type="range" id="msOi" min="1" max="4.8" step="0.1"></label><div class="simchips"><button type="button" class="chip" data-w="2.5">Minimal 2,5 m</button><button type="button" class="chip" data-w="4.8">Maximal 4,8 m</button></div></div>
+      <div class="simro"><div class="simrow"><span>Abstützbreite (Aussenkante Stützteller)</span><b id="msAr"></b></div><div class="simrow"><span>Überhang Lafette seitlich (geschätzt)</span><b id="msOr"></b></div><div class="simrow"><span>Fahrzeugbreite</span><b>2,5 m</b></div><div class="simrow"><span>Platzbedarf je Seite über das Fahrzeug hinaus</span><b id="msAs"></b></div><div id="msAm" class="simmsg ok"></div></div></section>
     <section class="adlc"><h3 class="zh">Minimaler Abstand zur Wand</h3><div class="simbox"><svg id="msC" viewBox="0 0 340 298" role="img" aria-label="Mindestabstand zur Wand"></svg></div>
       <div class="simc"><label>Einsatzhöhe (Korbboden) <b id="msCv"></b><input type="range" id="msCi" min="3" max="29" step="0.5"></label>
       <div class="simg"><span>Gelenkarm (Korbarm)</span><div class="simchips"><button type="button" class="chip" data-ko="1">Abgeneigt (Gelenk genutzt)</button><button type="button" class="chip" data-ko="0">Gestreckt</button></div></div></div>
-      <div class="simro" id="msCr"></div>
-      <h3 class="zh">Detail Gelenkarm</h3><div class="simbox"><svg id="msD" viewBox="0 0 340 190" role="img" aria-label="Detail Gelenkarm am Korb"></svg></div></section>
-    <section class="adlc"><h3 class="zh">Seitlich zur Wand (Fahrzeug parallel)</h3><div class="simbox"><svg id="msE" viewBox="0 0 340 230" role="img" aria-label="Draufsicht Wandabstand seitlich"></svg></div>
-      <div class="simro" id="msEr"></div></section></div>
-    <p class="foot">Seitlich: Fahrzeug parallel zur Wand, Leiter 90° zur Seite geschwenkt; Einsatzhöhe und Abstützbreite von oben. Quellen: Betriebsanleitung L32A-XS, Technische Daten (S. 259): Abstützbreite 2 500 bis 4 800 mm, Fahrzeug ca. 10 500 × 2 500 × 3 400 mm; Korbarm-Grenzen (S. 109): max. 75° zum Leitersatz, max. 40° unter der Horizontalen; Leiterlänge ab 12 m (Ausladungsdiagramm S. 260). Nicht als Zahl in der Anleitung: Lage der Lafette und Länge des Korbarms. Sie sind aus den Zeichnungen abgelesen bzw. geschätzt (Korbarm ca. 1,5 m). Die Anleitung verlangt mindestens 1 m Abstand zu Gebäuden. Nur zur Ausbildung, massgebend ist die Anzeige am Fahrzeug.</p>`;
+      <div class="simro" id="msCr"></div></section></div>
+    <p class="foot">Quellen: Betriebsanleitung L32A-XS, Technische Daten (S. 259): Abstützbreite 2 500 bis 4 800 mm, Fahrzeug ca. 10 500 × 2 500 × 3 400 mm; Korbarm-Grenzen (S. 109): max. 75° zum Leitersatz, max. 40° unter der Horizontalen; Leiterlänge ab 12 m (Ausladungsdiagramm S. 260). Nicht als Zahl in der Anleitung: Überhang der Lafette (nach SFV-Skizze auf ca. 4,4 m geschätzt, einstellbar), Lage des Leiterdrehpunkts und Länge des Korbarms (ca. 1,5 m, geschätzt). Die Anleitung verlangt mindestens 1 m Abstand zu Gebäuden. Nur zur Ausbildung, massgebend ist die Anzeige am Fahrzeug.</p>`;
   const tick = (x1, x2, y, t, col) => `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="${col || "#23262b"}" stroke-width="1.3"/><path d="M${x1} ${y} l6 -3 v6z M${x2} ${y} l-6 -3 v6z" fill="${col || "#23262b"}"/><text x="${(x1 + x2) / 2}" y="${y - 5}" font-size="11" font-weight="700" text-anchor="middle" fill="${col || "#23262b"}">${t}</text>`;
   const drawA = () => {
     const w = MS.w, P = 40, cx = 170, gy = 178, x0 = cx - w * P / 2, x1 = cx + w * P / 2, bw = 2.5 * P / 2;
@@ -918,7 +913,10 @@ function masseView() {
     $("msAm").textContent = w >= 4.75 ? "Volle Abstützbreite: voller Arbeitsbereich." : w <= 2.55 ? "Minimale Breite: Stützen innerhalb der Fahrzeugkontur, Arbeitsbereich stark eingeschränkt." : "Verringerte Breite: Arbeitsbereich eingeschränkt (Anzeige am Fahrzeug beachten).";
     const leg = x => `<rect x="${x - 4}" y="${gy - 46}" width="8" height="46" fill="#d4d7dc" stroke="#23262b" stroke-width="1"/><rect x="${x - 13}" y="${gy - 4}" width="26" height="4" fill="#1f2024"/><rect x="${x - 4}" y="${gy - 46}" width="8" height="18" fill="#9aa0a8"/>`;
     const chev = Array.from({ length: 8 }, (_, q) => `<path d="M${cx - bw + 6 + q * 14} ${gy - 50} l10 0 l-24 40 l-10 0 z" fill="#fff" opacity=".9"/>`).join("");
-    $("msA").innerHTML = `<line x1="8" y1="${gy}" x2="332" y2="${gy}" stroke="#23262b" stroke-width="2"/>
+    const ov = MS.ov, hx = Math.min(x0 + ov * P, 330), hy = gy - 112, ex = Math.min(hx + 60, 334), ey = hy - 42;
+    $("msOi").value = ov; $("msOv").textContent = f1(ov) + " m"; $("msOr").textContent = "ca. " + f1(ov) + " m";
+    const lad = `<path d="M${cx - 30} ${gy - 100} L${cx + 30} ${gy - 100} L${hx} ${hy + 5} L${hx - 4} ${hy - 6} L${cx + 20} ${gy - 126} Z" fill="#c0141b" stroke="#7d0e13" stroke-width="1.5"/><line x1="${hx}" y1="${hy}" x2="${ex}" y2="${ey}" stroke="#2a2d33" stroke-width="9"/><line x1="${hx}" y1="${hy}" x2="${ex}" y2="${ey}" stroke="#8a8f98" stroke-width="5"/><circle cx="${hx}" cy="${hy}" r="4" fill="#c9ccd1" stroke="#23262b" stroke-width="1.4"/>`;
+    $("msA").innerHTML = `${lad}${tick(x0, hx, hy - 52, "Überhang Lafette " + f1(ov) + " m", "#2f7d4f")}<line x1="${x0}" y1="${hy - 48}" x2="${x0}" y2="${gy - 46}" stroke="#2f7d4f" stroke-dasharray="3 2" opacity=".6"/><line x1="${hx}" y1="${hy - 48}" x2="${hx}" y2="${hy}" stroke="#2f7d4f" stroke-dasharray="3 2" opacity=".6"/><line x1="8" y1="${gy}" x2="332" y2="${gy}" stroke="#23262b" stroke-width="2"/>
       <line x1="${x0}" y1="${gy - 34}" x2="${x1}" y2="${gy - 34}" stroke="#6b6f76" stroke-width="7"/>${leg(x0)}${leg(x1)}
       <rect x="${cx - bw - 5}" y="${gy - 78}" width="${bw * 2 + 10}" height="26" fill="#9aa0a8"/><rect x="${cx - bw}" y="${gy - 80}" width="${bw * 2}" height="46" rx="3" fill="#c0141b" stroke="#7d0e13" stroke-width="1.5"/>
       <clipPath id="cpA"><rect x="${cx - bw}" y="${gy - 80}" width="${bw * 2}" height="46"/></clipPath><g clip-path="url(#cpA)">${chev}</g>
@@ -927,45 +925,6 @@ function masseView() {
       <rect x="${cx - bw - 4}" y="${gy - 112}" width="${bw * 2 + 8}" height="34" rx="5" fill="#c0141b" stroke="#7d0e13" stroke-width="1.5"/><rect x="${cx - 18}" y="${gy - 126}" width="36" height="16" rx="3" fill="#6b6f76"/>
       ${tick(cx - bw, cx + bw, gy - 134, "2,5 m", "#6b6f76")}${tick(x0, x1, gy + 22, f1(w) + " m", "#c8161d")}
       <line x1="${x0}" y1="${gy + 4}" x2="${x0}" y2="${gy + 26}" stroke="#c8161d" stroke-dasharray="3 2"/><line x1="${x1}" y1="${gy + 4}" x2="${x1}" y2="${gy + 26}" stroke="#c8161d" stroke-dasharray="3 2"/>`;
-  };
-  const drawB = () => {
-    const U = 29.5, kk = U / 81.6, ox = 233 - 0, gy = 150, pivx = ox + MS_P.x * U;
-    $("msB").innerHTML = `<line x1="8" y1="${gy}" x2="332" y2="${gy}" stroke="#23262b" stroke-width="2"/>${adlTruck(ox, gy, kk)}
-      <line x1="${ox}" y1="${gy + 4}" x2="${ox}" y2="14" stroke="#23262b" stroke-dasharray="6 3 1 3" opacity=".6"/><text x="${ox + 4}" y="22" font-size="9" fill="#23262b" opacity=".8">Drehachse</text>
-      <line x1="${pivx}" y1="${gy - MS_P.h * U}" x2="${pivx}" y2="${gy - MS_P.h * U - 20}" stroke="#c8161d"/><circle cx="${pivx}" cy="${gy - MS_P.h * U}" r="3.5" fill="#c8161d"/>
-      ${tick(pivx, ox, gy - MS_P.h * U - 24, "ca. 2,1 m", "#c8161d")}<text x="${pivx}" y="${gy - MS_P.h * U - 36}" font-size="9" text-anchor="middle" fill="#c8161d">Lafette</text>`;
-  };
-  const drawD = (sel, H) => {
-    if (!sel) { $("msD").innerHTML = ""; return; }
-    const S = 34, jx = 100, jy = 78, d = (sel.a - sel.b) * Math.PI / 180, a = sel.a * Math.PI / 180, P = (r, t) => [jx + r * S * Math.cos(t), jy - r * S * Math.sin(t)];
-    const k2 = P(MS_KA, d), cl = k2[0] + .6 * S, fl = k2[1] + 1 * S, ct = fl - 1.15 * S, wx = k2[0] + 1.45 * S;
-    const arc = (r, t0, t1) => { const p0 = P(r, t0), p1 = P(r, t1); return `<path d="M${p0[0]} ${p0[1]} A${r * S} ${r * S} 0 0 ${t1 < t0 ? 1 : 0} ${p1[0]} ${p1[1]}" fill="none" stroke="#c8161d" stroke-width="1.6"/>`; };
-    const lim = P(2.6, -40 * Math.PI / 180), mid = P(1.75, (d + a) / 2);
-    $("msD").innerHTML = `<rect x="${wx}" y="6" width="${Math.max(6, 336 - wx)}" height="178" fill="#d9d5d0" stroke="#23262b" stroke-width="1.2"/>
-      <line x1="10" y1="${jy}" x2="${wx - 4}" y2="${jy}" stroke="#6b6f76" stroke-dasharray="4 3"/><text x="10" y="${jy + 12}" font-size="9" fill="#6b6f76">Horizontale</text>
-      <line x1="${jx}" y1="${jy}" x2="${lim[0]}" y2="${lim[1]}" stroke="#c8161d" stroke-dasharray="3 3" opacity=".7"/><text x="${lim[0] - 20}" y="${lim[1] + 12}" font-size="9" fill="#c8161d">−40° Grenze</text>
-      <g transform="translate(${jx} ${jy}) rotate(${-sel.a}) scale(${S})"><rect x="-2.6" y="-.45" width="2.6" height=".9" fill="#fff" stroke="#2a2d33" stroke-width=".07"/><path d="M-2.6 -.45 L-2.15 .45 L-1.7 -.45 L-1.25 .45 L-.8 -.45 L-.35 .45 L0 0" fill="none" stroke="#5b5f66" stroke-width=".04"/></g>
-      <line x1="${jx}" y1="${jy}" x2="${P(1.3, a)[0]}" y2="${P(1.3, a)[1]}" stroke="#23262b" stroke-dasharray="2 2" opacity=".6"/>
-      <line x1="${jx}" y1="${jy}" x2="${k2[0]}" y2="${k2[1]}" stroke="#23262b" stroke-width="7" stroke-linecap="round"/><line x1="${jx}" y1="${jy}" x2="${k2[0]}" y2="${k2[1]}" stroke="#8a8f98" stroke-width="3.5" stroke-linecap="round"/>
-      <circle cx="${jx}" cy="${jy}" r="6" fill="#c9ccd1" stroke="#23262b" stroke-width="1.6"/><circle cx="${k2[0]}" cy="${k2[1]}" r="4" fill="#c9ccd1" stroke="#23262b" stroke-width="1.4"/>
-      <rect x="${cl - .85 * S}" y="${ct}" width="${1.7 * S}" height="${1.15 * S}" rx="3" fill="#fff" fill-opacity=".75" stroke="#23262b" stroke-width="1.6"/><rect x="${wx - 6}" y="${ct}" width="6" height="${1.15 * S}" fill="#c8161d"/><path d="M${cl - .85 * S} ${fl} h${1.7 * S}" stroke="#23262b" stroke-width="3"/>
-      ${sel.b > 1 ? arc(1.15, a, d) : ""}<text x="${mid[0] - 8}" y="${mid[1] - 2}" font-size="13" font-weight="700" fill="#c8161d">${Math.round(sel.b)}°</text>
-      <text x="${jx + 10}" y="${jy + 18}" font-size="10" fill="#23262b">Gelenk</text><text x="8" y="182" font-size="10" fill="#23262b">Rot: Winkel Korbarm zum Leitersatz (max. 75°). Korbarm ca. ${f1(MS_KA)} m.</text>
-      <text x="${Math.min(wx + 6, 300)}" y="30" font-size="11" fill="#6b6f76">Wand</text>`;
-  };
-  const drawE = (sel, H) => {
-    const U = 11.5, gy = 112, w = MS.w, hw = w / 2, cx = 108, X = m => cx + U * m;
-    const axw = sel ? Math.max(sel.x, hw + .2) : null, wallX = axw === null ? 330 : X(axw), tr = sel && sel.x < hw + .2;
-    const feet = [[-3.6, hw], [2.3, hw], [-3.6, -hw], [2.3, -hw]].map(f => `<rect x="${X(f[1]) - 5}" y="${gy + f[0] * U - 5}" width="10" height="10" fill="#c8161d" stroke="#7d0e13"/>`).join("");
-    const bars = [-3.6, 2.3].map(f => `<line x1="${X(-hw)}" y1="${gy + f * U}" x2="${X(hw)}" y2="${gy + f * U}" stroke="#6b6f76" stroke-width="4"/>`).join("");
-    let dm = "";
-    if (axw !== null) { const y = gy + 82; dm = `<line x1="${X(0)}" y1="${gy + 6}" x2="${X(0)}" y2="${y}" stroke="#23262b" stroke-dasharray="3 3" opacity=".4"/><line x1="${wallX}" y1="${y - 8}" x2="${wallX}" y2="${y + 8}" stroke="#2f7d4f" stroke-dasharray="3 2"/><line x1="${X(0)}" y1="${y}" x2="${wallX}" y2="${y}" stroke="#2f7d4f" stroke-width="1.5"/><path d="M${X(0)} ${y} l6 -3 v6z M${wallX} ${y} l-6 -3 v6z" fill="#2f7d4f"/><text x="${(X(0) + wallX) / 2}" y="${y - 5}" font-size="11" font-weight="700" text-anchor="middle" fill="#2f7d4f">${f1(axw)} m</text>`; }
-    $("msE").innerHTML = `<rect x="${wallX}" y="6" width="${Math.max(8, 336 - wallX)}" height="218" fill="#d9d5d0" stroke="#23262b" stroke-width="1.2"/>${bars}${feet}
-      <rect x="${X(-1.25)}" y="${gy - 6 * U}" width="${2.5 * U}" height="${10.5 * U * .6}" rx="4" fill="#c0141b" stroke="#7d0e13" stroke-width="1.5"/><rect x="${X(-1.25) + 3}" y="${gy - 6 * U + 3}" width="${2.5 * U - 6}" height="${2.6 * U}" rx="3" fill="#b9c3cc" stroke="#23262b"/>
-      <circle cx="${X(0)}" cy="${gy}" r="${1.15 * U}" fill="#a30f15" stroke="#7d0e13" stroke-width="1.5"/>
-      <line x1="${X(0)}" y1="${gy}" x2="${wallX - 1.7 * U + 3}" y2="${gy}" stroke="#23262b" stroke-width="3.5"/><rect x="${wallX - 1.7 * U}" y="${gy - .6 * U}" width="${1.7 * U}" height="${1.2 * U}" rx="2" fill="#fff" fill-opacity=".7" stroke="#23262b" stroke-width="1.3"/>
-      <circle cx="${X(0)}" cy="${gy}" r="2.5" fill="#fff" stroke="#23262b"/><text x="${X(0) - 22}" y="${gy + 48}" font-size="9" fill="#23262b">Drehachse</text>${dm}<text x="10" y="14" font-size="9" fill="#6b6f76">Draufsicht, Wand rechts</text>`;
-    $("msEr").innerHTML = axw === null ? `<div class="simmsg bad">Diese Einsatzhöhe ist nicht erreichbar.</div>` : `<div class="simrow"><span>Drehachse – Wand</span><b>${f1(axw)} m</b></div><div class="simrow"><span>Fahrzeugkante – Wand</span><b>${f1(axw - 1.25)} m</b></div><div class="simrow"><span>Stützteller – Wand (Breite ${f1(w)} m)</span><b>${f1(axw - hw)} m</b></div><div class="simrow"><span>Mit 1 m Sicherheitsabstand</span><b>${f1(axw + 1)} m</b></div>${tr ? `<div class="simmsg bad">Bei dieser Höhe bestimmt die Abstützung den Wandabstand (Stützteller ${f1(hw)} m neben der Drehachse). Abstützbreite verkleinern oder weiter weg stellen.</div>` : `<div class="simmsg ok">Der Abstand wird vom Korb bestimmt, die Stützen haben Platz.</div>`}`;
   };
   const drawC = () => {
     const U = 8.2, gy = 275, ox = 118, X = x => ox + U * x, Y = h => gy - U * h, kk = U / 81.6, H = MS.H;
@@ -981,14 +940,14 @@ function masseView() {
       g += `<line x1="8" y1="${Y(H)}" x2="${cxp - .85 * U}" y2="${Y(H)}" stroke="#c8161d" stroke-dasharray="3 3" opacity=".6"/><text x="10" y="${Y(H) - 3}" font-size="9" fill="#c8161d">${f1(H)} m</text>`;
     }
     $("msC").innerHTML = g;
-    drawD(sel, H); drawE(sel, H);
     $("msCr").innerHTML = sel ? `<div class="simrow"><span>Min. Abstand Drehachse – Wand</span><b>${f1(sel.x)} m</b></div><div class="simrow"><span>Mit 1 m Sicherheitsabstand</span><b>${f1(sel.x + 1)} m</b></div><div class="simrow"><span>Aufrichtewinkel · Auszug</span><b>${Math.round(sel.a)}° · ${f1(sel.L)} m</b></div><div class="simrow"><span>Korbarm zum Leitersatz</span><b>${Math.round(sel.b)}°${sel.b ? "" : " (gestreckt)"}</b></div>${bg && bs && bs.x - bg.x > .05 ? `<div class="simmsg ok">Mit Gelenkarm ${f1(bs.x - bg.x)} m näher an die Wand als mit gestrecktem Korbarm (${f1(bs.x)} m).</div>` : `<div class="simmsg ok">Auf dieser Höhe bringt der Gelenkarm keinen Vorteil.</div>`}` : `<div class="simmsg bad">Diese Einsatzhöhe ist mit den Leitergrenzen (Auszug 12–28,4 m, Winkel bis 76°) nicht erreichbar.</div>`;
   };
+  $("msOi").oninput = e => { MS.ov = +e.target.value; drawA(); };
   $("msAi").oninput = e => { MS.w = +e.target.value; drawA(); };
   app.querySelectorAll("[data-w]").forEach(b => b.onclick = () => { MS.w = +b.dataset.w; drawA(); });
   $("msCi").oninput = e => { MS.H = +e.target.value; drawC(); };
   app.querySelectorAll("[data-ko]").forEach(b => b.onclick = () => { MS.ko = b.dataset.ko === "1"; drawC(); });
-  drawA(); drawB(); drawC(); window.scrollTo(0, 0);
+  drawA(); drawC(); window.scrollTo(0, 0);
 }
 function sgvView(id) {
   state.mod = null; backBtn.hidden = false;
