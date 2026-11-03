@@ -1,4 +1,4 @@
-const APP_VERSION = "1.150";
+const APP_VERSION = "1.151";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -866,7 +866,10 @@ function simView() {
       <line x1="${X(0)}" y1="${Y(-7)}" x2="${X(0)}" y2="${Y(33)}" stroke="currentColor" stroke-dasharray="6 3 1 3" opacity=".5"/>${lines}
       <line x1="${X(-9)}" y1="${Y(0)}" x2="${X(28)}" y2="${Y(0)}" stroke="currentColor" stroke-width="2"/><rect x="${X(-9)}" y="${Y(0)}" width="${X(28) - X(-9)}" height="${Y(-7) - Y(0)}" fill="currentColor" opacity=".05"/>${ticks}${trk}
       ${ladder}${cage}
-      <line x1="${X(0)}" y1="${Y(k.fh) + 14}" x2="${X(k.fx)}" y2="${Y(k.fh) + 14}" stroke="${reserveOk ? "#2f7d4f" : "#c8161d"}" stroke-width="1.5"/><text x="${(X(0) + X(k.fx)) / 2}" y="${Y(k.fh) + 11}" font-size="9" font-weight="700" text-anchor="middle" fill="${reserveOk ? "#2f7d4f" : "#c8161d"}">${k.fx.toFixed(1)} m</text>`;
+      <line x1="${X(k.fx)}" y1="${Y(k.fh)}" x2="${X(k.fx)}" y2="${Y(-5.2)}" stroke="${reserveOk ? "#2f7d4f" : "#c8161d"}" stroke-width=".8" stroke-dasharray="3 2"/>
+      <line x1="${X(0)}" y1="${Y(-4.2)}" x2="${X(k.fx)}" y2="${Y(-4.2)}" stroke="${reserveOk ? "#2f7d4f" : "#c8161d"}" stroke-width="1.5"/>
+      <path d="M${X(0)} ${Y(-4.2)} l5 -3 v6 z M${X(k.fx)} ${Y(-4.2)} l-5 -3 v6 z" fill="${reserveOk ? "#2f7d4f" : "#c8161d"}"/>
+      <text x="${(X(0) + X(k.fx)) / 2}" y="${Y(-4.2) - 4}" font-size="9" font-weight="700" text-anchor="middle" fill="${reserveOk ? "#2f7d4f" : "#c8161d"}">Ausladung ${k.fx.toFixed(1)} m</text>`;
     const msg = A.p < 0 ? "Ausserhalb der Benutzungsgrenze." : A.nb ? "Nur noch eine Person ohne Korb (Benutzungsgrenze)." : over ? (SIM.tr && SIM.n > 2 ? "Mit Krankentragenhalterung max. 2 Personen im Korb." : A.nb ? "Korb mit Trage/Personen hier nicht zulässig." : "ÜBERLAST: " + (SIM.n * 100 + extra) + " kg im Korb, hier max. " + A.kg + " kg.") : resKg < 100 ? "Fast keine Reserve mehr: Korb voll belastet." : "Alles im grünen Bereich.";
     $("simro").innerHTML = `<div class="simrow"><span>Ausladung</span><b>${k.fx.toFixed(1)} m</b></div><div class="simrow"><span>Rettungshöhe</span><b>${(k.fh + 1.7).toFixed(1)} m</b></div><div class="simrow"><span>Max. Zuladung hier</span><b>${A.p < 0 ? "–" : A.nb ? "100 kg, ohne Korb" : (A.t === "500 kg" ? "500 kg" : A.p + " Pers. · " + A.kg + " kg")}</b></div><div class="simbel" aria-label="Belastungsanzeige">${[0, 1, 2, 3, 4].map(i => PIC(i < SIM.n ? "out" : (A.p > 0 && i < SIM.n + Math.max(0, res) && i < 5) ? "fill" : "dim")).join("")}<div class="simkg"><b>${A.p < 0 || A.nb ? 0 : Math.max(0, resKg)}</b> kg<small>ZULADUNGSRESERVE</small></div></div><div class="simmsg ${over ? "bad" : "ok"}">${k.clamp ? "Ausladungsgrenze der gewählten Zuladungsreserve erreicht: Auszug begrenzt. " : ""}${msg}</div>`;
     SIM.L = k.L;
