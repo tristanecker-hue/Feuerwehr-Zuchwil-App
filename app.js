@@ -1,4 +1,4 @@
-const APP_VERSION = "1.140";
+const APP_VERSION = "1.141";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -784,7 +784,7 @@ function adlView() {
   app.innerHTML = `<section class="hero"><h1>Autodrehleiter</h1><p>Anleitungen zur Drehleiter L32A-XS der Feuerwehr Zuchwil.</p></section>
     <div class="menu rgmenu">
       <button class="mbtn main pdfbtn" id="adlsim"><span>Drehleiter-Simulator</span><small>Ausladung, Personen, Zuladungsreserve interaktiv</small></button>
-      <button class="mbtn main pdfbtn" id="adlmas"><span>Drehleiter Masse</span><small>Abstützbreite, Überhang Lafette, Wandabstand</small></button>
+      <button class="mbtn main pdfbtn" id="adlmas"><span>Drehleiter Masse</span><small>Abstützbreite und Wandabstand</small></button>
       <button class="mbtn main pdfbtn" id="adlpdf"><span>Betriebsanleitung L32A-XS</span><small>PDF · ${RGDEF.adl.pages} S.</small></button>
       <button class="mbtn main pdfbtn" id="adlpdf2"><span>Einweisungsunterlage</span><small>PDF · ${RGDEF.adl2.pages} S. · Kurzfassung zum Lernen</small></button>
     </div>
@@ -897,14 +897,14 @@ function masseView() {
   const $ = id => document.getElementById(id), f1 = n => n.toFixed(1).replace(".", ",");
   app.innerHTML = `<section class="hero"><h1>Drehleiter Masse</h1><p>L32A-XS der Feuerwehr Zuchwil: Abstützung, Lafette und Wandabstand.</p></section>
     <div class="adlf">
-    <section class="adlc"><h3 class="zh">Abstützbreite</h3><div class="simbox"><svg id="msA" viewBox="0 -12 340 227" role="img" aria-label="Heckansicht mit Abstützung und Lafette"></svg></div>
-      <div class="simc"><label>Abstützbreite <b id="msAv"></b><input type="range" id="msAi" min="2.5" max="4.8" step="0.1"></label><label>Überhang Lafette seitlich (ca.) <b id="msOv"></b><input type="range" id="msOi" min="1" max="4.8" step="0.1"></label><div class="simchips"><button type="button" class="chip" data-w="2.5">Minimal 2,5 m</button><button type="button" class="chip" data-w="4.8">Maximal 4,8 m</button></div></div>
-      <div class="simro"><div class="simrow"><span>Abstützbreite (Aussenkante Stützteller)</span><b id="msAr"></b></div><div class="simrow"><span>Überhang Lafette seitlich (geschätzt)</span><b id="msOr"></b></div><div class="simrow"><span>Fahrzeugbreite</span><b>2,5 m</b></div><div class="simrow"><span>Platzbedarf je Seite über das Fahrzeug hinaus</span><b id="msAs"></b></div><div id="msAm" class="simmsg ok"></div></div></section>
+    <section class="adlc"><h3 class="zh">Abstützbreite</h3><div class="simbox"><svg id="msA" viewBox="0 0 340 215" role="img" aria-label="Heckansicht mit Abstützung"></svg></div>
+      <div class="simc"><label>Abstützbreite <b id="msAv"></b><input type="range" id="msAi" min="2.5" max="4.8" step="0.1"></label><div class="simchips"><button type="button" class="chip" data-w="2.5">Minimal 2,5 m</button><button type="button" class="chip" data-w="4.8">Maximal 4,8 m</button></div></div>
+      <div class="simro"><div class="simrow"><span>Abstützbreite (Aussenkante Stützteller)</span><b id="msAr"></b></div><div class="simrow"><span>Fahrzeugbreite</span><b>2,5 m</b></div><div class="simrow"><span>Platzbedarf je Seite über das Fahrzeug hinaus</span><b id="msAs"></b></div><div id="msAm" class="simmsg ok"></div></div></section>
     <section class="adlc"><h3 class="zh">Minimaler Abstand zur Wand</h3><div class="simbox"><svg id="msC" viewBox="0 0 340 298" role="img" aria-label="Mindestabstand zur Wand"></svg></div>
       <div class="simc"><label>Einsatzhöhe (Korbboden) <b id="msCv"></b><input type="range" id="msCi" min="3" max="29" step="0.5"></label>
       <div class="simg"><span>Gelenkarm (Korbarm)</span><div class="simchips"><button type="button" class="chip" data-ko="1">Abgeneigt (Gelenk genutzt)</button><button type="button" class="chip" data-ko="0">Gestreckt</button></div></div></div>
       <div class="simro" id="msCr"></div></section></div>
-    <p class="foot">Quellen: Betriebsanleitung L32A-XS, Technische Daten (S. 259): Abstützbreite 2 500 bis 4 800 mm, Fahrzeug ca. 10 500 × 2 500 × 3 400 mm; Korbarm-Grenzen (S. 109): max. 75° zum Leitersatz, max. 40° unter der Horizontalen; Leiterlänge ab 12 m (Ausladungsdiagramm S. 260). Nicht als Zahl in der Anleitung: Überhang der Lafette (nach SFV-Skizze auf ca. 4,4 m geschätzt, einstellbar), Lage des Leiterdrehpunkts und Länge des Korbarms (ca. 1,5 m, geschätzt). Die Anleitung verlangt mindestens 1 m Abstand zu Gebäuden. Nur zur Ausbildung, massgebend ist die Anzeige am Fahrzeug.</p>`;
+    <p class="foot">Quellen: Betriebsanleitung L32A-XS, Technische Daten (S. 259): Abstützbreite 2 500 bis 4 800 mm, Fahrzeug ca. 10 500 × 2 500 × 3 400 mm; Korbarm-Grenzen (S. 109): max. 75° zum Leitersatz, max. 40° unter der Horizontalen; Leiterlänge ab 12 m (Ausladungsdiagramm S. 260). Nicht als Zahl in der Anleitung: Lage des Leiterdrehpunkts und Länge des Korbarms (ca. 1,5 m, geschätzt). Die Anleitung verlangt mindestens 1 m Abstand zu Gebäuden. Nur zur Ausbildung, massgebend ist die Anzeige am Fahrzeug.</p>`;
   const tick = (x1, x2, y, t, col) => `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="${col || "#23262b"}" stroke-width="1.3"/><path d="M${x1} ${y} l6 -3 v6z M${x2} ${y} l-6 -3 v6z" fill="${col || "#23262b"}"/><text x="${(x1 + x2) / 2}" y="${y - 5}" font-size="11" font-weight="700" text-anchor="middle" fill="${col || "#23262b"}">${t}</text>`;
   const drawA = () => {
     const w = MS.w, P = 40, cx = 170, gy = 178, x0 = cx - w * P / 2, x1 = cx + w * P / 2, bw = 2.5 * P / 2;
@@ -913,10 +913,7 @@ function masseView() {
     $("msAm").textContent = w >= 4.75 ? "Volle Abstützbreite: voller Arbeitsbereich." : w <= 2.55 ? "Minimale Breite: Stützen innerhalb der Fahrzeugkontur, Arbeitsbereich stark eingeschränkt." : "Verringerte Breite: Arbeitsbereich eingeschränkt (Anzeige am Fahrzeug beachten).";
     const leg = x => `<rect x="${x - 4}" y="${gy - 46}" width="8" height="46" fill="#d4d7dc" stroke="#23262b" stroke-width="1"/><rect x="${x - 13}" y="${gy - 4}" width="26" height="4" fill="#1f2024"/><rect x="${x - 4}" y="${gy - 46}" width="8" height="18" fill="#9aa0a8"/>`;
     const chev = Array.from({ length: 8 }, (_, q) => `<path d="M${cx - bw + 6 + q * 14} ${gy - 50} l10 0 l-24 40 l-10 0 z" fill="#fff" opacity=".9"/>`).join("");
-    const ov = MS.ov, hx = Math.min(x0 + ov * P, 330), hy = gy - 112, ex = Math.min(hx + 60, 334), ey = hy - 42;
-    $("msOi").value = ov; $("msOv").textContent = f1(ov) + " m"; $("msOr").textContent = "ca. " + f1(ov) + " m";
-    const lad = `<path d="M${cx - 30} ${gy - 100} L${cx + 30} ${gy - 100} L${hx} ${hy + 5} L${hx - 4} ${hy - 6} L${cx + 20} ${gy - 126} Z" fill="#c0141b" stroke="#7d0e13" stroke-width="1.5"/><line x1="${hx}" y1="${hy}" x2="${ex}" y2="${ey}" stroke="#2a2d33" stroke-width="9"/><line x1="${hx}" y1="${hy}" x2="${ex}" y2="${ey}" stroke="#8a8f98" stroke-width="5"/><circle cx="${hx}" cy="${hy}" r="4" fill="#c9ccd1" stroke="#23262b" stroke-width="1.4"/>`;
-    $("msA").innerHTML = `${lad}${tick(x0, hx, hy - 52, "Überhang Lafette " + f1(ov) + " m", "#2f7d4f")}<line x1="${x0}" y1="${hy - 48}" x2="${x0}" y2="${gy - 46}" stroke="#2f7d4f" stroke-dasharray="3 2" opacity=".6"/><line x1="${hx}" y1="${hy - 48}" x2="${hx}" y2="${hy}" stroke="#2f7d4f" stroke-dasharray="3 2" opacity=".6"/><line x1="8" y1="${gy}" x2="332" y2="${gy}" stroke="#23262b" stroke-width="2"/>
+    $("msA").innerHTML = `<line x1="8" y1="${gy}" x2="332" y2="${gy}" stroke="#23262b" stroke-width="2"/>
       <line x1="${x0}" y1="${gy - 34}" x2="${x1}" y2="${gy - 34}" stroke="#6b6f76" stroke-width="7"/>${leg(x0)}${leg(x1)}
       <rect x="${cx - bw - 5}" y="${gy - 78}" width="${bw * 2 + 10}" height="26" fill="#9aa0a8"/><rect x="${cx - bw}" y="${gy - 80}" width="${bw * 2}" height="46" rx="3" fill="#c0141b" stroke="#7d0e13" stroke-width="1.5"/>
       <clipPath id="cpA"><rect x="${cx - bw}" y="${gy - 80}" width="${bw * 2}" height="46"/></clipPath><g clip-path="url(#cpA)">${chev}</g>
@@ -942,7 +939,6 @@ function masseView() {
     $("msC").innerHTML = g;
     $("msCr").innerHTML = sel ? `<div class="simrow"><span>Min. Abstand Drehachse – Wand</span><b>${f1(sel.x)} m</b></div><div class="simrow"><span>Mit 1 m Sicherheitsabstand</span><b>${f1(sel.x + 1)} m</b></div><div class="simrow"><span>Aufrichtewinkel · Auszug</span><b>${Math.round(sel.a)}° · ${f1(sel.L)} m</b></div><div class="simrow"><span>Korbarm zum Leitersatz</span><b>${Math.round(sel.b)}°${sel.b ? "" : " (gestreckt)"}</b></div>${bg && bs && bs.x - bg.x > .05 ? `<div class="simmsg ok">Mit Gelenkarm ${f1(bs.x - bg.x)} m näher an die Wand als mit gestrecktem Korbarm (${f1(bs.x)} m).</div>` : `<div class="simmsg ok">Auf dieser Höhe bringt der Gelenkarm keinen Vorteil.</div>`}` : `<div class="simmsg bad">Diese Einsatzhöhe ist mit den Leitergrenzen (Auszug 12–28,4 m, Winkel bis 76°) nicht erreichbar.</div>`;
   };
-  $("msOi").oninput = e => { MS.ov = +e.target.value; drawA(); };
   $("msAi").oninput = e => { MS.w = +e.target.value; drawA(); };
   app.querySelectorAll("[data-w]").forEach(b => b.onclick = () => { MS.w = +b.dataset.w; drawA(); });
   $("msCi").oninput = e => { MS.H = +e.target.value; drawC(); };
