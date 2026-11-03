@@ -1,4 +1,4 @@
-const APP_VERSION = "1.146";
+const APP_VERSION = "1.147";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -933,7 +933,7 @@ function masseView() {
           wall += `<rect x="${x0}" y="${y1 + 5}" width="10" height="${(FH - 1.1) * U - 2}" fill="#a9c8de" stroke="#4a5560" stroke-width="1"/><line x1="${x0 + 5}" y1="${y1 + 5}" x2="${x0 + 5}" y2="${y0 - 0.1 * U - 2}" stroke="#4a5560" stroke-width=".8"/>`;
         }
         if (f === 0) wall += `<rect x="${wx}" y="${y0 - 3}" width="${hw}" height="3" fill="#8d8680"/>`;
-        if (hw > 40) wall += `<text x="334" y="${y0 - 3}" text-anchor="end" font-size="6.5" fill="#6b645d">${f === 0 ? "EG" : f + ". OG"}</text>`;
+        if (hw > 60) wall += `<text x="334" y="${y0 - 3}" text-anchor="end" font-size="6.5" fill="#6b645d">${f === 0 ? "Erdgeschoss" : f + ". Stock"}</text>`;
       }
       const px = X(MS_P.x), py = Y(MS_P.h), tx = X(sel.tx), ty = Y(sel.th), d = (sel.a - sel.b) * Math.PI / 180, kx = tx + MS_KA * U * Math.cos(d) * 1, ky = ty - MS_KA * U * Math.sin(d), cxp = X(sel.x) - .85 * U, cyp = ky + 1 * U;
       g += wall + adlLadder(px, py, sel.a, sel.L, U) + `<line x1="${tx}" y1="${ty}" x2="${tx + MS_KA * U * Math.cos(d)}" y2="${ty - MS_KA * U * Math.sin(d)}" stroke="#23262b" stroke-width="3"/><circle cx="${tx}" cy="${ty}" r="2.4" fill="#fff" stroke="#23262b" stroke-width="1.2"/>
@@ -942,7 +942,7 @@ function masseView() {
       g += `<line x1="8" y1="${Y(H)}" x2="${cxp - .85 * U}" y2="${Y(H)}" stroke="#c8161d" stroke-dasharray="3 3" opacity=".6"/><text x="10" y="${Y(H) - 3}" font-size="9" fill="#c8161d">${f1(H)} m</text>`;
     }
     $("msC").innerHTML = g;
-    $("msCr").innerHTML = sel ? `<div class="simrow"><span>Min. Abstand Drehachse – Wand</span><b>${f1(sel.x)} m</b></div><div class="simrow"><span>Mit 1 m Sicherheitsabstand</span><b>${f1(sel.x + 1)} m</b></div><div class="simrow"><span>Aufrichtewinkel · Auszug</span><b>${Math.round(sel.a)}° · ${f1(sel.L)} m</b></div><div class="simrow"><span>Korbarm zum Leitersatz</span><b>${Math.round(sel.b)}°${sel.b ? "" : " (gestreckt)"}</b></div>${bg && bs && bs.x - bg.x > .05 ? `<div class="simmsg ok">Mit Gelenkarm ${f1(bs.x - bg.x)} m näher an die Wand als mit gestrecktem Korbarm (${f1(bs.x)} m).</div>` : `<div class="simmsg ok">Auf dieser Höhe bringt der Gelenkarm keinen Vorteil.</div>`}` : `<div class="simmsg bad">Diese Einsatzhöhe ist mit den Leitergrenzen (Auszug 12–28,4 m, Winkel bis 76°) nicht erreichbar.</div>`;
+    $("msCr").innerHTML = sel ? `<div class="simrow"><span>Korb auf Höhe</span><b>${(f => f ? f + ". Stock" : "Erdgeschoss")(Math.floor(MS.H / 3))}</b></div><div class="simrow"><span>Min. Abstand Drehachse – Wand</span><b>${f1(sel.x)} m</b></div><div class="simrow"><span>Mit 1 m Sicherheitsabstand</span><b>${f1(sel.x + 1)} m</b></div><div class="simrow"><span>Aufrichtewinkel · Auszug</span><b>${Math.round(sel.a)}° · ${f1(sel.L)} m</b></div><div class="simrow"><span>Korbarm zum Leitersatz</span><b>${Math.round(sel.b)}°${sel.b ? "" : " (gestreckt)"}</b></div>${bg && bs && bs.x - bg.x > .05 ? `<div class="simmsg ok">Mit Gelenkarm ${f1(bs.x - bg.x)} m näher an die Wand als mit gestrecktem Korbarm (${f1(bs.x)} m).</div>` : `<div class="simmsg ok">Auf dieser Höhe bringt der Gelenkarm keinen Vorteil.</div>`}` : `<div class="simmsg bad">Diese Einsatzhöhe ist mit den Leitergrenzen (Auszug 12–28,4 m, Winkel bis 76°) nicht erreichbar.</div>`;
   };
   $("msCi").oninput = e => { MS.H = +e.target.value; drawC(); };
   $("msAi").oninput = e => { MS.w = +e.target.value; drawA(); };
