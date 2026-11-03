@@ -1,4 +1,4 @@
-const APP_VERSION = "1.145";
+const APP_VERSION = "1.146";
 /* ---------- Zustand und Speicher ---------- */
 const app = document.getElementById("app");
 const backBtn = document.getElementById("back");
@@ -923,7 +923,18 @@ function masseView() {
     $("msCi").value = H; $("msCv").textContent = f1(H) + " m"; document.querySelectorAll("[data-ko]").forEach(b => b.classList.toggle("on", (b.dataset.ko === "1") === MS.ko));
     let g = `<line x1="8" y1="${gy}" x2="332" y2="${gy}" stroke="#23262b" stroke-width="2"/>${adlTruck(X(0), gy, kk)}<line x1="${X(0)}" y1="${gy}" x2="${X(0)}" y2="10" stroke="#23262b" stroke-dasharray="6 3 1 3" opacity=".5"/>`;
     if (sel) {
-      const wx = X(sel.x), wall = `<rect x="${wx}" y="6" width="${Math.max(6, 336 - wx)}" height="${gy - 6}" fill="#d9d5d0" stroke="#23262b" stroke-width="1.2"/>${Array.from({ length: 14 }, (_, q) => `<line x1="${wx}" y1="${12 + q * 19}" x2="${Math.min(336, wx + 34)}" y2="${12 + q * 19 - 8}" stroke="#9a948d" stroke-width="1"/>`).join("")}`;
+      const wx = X(sel.x), hw = Math.max(6, 336 - wx), FH = 3, NF = 10, rt = Y(FH * NF);
+      let wall = `<rect x="${wx}" y="${rt}" width="${hw}" height="${gy - rt}" fill="#e6ddd2" stroke="#23262b" stroke-width="1.2"/><rect x="${wx - 2}" y="${rt - 5}" width="${hw + 2}" height="5" fill="#8d8680" stroke="#23262b" stroke-width="1"/>`;
+      for (let f = 0; f < NF; f++) {
+        const y0 = Y(f * FH), y1 = Y((f + 1) * FH), nw = Math.min(3, Math.floor((hw - 4) / 15));
+        if (f > 0) wall += `<line x1="${wx}" y1="${y0}" x2="336" y2="${y0}" stroke="#23262b" stroke-width="1.4"/>`;
+        for (let q = 0; q < nw; q++) {
+          const x0 = wx + 6 + q * 15;
+          wall += `<rect x="${x0}" y="${y1 + 5}" width="10" height="${(FH - 1.1) * U - 2}" fill="#a9c8de" stroke="#4a5560" stroke-width="1"/><line x1="${x0 + 5}" y1="${y1 + 5}" x2="${x0 + 5}" y2="${y0 - 0.1 * U - 2}" stroke="#4a5560" stroke-width=".8"/>`;
+        }
+        if (f === 0) wall += `<rect x="${wx}" y="${y0 - 3}" width="${hw}" height="3" fill="#8d8680"/>`;
+        if (hw > 40) wall += `<text x="334" y="${y0 - 3}" text-anchor="end" font-size="6.5" fill="#6b645d">${f === 0 ? "EG" : f + ". OG"}</text>`;
+      }
       const px = X(MS_P.x), py = Y(MS_P.h), tx = X(sel.tx), ty = Y(sel.th), d = (sel.a - sel.b) * Math.PI / 180, kx = tx + MS_KA * U * Math.cos(d) * 1, ky = ty - MS_KA * U * Math.sin(d), cxp = X(sel.x) - .85 * U, cyp = ky + 1 * U;
       g += wall + adlLadder(px, py, sel.a, sel.L, U) + `<line x1="${tx}" y1="${ty}" x2="${tx + MS_KA * U * Math.cos(d)}" y2="${ty - MS_KA * U * Math.sin(d)}" stroke="#23262b" stroke-width="3"/><circle cx="${tx}" cy="${ty}" r="2.4" fill="#fff" stroke="#23262b" stroke-width="1.2"/>
         <rect x="${cxp - .85 * U}" y="${cyp - 1.15 * U}" width="${1.7 * U}" height="${1.15 * U}" rx="2" fill="#fff" fill-opacity=".6" stroke="#23262b" stroke-width="1.3"/><rect x="${cxp + .85 * U - 4}" y="${cyp - 1.15 * U}" width="4" height="${1.15 * U}" fill="#c8161d"/>
