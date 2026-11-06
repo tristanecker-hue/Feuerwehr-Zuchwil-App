@@ -608,12 +608,6 @@ html.dv .top .wrap{max-width:1280px}
 html.dv .hero h1{font-size:2.6rem}
 html.dv .hero p{max-width:70ch;font-size:1.05rem}
 html.dv .adlf{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:36px 40px;align-items:start}
-html.dv .adlf>.adlc:last-child{grid-column:1/-1}
-html.dv .adlf>.adlc:last-child{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);grid-template-rows:auto auto auto 1fr;column-gap:40px;align-items:start}
-html.dv .adlf>.adlc:last-child>.zh{grid-column:1/-1}
-html.dv .adlf>.adlc:last-child>.simbox{grid-column:1;grid-row:2/5}
-html.dv .adlf>.adlc:last-child>.simc{grid-column:2;grid-row:2}
-html.dv .adlf>.adlc:last-child>.simro{grid-column:2;grid-row:3}
 html.dv #app:has(#simsvg){display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);column-gap:40px;align-items:start}
 html.dv #app:has(#simsvg)>.hero,html.dv #app:has(#simsvg)>.foot{grid-column:1/-1}
 html.dv #app:has(#simsvg)>.simbox{grid-column:1;grid-row:2/5}
@@ -625,3 +619,8 @@ html.dv .srch{max-width:560px}
 html.dv .gmgrid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
 html.dv .loginbox,html.dv .sinfo,html.dv .lgrp{max-width:none}
 html.dv #app>.lgrp,html.dv #app>details{max-width:none}
+html.dv .adlf{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:28px 40px}
+html.dv .adlf>.adlc:nth-child(1){grid-column:2;grid-row:1}
+html.dv .adlf>.adlc:nth-child(2){grid-column:2;grid-row:2}
+html.dv .adlf>.adlc:nth-child(3){grid-column:1;grid-row:1/3}
+html.dv .adlf{align-content:start}html.dv .adlf+.foot{max-width:none}
