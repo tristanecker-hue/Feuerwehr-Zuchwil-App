@@ -1,4 +1,4 @@
-const APP_VERSION = "1.156";
+const APP_VERSION = "1.157";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -160,12 +160,12 @@ function extinguishFx(lb, fire) {
     const pick = a => a[Math.random() * a.length | 0];
     /* Skills: ein Hauptauftritt, dazu mit 65 % die Siegerpose */
     let nm = window.__fxName; if (!nm) { const NM = ["Marin", "Tristan", "Daniele"]; let k = 0; try { k = (parseInt(localStorage.getItem("fwz-ffn") || "-1", 10) + 1) % 3; localStorage.setItem("fwz-ffn", k); } catch (e) { k = Math.floor(Math.random() * 3); } nm = NM[k]; }
-    const skill = window.__fxSkill || pick(["strahl", "schwenk", "salto", "eimer", "fontaene", "pirouette"]), pose = window.__fxJoke ? true : window.__fxPose !== undefined ? window.__fxPose : Math.random() < .65, joke = window.__fxJoke !== undefined ? window.__fxJoke : Math.random() < .5, say = (joke ? pick(FF_JOKES) : pick(["Gelöscht!", "Alles im Griff!", "@ ist da!", "Wasser marsch!", "Feuer aus!"])).replace("@", nm);
+    const skill = window.__fxSkill || pick(["strahl", "schwenk", "salto", "eimer", "fontaene", "pirouette", "pulver", "kette", "leiter"]), pose = skill === "leiter" ? false : window.__fxJoke ? true : window.__fxPose !== undefined ? window.__fxPose : Math.random() < .65, joke = skill === "kette" || skill === "leiter" ? false : window.__fxJoke !== undefined ? window.__fxJoke : Math.random() < .5, say = (joke ? pick(FF_JOKES) : pick(["Gelöscht!", "Alles im Griff!", "@ ist da!", "Wasser marsch!", "Feuer aus!"])).replace("@", nm);
     const zones = [[-25, 25], [155, 205], [55, 125], [-60, -30], [210, 240]], z = pick(zones), th = (z[0] + Math.random() * (z[1] - z[0])) * Math.PI / 180;
     const R = Math.min(r.width / 2 + 70, 210), sc = Math.min(1.5, Math.max(1.05, VW / 390 * 1.26));
     let fx = Math.min(VW - 45 * sc, Math.max(45 * sc, cx + Math.cos(th) * R * 1.15)), fy = Math.min(VH - 70 * sc, Math.max(95 * sc, cy + Math.sin(th) * R * .95));
     const dir = cx >= fx ? 1 : -1, slideFrom = dir === 1 ? -120 * sc : VW + 120 * sc, ps = [], t0 = performance.now();
-    const IN = 650, SPRAY = skill === "eimer" ? 1700 : 1900, POSE = joke ? 4300 : pose ? 900 : 0, OUT = 500, TOT = IN + SPRAY + POSE + OUT;
+    const IN = 650, SPRAY = skill === "eimer" ? 1700 : skill === "kette" || skill === "leiter" ? 2400 : 1900, POSE = joke ? 4300 : pose ? 900 : 0, OUT = 500, TOT = IN + SPRAY + POSE + OUT;
     let last = t0, sprayT = 0, out = false, thrown = false, bucket = null;
     const ease = x => 1 - Math.pow(1 - x, 3);
     function man(x, y, t, aim, o) {
@@ -187,13 +187,14 @@ function extinguishFx(lb, fire) {
       } else {
         const a = aim + Math.sin(t / 60) * .02;
         g.beginPath(); g.moveTo(4, -10); g.lineTo(4 + Math.cos(a) * 22, -4 + Math.sin(a) * 22); g.stroke();
-        if (o.bucket) { g.fillStyle = "#8a93a1"; g.beginPath(); const bx = 4 + Math.cos(a) * 26, by = -4 + Math.sin(a) * 26; g.moveTo(bx - 9, by - 8); g.lineTo(bx + 9, by - 8); g.lineTo(bx + 6, by + 8); g.lineTo(bx - 6, by + 8); g.fill(); g.fillStyle = "rgba(120,190,255,.9)"; g.fillRect(bx - 8, by - 8, 16, 3); }
+        if (o.ext) { const hx = 4 + Math.cos(a) * 24, hy = -4 + Math.sin(a) * 24; g.fillStyle = "#c8161d"; g.beginPath(); g.roundRect(hx - 6, hy - 9, 12, 26, 3); g.fill(); g.fillStyle = "#222"; g.fillRect(hx - 3, hy - 14, 7, 6); g.strokeStyle = "#222"; g.lineWidth = 2.5; g.beginPath(); g.moveTo(hx + 3, hy - 11); g.lineTo(hx + 3 + Math.cos(a) * 16, hy - 11 + Math.sin(a) * 16 + 6); g.stroke(); g.lineWidth = 6; }
+        else if (o.bucket) { g.fillStyle = "#8a93a1"; g.beginPath(); const bx = 4 + Math.cos(a) * 26, by = -4 + Math.sin(a) * 26; g.moveTo(bx - 9, by - 8); g.lineTo(bx + 9, by - 8); g.lineTo(bx + 6, by + 8); g.lineTo(bx - 6, by + 8); g.fill(); g.fillStyle = "rgba(120,190,255,.9)"; g.fillRect(bx - 8, by - 8, 16, 3); }
         else if (!o.noNozzle) { g.strokeStyle = "#c8a82a"; g.lineWidth = 7; g.beginPath(); g.moveTo(4 + Math.cos(a) * 20, -4 + Math.sin(a) * 20); g.lineTo(4 + Math.cos(a) * 40, -4 + Math.sin(a) * 40); g.stroke(); }
       }
       g.restore();
-      g.save(); g.font = "700 " + Math.round(11 * sc) + "px system-ui, sans-serif"; g.textAlign = "center"; const tw = g.measureText(nm).width + 12, ty = y - 58 * sc + (o.dy || 0);
+      g.save(); g.font = "700 " + Math.round(11 * sc) + "px system-ui, sans-serif"; g.textAlign = "center"; const NN = o.nm || nm, tw = g.measureText(NN).width + 12, ty = y - 58 * sc + (o.dy || 0);
       g.fillStyle = "rgba(255,255,255,.92)"; g.strokeStyle = "#c8161d"; g.lineWidth = 1.5; g.beginPath(); g.roundRect(x - tw / 2, ty - 12 * sc, tw, 17 * sc, 8); g.fill(); g.stroke();
-      g.fillStyle = "#c8161d"; g.fillText(nm, x, ty + 1 * sc);
+      g.fillStyle = "#c8161d"; g.fillText(NN, x, ty + 1 * sc);
       if (o.say) {
         const fs = Math.round(13 * sc), maxW = Math.min(VW - 28, 250 * Math.max(1, sc / 1.3)); g.font = "700 " + fs + "px system-ui, sans-serif"; g.textAlign = "center";
         const ws = o.say.split(" "), lines = []; let cur = ""; ws.forEach(w => { const t = cur ? cur + " " + w : w; if (g.measureText(t).width > maxW - 22 && cur) { lines.push(cur); cur = w; } else cur = t; }); lines.push(cur);
@@ -210,7 +211,7 @@ function extinguishFx(lb, fire) {
       const el = now - t0, dt = Math.min(.05, (now - last) / 1000); last = now;
       g.clearRect(0, 0, VW, VH);
       const tOut = IN + SPRAY + POSE, k = el < IN ? ease(el / IN) : el > tOut ? 1 - ease((el - tOut) / OUT) : 1, x = slideFrom + (fx - slideFrom) * k, sp = el - IN;
-      const spraying = sp > 0 && sp < SPRAY, o = { walk: k < 1 && (el < IN || el > tOut), noNozzle: skill === "eimer" };
+      const spraying = sp > (skill === "leiter" ? 500 : 0) && sp < SPRAY, o = { walk: k < 1 && (el < IN || el > tOut), noNozzle: skill === "eimer" || skill === "pulver", ext: skill === "pulver" };
       let jump = 0, tx = cx, ty = cy;
       if (skill === "schwenk" && spraying) tx = cx + Math.sin(sp / 170) * r.width * .45;
       if (skill === "fontaene" && spraying && sp < 700) { tx = cx + (cx - fx) * .2; ty = cy - 230; }
@@ -220,17 +221,42 @@ function extinguishFx(lb, fire) {
       if (skill === "eimer") { o.bucket = !thrown && el > IN * .4; if (!o.bucket) o.noNozzle = true; }
       if (el > IN + SPRAY && pose && el < tOut) { o.thumb = true; o.smile = true; o.say = say; }
       const flipSave = dir; if (o.dirFlip !== undefined) { /* Pirouette: Körper dreht sich um die Hochachse */ g.save(); g.translate(x, 0); g.scale(Math.abs(o.dirFlip) < .12 ? .12 : Math.abs(o.dirFlip), 1); g.translate(-x, 0); }
-      const [nx, ny] = man(x, fy + jump, now, aim, o);
+      let nx, ny; const H = [];
+      if (skill === "kette") {            /* Eimerkette: alle drei Feuerwehrleute */
+        const others = ["Marin", "Tristan", "Daniele"].filter(n => n !== nm), nms = [nm, others[0], others[1]];
+        for (let i = 2; i >= 0; i--) { const xi = slideFrom + ((cx + dir * 64 * sc * (1 - i)) - slideFrom) * k; H[i] = man(xi, Math.min(VH - 70 * sc, r.bottom + 80 * sc), now + i * 90, 0, { walk: o.walk, noNozzle: true, nm: nms[i], thumb: o.thumb, smile: o.smile, say: i === 0 ? o.say : undefined }); }
+        [nx, ny] = H[0];
+      } else if (skill === "leiter") {    /* Drehleiter fährt ein und spritzt */
+        const s = sc * .9, gy = fy + 30 * sc, q = el > tOut ? 1 - ease((el - tOut) / OUT) : Math.max(0, Math.min(1, (el - 250) / (IN + 250)));
+        g.save(); g.translate(x, gy); g.scale(dir * s, s);
+        g.fillStyle = "#c8161d"; g.fillRect(-72, -42, 104, 30); g.fillRect(32, -50, 36, 38);
+        g.fillStyle = "#eee"; g.fillRect(-72, -27, 104, 4); g.fillStyle = "#9fd0ee"; g.fillRect(52, -44, 14, 14);
+        g.fillStyle = "#555"; g.fillRect(-72, -14, 140, 4); g.fillStyle = "#8a93a1"; g.fillRect(-34, -50, 24, 8);
+        g.fillStyle = Math.floor(now / 180) % 2 ? "#3b82f6" : "#bcd7ff"; g.fillRect(44, -57, 12, 7);
+        [[-46, -6], [44, -6]].forEach(([wx, wy]) => { g.fillStyle = "#222"; g.beginPath(); g.arc(wx, wy, 11, 0, 6.3); g.fill(); g.fillStyle = "#aaa"; g.beginPath(); g.arc(wx, wy, 4, 0, 6.3); g.fill(); });
+        g.restore();
+        const pvx = x + dir * s * -22, pvy = gy - 48 * s, ta = Math.max(.25, Math.min(1.25, Math.atan2(pvy - cy, Math.abs(cx - pvx)))), a = ta * ease(q), len = (70 + 120 * ease(q)) * s, tipx = pvx + dir * Math.cos(a) * len, tipy = pvy - Math.sin(a) * len;
+        g.lineCap = "round"; g.strokeStyle = "#3a3f4a"; g.lineWidth = 8 * s; g.beginPath(); g.moveTo(pvx, pvy); g.lineTo(tipx, tipy); g.stroke();
+        g.strokeStyle = "#c9ccd1"; g.lineWidth = 3 * s; g.setLineDash([5 * s, 5 * s]); g.beginPath(); g.moveTo(pvx, pvy); g.lineTo(tipx, tipy); g.stroke(); g.setLineDash([]);
+        g.fillStyle = "#fff"; g.strokeStyle = "#23262b"; g.lineWidth = 2; g.beginPath(); g.roundRect(tipx - 9 * s, tipy - 7 * s, 18 * s, 12 * s, 2); g.fill(); g.stroke();
+        nx = tipx; ny = tipy;
+      } else [nx, ny] = man(x, fy + jump, now, aim, o);
       if (o.dirFlip !== undefined) g.restore();
       /* Schlauch vom Bildrand zum Strahlrohr (nicht beim Eimer) */
-      if (skill !== "eimer") { g.strokeStyle = "#d4b22a"; g.lineWidth = 6 * sc / 1.2; g.lineCap = "round"; g.beginPath(); g.moveTo(slideFrom, fy + 40 * sc); g.bezierCurveTo(slideFrom + (x - slideFrom) * .4, fy + 60 * sc, x - dir * 20 * sc, fy + 50 * sc, x + dir * 4 * sc, fy + 2 * sc + jump); g.stroke(); }
-      if (skill === "eimer") {
-        if (!thrown && sp > 250) { thrown = true; bucket = { x0: nx, y0: ny, t: 0 }; }
+      if (!["eimer", "pulver", "kette", "leiter"].includes(skill)) { g.strokeStyle = "#d4b22a"; g.lineWidth = 6 * sc / 1.2; g.lineCap = "round"; g.beginPath(); g.moveTo(slideFrom, fy + 40 * sc); g.bezierCurveTo(slideFrom + (x - slideFrom) * .4, fy + 60 * sc, x - dir * 20 * sc, fy + 50 * sc, x + dir * 4 * sc, fy + 2 * sc + jump); g.stroke(); }
+      if (skill === "eimer" || skill === "kette") {
+        if (skill === "eimer" && !thrown && sp > 250) { thrown = true; bucket = { x0: nx, y0: ny, t: 0 }; }
+        if (skill === "kette" && !thrown) {   /* Eimer wandert von Hand zu Hand */
+          if (sp < 900) { const a0 = sp < 450 ? 2 : 1, a1 = a0 - 1, u = Math.max(0, (sp < 450 ? sp : sp - 450) / 450), bx = H[a0][0] + (H[a1][0] - H[a0][0]) * u, by = H[a0][1] + (H[a1][1] - H[a0][1]) * u - Math.sin(u * Math.PI) * 16;
+            g.fillStyle = "#8a93a1"; g.beginPath(); g.moveTo(bx - 9, by - 8); g.lineTo(bx + 9, by - 8); g.lineTo(bx + 6, by + 8); g.lineTo(bx - 6, by + 8); g.fill(); }
+          else { thrown = true; bucket = { x0: nx, y0: ny, t: 0 }; }
+        }
         if (bucket) { bucket.t += dt; const u = Math.min(1, bucket.t / .65), bx = bucket.x0 + (cx - bucket.x0) * u, by = bucket.y0 + (cy - bucket.y0) * u - Math.sin(u * Math.PI) * 140;
           if (u < 1) { g.save(); g.translate(bx, by); g.rotate(u * 9 * dir); g.fillStyle = "#8a93a1"; g.beginPath(); g.moveTo(-9, -8); g.lineTo(9, -8); g.lineTo(6, 8); g.lineTo(-6, 8); g.fill(); g.restore(); }
           else if (!bucket.done) { bucket.done = true; splash(cx, cy, 160); fire.level(0); } }
       } else if (spraying && !(skill === "salto" && o.rot)) {
-        for (let i = 0; i < 9; i++) { const d = Math.atan2(ty - ny, tx - nx) + (Math.random() - .5) * .09, s2 = 600 + Math.random() * 140; ps.push({ x: nx, y: ny, vx: Math.cos(d) * s2, vy: Math.sin(d) * s2, w: 1, l: 0 }); }
+        if (skill === "pulver") { for (let i = 0; i < 4; i++) { const d = Math.atan2(ty - ny, tx - nx) + (Math.random() - .5) * .35, s2 = 300 + Math.random() * 160; ps.push({ x: nx, y: ny, vx: Math.cos(d) * s2, vy: Math.sin(d) * s2, w: 0, l: 0 }); } }
+        else for (let i = 0; i < 9; i++) { const d = Math.atan2(ty - ny, tx - nx) + (Math.random() - .5) * .09, s2 = 600 + Math.random() * 140; ps.push({ x: nx, y: ny, vx: Math.cos(d) * s2, vy: Math.sin(d) * s2, w: 1, l: 0 }); }
         sprayT += dt; if (sprayT > .55 && !(skill === "fontaene" && sp < 700)) fire.level(0);
       }
       g.globalCompositeOperation = "source-over";
