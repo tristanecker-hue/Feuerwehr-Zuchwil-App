@@ -566,7 +566,7 @@ body.hasgear .top .brand { font-size: 1rem; letter-spacing: .05em; white-space: 
 .simbox svg{width:100%;height:auto;display:block;max-height:62vh}
 .simro{display:flex;flex-direction:column;gap:6px;margin:12px 0;padding:12px 14px;border-radius:14px;background:var(--surface);color:var(--ink);border:1px solid var(--line)}
 .simrow{display:flex;justify-content:space-between;gap:10px;font-size:15px}.simrow span{color:var(--muted)}
-.simmsg{margin-top:4px;padding:8px 10px;border-radius:10px;font-weight:700;font-size:14px}.simmsg.ok{background:rgba(47,125,79,.15);color:#2f7d4f}.simmsg.bad{background:rgba(200,22,29,.15);color:#c8161d}
+.simmsg{margin-top:4px;padding:8px 10px;border-radius:10px;font-weight:700;font-size:14px}.simmsg.ok{background:rgba(47,125,79,.15);color:#2f7d4f}.simmsg.warn{background:rgba(220,140,0,.18);color:#a86400}.simmsg.bad{background:rgba(200,22,29,.15);color:#c8161d}
 .simrow .bad{color:#c8161d}.simrow .ok{color:#2f7d4f}
 .simc{display:flex;flex-direction:column;gap:14px;margin:6px 0 14px}
 .simc label{display:flex;flex-direction:column;gap:6px;font-weight:600;color:var(--ink)}.simc label b{float:right}
@@ -625,10 +625,5 @@ html.dv .adlf>.adlc:nth-child(2){grid-column:2;grid-row:2}
 html.dv .adlf>.adlc:nth-child(3){grid-column:1;grid-row:1/3}
 html.dv .adlf{align-content:start}html.dv .adlf+.foot{max-width:none}
 /* Autodrehleiter: Szene, Stützen-Ablauf, Bedienelemente-Trainer */
-.bdw{position:relative;width:100%;max-width:720px;margin:0 auto 10px;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:#fff}
-.bdw img{display:block;width:100%;height:100%;object-fit:contain}
-.bdw .hs{position:absolute;transform:translate(-50%,-50%);width:30px;height:30px;min-height:0;aspect-ratio:auto;padding:0;border-radius:50%;border:2px solid #c8161d;background:rgba(200,22,29,.82);color:#fff;font-weight:700;font-size:.8rem;display:grid;place-items:center;box-shadow:0 0 0 3px rgba(255,255,255,.7)}
-.bdw .hs.on{background:#2f7d4f;border-color:#2f7d4f}
-html.dv .bdw{max-width:560px}
 .rgmenu .pdfbtn small{white-space:normal;text-align:left}
 html.dv 
