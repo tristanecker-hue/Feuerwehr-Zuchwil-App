@@ -16,6 +16,7 @@ button{font:inherit;color:var(--ink);cursor:pointer}
 .hud.off{display:none}.hud span{color:var(--mut);white-space:nowrap}.hud b{font-variant-numeric:tabular-nums;font-weight:600;color:var(--ink);margin-left:3px}
 .task.gone{display:none}.task{max-width:300px;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-size:17px;line-height:1.2}
 .task b{display:block;font-size:13px;color:var(--mut);letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px}
+.task{position:relative;padding-right:30px}.task .tx{position:absolute;top:4px;right:4px;width:24px;height:24px;border:0;border-radius:50%;background:#ffffff1f;font-size:14px;line-height:1;padding:0}
 .task.done{border-color:var(--grn)}.task .t{color:var(--grn);font-weight:700}
 .msg{position:fixed;left:50%;transform:translateX(-50%);top:46%;background:#000b;border:1px solid var(--amb);color:var(--amb);padding:8px 16px;border-radius:10px;font-size:19px;font-weight:600;opacity:0;transition:opacity .2s;pointer-events:none;text-align:center;max-width:90%}
 .msg.on{opacity:1}
@@ -185,16 +186,18 @@ cv.onpointermove=e=>{const o=pts.get(e.pointerId);if(!o)return;
 cv.onwheel=e=>{zoomBy(1+e.deltaY*.001);e.preventDefault()};
 /* Aufgabe */
 function newTask(){const w=wins[Math.floor(Math.random()*wins.length)];let g=0;while(true){const k=wins[Math.floor(Math.random()*wins.length)];if(k.f>=1&&k.f<=7){Object.assign(w,{});g=k;break}}
- task={w:g,t0:null,done:false,hold:0};T.set(g.x,g.y-.2+.5,zw-.95);tgt.position.set(g.x,g.y,zw-.15);tgt.visible=true;$("task").classList.remove("done");taskUI()}
+ task={w:g,t0:null,done:false,hold:0};T.set(g.x,g.y-.2+.5,zw-.95);tgt.position.set(g.x,g.y,zw-.15);tgt.visible=true;$("task").classList.remove("done");taskUI();if(sup.v>=1)peekGoal()}
+function addX(){const x=document.createElement('button');x.className='tx';x.textContent='✕';x.setAttribute('aria-label','Aufgabe ausblenden');x.onclick=()=>$('task').classList.add('gone');$('task').appendChild(x)}
+let peek=null;function peekGoal(){if(task&&!task.done)peek={t:0}}
 let tkT=0;function showTask(ms){const e=$("task");e.classList.remove("gone");clearTimeout(tkT);if(ms)tkT=setTimeout(()=>e.classList.add("gone"),ms)}
 function taskUI(){const w=task.w;$("task").innerHTML=task.done?`<b>Geschafft</b><span class="t">Korb am Fenster im ${w.f}. Stock · ${task.time.toFixed(1).replace(".",",")} s</span><br><button class="chip" id="nt" style="margin-top:6px">Neue Aufgabe</button>`:`<b>Aufgabe</b>Leiterpaket zuerst etwas anheben, dann: Fahre den Korb vor das grün markierte Fenster im <strong>${w.f}. Stock</strong>.`;
- if(task.done){$("nt").onclick=newTask;showTask(0)}else showTask(8000)}
+ if(task.done){$("nt").onclick=newTask;showTask(0)}else showTask(8000);addX()}
 newTask();stepUI();
 $("bl").onclick=()=>{lights.bl=!lights.bl;$("bl").classList.toggle("on",lights.bl)};$("wb").onclick=()=>{lights.wb=!lights.wb;$("wb").classList.toggle("on",lights.wb)};
-$("tk").onclick=()=>showTask(task&&task.done?0:8000);$("hv").onclick=()=>{$("hud").classList.toggle("off");$("hv").classList.toggle("on")};
+$("tk").onclick=()=>{const e=$("task");if(e.classList.contains("gone"))showTask(task&&task.done?0:8000);else{clearTimeout(tkT);e.classList.add("gone")}};$("hv").onclick=()=>{$("hud").classList.toggle("off");$("hv").classList.toggle("on")};
 let mt=0;function warn(t){$("msg").textContent=t;$("msg").classList.add("on");mt=1.6}
 /* Schleife */
-let last=performance.now(),tt0=0,last0=false;function stepUI(){showTask(0);$("task").classList.remove("done");$("task").innerHTML="<b>Schritt 1</b>Fahre zuerst die <strong>Stützen aus</strong>: Taste «Stützen ausfahren». Dann Freigabetaster antippen und das Leiterpaket mit dem linken Hebel zuerst etwas anheben."}stepUI();
+let last=performance.now(),tt0=0,last0=false;function stepUI(){showTask(0);$("task").classList.remove("done");$("task").innerHTML="<b>Schritt 1</b>Fahre zuerst die <strong>Stützen aus</strong>: Taste «Stützen ausfahren». Dann Freigabetaster antippen und das Leiterpaket mit dem linken Hebel zuerst etwas anheben.";addX()}stepUI();
 const UP=new THREE.Vector3(0,1,0);function lk(){cam.rotateOnWorldAxis(UP,look.y);cam.rotateX(-look.p)}
 function loop(now){const ph=Math.floor(now/110)%8,onA=lights.bl&&(ph===0||ph===2),onB=lights.bl&&(ph===4||ph===6);wbM.color.setHex(lights.wb&&Math.floor(now/450)%2===0?0xffa31a:0x4a2a05);lbM[0].color.setHex(onA?0x57b0ff:0x0b2a5a);lbM[1].color.setHex(onB?0x57b0ff:0x0b2a5a);blL.intensity=(onA||onB)?1.2:0;blL.position.z=onA?-.4:.4;requestAnimationFrame(loop);const dt=Math.min(.05,(now-last)/1e3);last=now;
  const kl=keyv("KeyW","KeyS","KeyA","KeyD"),kr=keyv("ArrowUp","ArrowDown","ArrowLeft","ArrowRight");
@@ -204,7 +207,7 @@ function loop(now){const ph=Math.floor(now/110)%8,onA=lights.bl&&(ph===0||ph===2
  const moving=Object.values(want).some(x=>x!==0);
  sup.v=Math.max(0,Math.min(1,sup.v+(sup.t?1:-1)*dt/4));if(sup.v>0&&sup.v<1||sup.t!==Math.round(sup.v))setSup(sup.v);
  const ok=sup.v>=1;$("sup").textContent=sup.v>0&&sup.v<1?(sup.t?"Fährt aus…":"Fährt ein…"):(sup.t?"Stützen einfahren":"Stützen ausfahren");$("sup").classList.toggle("on",ok);
- if(ok!==last0){last0=ok;if(!ok)stepUI();else taskUI()}
+ if(ok!==last0){last0=ok;if(!ok)stepUI();else{taskUI();peekGoal()}}
  if(moving&&!ok){want={yaw:0,pitch:0,arm:0,len:0};warn("Zuerst die Stützen ausfahren!")}else if(moving&&!fr.on){want={yaw:0,pitch:0,arm:0,len:0};warn("Zuerst den Freigabetaster antippen!")}else if(L.pitch<LIFT&&Math.abs(L.yaw)<4&&(want.yaw||want.len||want.arm)){want.yaw=want.len=want.arm=0;warn("Leiterpaket zuerst anheben!")}
  if(moving&&fr.on){if(want.arm<0&&L.ax<1&&L.arm>-.3){want.arm=0;L.ax=Math.min(1,L.ax+dt*.5);warn("Korbarm fährt aus …")}else if(want.arm>0&&L.arm>-.3&&L.ax>0){want.arm=0;if(L.arm<0)L.arm=0;L.ax=Math.max(0,L.ax-dt*.5)}}
  const old={...L};
@@ -227,6 +230,7 @@ function loop(now){const ph=Math.floor(now/110)%8,onA=lights.bl&&(ph===0||ph===2
  else if(view==="free"){}
  else if(view==="st"){const p=new THREE.Vector3(.4,3.1,.6);tt.localToWorld(p);const q=new THREE.Vector3(14,4.6,0);tt.localToWorld(q);cam.position.copy(p);cam.lookAt(q);lk()}
  else{const p=new THREE.Vector3(.5,-.1,0);cage.localToWorld(p);const q=new THREE.Vector3(6,-.9,0);cage.localToWorld(q);cam.position.copy(p);cam.lookAt(q);lk()}
+ if(peek){peek.t+=dt;const D=3.6,u=peek.t/D;if(u>=1)peek=null;else{const k=Math.sin(Math.PI*Math.min(1,u)),e=k*k*(3-2*k);const p1=new THREE.Vector3(T.x+9,Math.max(2.5,T.y*.6),T.z-15),o=new THREE.PerspectiveCamera();o.position.copy(p1);o.lookAt(T);const q0=cam.quaternion.clone();cam.position.lerp(p1,e);cam.quaternion.copy(q0).slerp(o.quaternion,e)}}
  R.render(S,cam)}
 apply();requestAnimationFrame(loop);window.__trainer={cam,setView:v=>{view=v},cageW:()=>{S.updateMatrixWorld(true);return cage.localToWorld(new THREE.Vector3(.6,-.4,0))},L,T,cageC,fr:setFr,orb0,sup,get task(){return task},ST};
 })();
