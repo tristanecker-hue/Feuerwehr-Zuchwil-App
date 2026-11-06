@@ -1,4 +1,4 @@
-const APP_VERSION = "1.157";
+const APP_VERSION = "1.158";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -811,15 +811,25 @@ function adlView() {
   document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
   state.mod = null; state.sub = null; state.view = "adl"; backBtn.hidden = false;
   app.innerHTML = `<section class="hero"><h1>Autodrehleiter</h1><p>Anleitungen zur Drehleiter L32A-XS der Feuerwehr Zuchwil.</p></section>
+    <div class="simbox adlscene"><svg id="adlsc" viewBox="0 0 340 180" role="img" aria-label="Drehleiter Zuchwil rettet eine Person aus dem Fenster">${adlSceneHtml()}</svg></div>
     <div class="menu rgmenu">
       <button class="mbtn main pdfbtn" id="adlsim"><span>Drehleiter-Simulator</span><small>Ausladung, Personen, Zuladungsreserve interaktiv</small></button>
       <button class="mbtn main pdfbtn" id="adlmas"><span>Drehleiter Masse</span><small>Abstützbreite und Wandabstand</small></button>
+      <button class="mbtn main pdfbtn" id="adlgr"><span>Draufsicht</span><small>Schwenkbereich, Stützen, Wandabstand von oben</small></button>
+      <button class="mbtn main pdfbtn" id="adlre"><span>Rettungs-Szenario</span><small>Person am Fenster: Leiter richtig einstellen</small></button>
+      <button class="mbtn main pdfbtn" id="adlst"><span>Stützen-Reihenfolge</span><small>Abstützen in der richtigen Reihenfolge üben</small></button>
+      <button class="mbtn main pdfbtn" id="adlbd"><span>Bedienelemente-Trainer</span><small>Haupt- und Korbbedienstand lernen und prüfen</small></button>
       <button class="mbtn main pdfbtn" id="adlpdf"><span>Betriebsanleitung L32A-XS</span><small>PDF · ${RGDEF.adl.pages} S.</small></button>
       <button class="mbtn main pdfbtn" id="adlpdf2"><span>Einweisungsunterlage</span><small>PDF · ${RGDEF.adl2.pages} S. · Kurzfassung zum Lernen</small></button>
     </div>
     <p class="foot">Unterlagen des Herstellers Rosenbauer, Ausgabe 12/2022, nur zur internen Verwendung.</p>`;
   document.getElementById("adlsim").onclick = () => simView();
   document.getElementById("adlmas").onclick = () => masseView();
+  document.getElementById("adlgr").onclick = () => grundrissView();
+  document.getElementById("adlre").onclick = () => rettungView();
+  document.getElementById("adlst").onclick = () => stuetzenView();
+  document.getElementById("adlbd").onclick = () => bedienView();
+  adlSceneStart();
   document.getElementById("adlpdf").onclick = () => { state.pdfBack = () => adlView(); rgView("adl"); };
   document.getElementById("adlpdf2").onclick = () => { state.pdfBack = () => adlView(); rgView("adl2"); };
   window.scrollTo(0, 0);
@@ -1280,7 +1290,7 @@ async function lektionen(m, el) {
   });
 }
 
-backBtn.addEventListener("click", () => { if (state.view === "games") { if (state.gm) gamesView(); else { gmStop(); start(); } return; } if (state.view === "les" && state.lc === "v" && state.vorHome) { state.vorHome = false; state.lc = null; start(); return; } if (state.view === "les" && (state.lc === "vl" || state.lc === "vn")) { state.lc = "v"; lesView(); window.scrollTo(0, 0); return; } if (state.view === "sub" && !state.mod) { home(); return; } if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "sim") { adlView(); return; } if (state.view === "masse") { adlView(); return; } if (state.view === "adl" || state.view === "gq" || state.view === "sgv" || state.view === "spick") { (state.sub ? subView(state.sub) : home()); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else (state.sub ? subView(state.sub) : home()); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) (state.sub ? subView(state.sub) : home()); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
+backBtn.addEventListener("click", () => { if (state.view === "games") { if (state.gm) gamesView(); else { gmStop(); start(); } return; } if (state.view === "les" && state.lc === "v" && state.vorHome) { state.vorHome = false; state.lc = null; start(); return; } if (state.view === "les" && (state.lc === "vl" || state.lc === "vn")) { state.lc = "v"; lesView(); window.scrollTo(0, 0); return; } if (state.view === "sub" && !state.mod) { home(); return; } if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "sim") { adlView(); return; } if (["masse", "adlgr", "adlre", "adlst", "adlbd"].includes(state.view)) { adlView(); return; } if (state.view === "adl" || state.view === "gq" || state.view === "sgv" || state.view === "spick") { (state.sub ? subView(state.sub) : home()); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else (state.sub ? subView(state.sub) : home()); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) (state.sub ? subView(state.sub) : home()); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
 /* ---------- Anmeldepflicht ---------- */
 let gateOffline = false;
 function gateNeeded() { return !!FWZ.enabled && !FWZ.user && !gateOffline; }
@@ -1558,4 +1568,206 @@ function vorlageView(neutral) {
   document.getElementById("vldoc").onclick = run(() => doc().open()); document.getElementById("vldsh").onclick = run(() => doc().share());
   document.getElementById("vlreset").onclick = () => { if (document.getElementById("vlreset").dataset.c) { VL = VL_DEF(); vlSave(); vorlageView(VLN); } else { document.getElementById("vlreset").dataset.c = 1; document.getElementById("vlreset").textContent = "Wirklich zurücksetzen? Nochmals tippen."; } };
   window.scrollTo(0, 0);
+}
+
+/* ================= Autodrehleiter: Zusatzseiten (V1.158) ================= */
+function adlPage(view, h, p, body) {
+  document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
+  state.mod = null; state.sub = null; state.view = view; backBtn.hidden = false;
+  app.innerHTML = `<section class="hero"><h1>${h}</h1><p>${p}</p></section>` + body; window.scrollTo(0, 0);
+}
+const adlF1 = n => n.toFixed(1).replace(".", ",");
+/* Lastgrenze nach Ausladungsdiagramm (S. 260, gerundet): zulässige Zuladung in kg bei Ausladung r (m) */
+const adlAllowedKg = r => r <= 16.7 ? 500 : r <= 18.2 ? 400 : r <= 19.3 ? 300 : r <= 20.9 ? 200 : r <= 22.7 ? 100 : 0;
+
+/* ---------- Szene (animierte Drehleiter auf der Autodrehleiter-Seite) ---------- */
+function adlSceneHtml() {
+  const U = 8.6, ox = 96, gy = 150, kk = U / 81.6, wx = 206, FH = 3, NF = 5;
+  let h = `<rect x="0" y="0" width="340" height="${gy}" fill="url(#adlsky)"/><rect x="0" y="${gy}" width="340" height="30" fill="#9aa19a"/><rect x="0" y="${gy}" width="340" height="3" fill="#6f766f"/>`;
+  h += `<rect x="${wx}" y="${gy - U * FH * NF}" width="${340 - wx}" height="${U * FH * NF}" fill="#e6ddd2" stroke="#23262b" stroke-width="1.2"/><rect x="${wx - 2}" y="${gy - U * FH * NF - 4}" width="${342 - wx}" height="4" fill="#8d8680"/>`;
+  for (let f = 0; f < NF; f++) { const y1 = gy - U * FH * (f + 1); if (f) h += `<line x1="${wx}" y1="${y1 + U * FH}" x2="340" y2="${y1 + U * FH}" stroke="#23262b" stroke-width="1.2"/>`; for (let q = 0; q < 3; q++) h += `<rect id="adlw${f}_${q}" x="${wx + 9 + q * 34}" y="${y1 + 7}" width="16" height="${U * FH - 14}" fill="#a9c8de" stroke="#4a5560" stroke-width="1"/><line x1="${wx + 17 + q * 34}" y1="${y1 + 7}" x2="${wx + 17 + q * 34}" y2="${y1 + U * FH - 7}" stroke="#4a5560" stroke-width=".8"/>`; }
+  h += `<line x1="0" y1="${gy}" x2="340" y2="${gy}" stroke="#23262b" stroke-width="1.5"/>${adlTruck(ox, gy, kk)}`;
+  return `<defs><linearGradient id="adlsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9ec9ee"/><stop offset="1" stop-color="#e8f1f8"/></linearGradient></defs>${h}<g id="adlscd"></g>`;
+}
+function adlSceneStart() {
+  const svg = document.getElementById("adlsc"); if (!svg) return;
+  const U = 8.6, ox = 96, gy = 150, px = ox + U * MS_P.x, py = gy - U * MS_P.h, still = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const step = t => {
+    const g = document.getElementById("adlscd"); if (!g || !document.getElementById("adlsc")) return;
+    const a = 44 + 4 * Math.sin(t / 1700), L = 15 + .7 * Math.sin(t / 2600);
+    const tx = px + U * L * Math.cos(a * Math.PI / 180), ty = py - U * L * Math.sin(a * Math.PI / 180);
+    const cx = tx + 9, cy = ty + 8;
+    let s = adlLadder(px, py, a, L, U);
+    s += `<line x1="${tx}" y1="${ty}" x2="${cx - 8}" y2="${cy - 12}" stroke="#23262b" stroke-width="2.4" stroke-linecap="round"/><rect x="${cx - 9}" y="${cy - 12}" width="18" height="12" rx="1.5" fill="#fff" fill-opacity=".75" stroke="#23262b" stroke-width="1.1"/><rect x="${cx + 5}" y="${cy - 12}" width="4" height="12" fill="#c8161d"/>`;
+    s += `<circle cx="${cx - 2}" cy="${cy - 15}" r="2.6" fill="#f0c9a0"/><path d="M${cx - 5} ${cy - 17} a3.2 3.2 0 0 1 6.4 0z" fill="#c8161d"/><rect x="${cx - 4}" y="${cy - 12.5}" width="4.4" height="7" fill="#3a3f4a"/>`;
+    const wv = Math.sin(t / 220) * 3; s += `<line x1="${cx}" y1="${cy - 10}" x2="${cx + 4}" y2="${cy - 17 + wv}" stroke="#3a3f4a" stroke-width="2" stroke-linecap="round"/>`;
+    const fl = 1 + .18 * Math.sin(t / 90) + .1 * Math.sin(t / 53), fx = 206 + 9 + 34 + 8, fy = gy - 3 * U * 3 + 12;
+    s += `<g transform="translate(${fx} ${fy + 14}) scale(${fl} ${fl})"><path d="M0 0 C-8 -4 -6 -12 0 -20 C2 -14 8 -10 6 -2 C4 2 -4 3 0 0z" fill="#f08a1c"/><path d="M0 0 C-4 -2 -3 -7 0 -11 C2 -7 4 -5 3 -1z" fill="#ffd54a"/></g>`;
+    const ph = (t / 14) % 40; s += `<path d="M${cx + 9} ${cy - 5} Q${(cx + fx) / 2} ${cy - 24} ${fx - 3} ${fy + 6}" fill="none" stroke="#6bb6ff" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 5" stroke-dashoffset="${-ph}"/>`;
+    s += `<rect x="${ox + 43}" y="${gy - 32}" width="7" height="4" fill="${Math.floor(t / 250) % 2 ? "#3b82f6" : "#bcd7ff"}"/>`;
+    g.innerHTML = s; if (!still) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+/* ---------- Draufsicht (Grundriss) ---------- */
+const GR = { th: 90, R: 14, d: 9, w: 4.8 };
+function grundrissView() {
+  adlPage("adlgr", "Drehleiter Draufsicht", "Fahrzeug, Stützen und Schwenkbereich von oben: wo der Wandabstand zählt.", `
+    <div class="simbox"><svg id="grS" viewBox="0 0 340 226" role="img" aria-label="Draufsicht Drehleiter mit Schwenkbereich"></svg></div>
+    <div class="simro" id="grR" role="status"></div>
+    <div class="simc"><label>Schwenkwinkel (0° = nach vorne, 90° = zur Wand) <b id="grtv"></b><input type="range" id="grt" min="-180" max="180" step="1"></label>
+      <label>Ausladung (Korb) <b id="grrv"></b><input type="range" id="grr" min="4" max="23" step="0.1"></label>
+      <label>Abstand Drehachse – Wand <b id="grdv"></b><input type="range" id="grd" min="3" max="16" step="0.1"></label>
+      <div class="simg"><span>Abstützbreite</span><div class="simchips"><button type="button" class="chip" data-gw="2.5">Minimal 2,5 m</button><button type="button" class="chip" data-gw="4.8">Maximal 4,8 m</button></div></div></div>
+    <p class="foot">Draufsicht nach den Fahrzeugmassen der Betriebsanleitung (S. 259: 10 500 × 2 500 mm, Abstützbreite 2 500 bis 4 800 mm). Lage der Drehachse und der Stützen am Fahrzeug aus der Zeichnung geschätzt. Korb ca. 1,7 × 1,15 m, Sicherheitsabstand zu Gebäuden mindestens 1 m. Bei kleiner Abstützbreite ist der Arbeitsbereich eingeschränkt (S. 95/96), massgebend ist die Anzeige am Fahrzeug. Nur zur Ausbildung.</p>`);
+  const $ = id => document.getElementById(id), S = 7, px = 170, py = 118, X = u => px + S * u, Y = v => py - S * v;
+  const gapOf = (th, R, d) => { const r = th * Math.PI / 180, v = R * Math.sin(r), h = .85 * Math.abs(Math.sin(r)) + .575 * Math.abs(Math.cos(r)); return d - v - h; };
+  const draw = () => {
+    const { th, R, d, w } = GR, r = th * Math.PI / 180, tx = X(-R * Math.cos(r)), ty = Y(R * Math.sin(r)), gap = gapOf(th, R, d);
+    $("grt").value = th; $("grr").value = R; $("grd").value = d; $("grtv").textContent = th + "°"; $("grrv").textContent = adlF1(R) + " m"; $("grdv").textContent = adlF1(d) + " m";
+    document.querySelectorAll("[data-gw]").forEach(b => b.classList.toggle("on", +b.dataset.gw === w));
+    const wy = Y(d), sy = Y(d - 1), leg = u => [1, -1].map(sg => `<line x1="${X(u)}" y1="${Y(sg * 1.25)}" x2="${X(u)}" y2="${Y(sg * w / 2)}" stroke="#9aa0a8" stroke-width="3.2"/><rect x="${X(u) - 4}" y="${Y(sg * w / 2) - 4}" width="8" height="8" fill="#1f2024"/><rect x="${X(u) - 4}" y="${Y(sg * w / 2) - 4}" width="8" height="8" fill="none" stroke="#d9322f" stroke-width="1"/>`).join("");
+    const bad = gap < 1, deg = Math.atan2(ty - py, tx - px) * 180 / Math.PI;
+    let win = ""; for (let q = 0; q * 24 + 8 < 332; q++) win += `<rect x="${8 + q * 24}" y="${Math.max(2, wy - 18)}" width="14" height="9" fill="#a9c8de" stroke="#4a5560" stroke-width=".8"/>`;
+    let s = `<rect x="0" y="0" width="340" height="226" fill="#eef1f4"/><rect x="0" y="${Math.max(0, wy)}" width="340" height="${226 - Math.max(0, wy)}" fill="#dfe4e8"/>`;
+    s += `<rect x="-2" y="-2" width="344" height="${wy + 2}" fill="#e6ddd2" stroke="#23262b" stroke-width="1.3"/>${win}<text x="336" y="${Math.max(12, wy - 22)}" text-anchor="end" font-size="8" fill="#6b645d">Gebäude</text>`;
+    s += `<line x1="0" y1="${sy}" x2="340" y2="${sy}" stroke="#c8161d" stroke-width="1" stroke-dasharray="4 3"/><text x="4" y="${sy + 9}" font-size="7.5" fill="#c8161d">1 m Sicherheitsabstand</text>`;
+    s += `<defs><clipPath id="grc1"><rect x="0" y="${sy}" width="340" height="${226 - sy}"/></clipPath><clipPath id="grc2"><rect x="0" y="0" width="340" height="${Math.max(0, sy)}"/></clipPath></defs><circle cx="${px}" cy="${py}" r="${S * R}" fill="none" stroke="#2f7d4f" stroke-width="1.6" stroke-dasharray="5 4" clip-path="url(#grc1)"/><circle cx="${px}" cy="${py}" r="${S * R}" fill="none" stroke="#c8161d" stroke-width="1.6" stroke-dasharray="5 4" clip-path="url(#grc2)"/>`;
+    s += `<line x1="${px}" y1="${py - 100}" x2="${px}" y2="${py + 100}" stroke="#23262b" stroke-width=".7" stroke-dasharray="6 3 1 3" opacity=".4"/>` + leg(-4.1) + leg(2);
+    s += `<rect x="${X(-5.3)}" y="${Y(1.25)}" width="${S * 8.1}" height="${S * 2.5}" rx="2" fill="#c0141b" stroke="#23262b" stroke-width="1.2"/><rect x="${X(-5.3)}" y="${Y(1.25)}" width="${S * 2.2}" height="${S * 2.5}" rx="2" fill="#8f0f15"/><rect x="${X(-5.3)}" y="${Y(.95)}" width="${S * .5}" height="${S * 1.9}" fill="#9fd0ee"/><circle cx="${px}" cy="${py}" r="${S * .9}" fill="#8a93a1" stroke="#23262b" stroke-width="1"/>`;
+    s += `<line x1="${px}" y1="${py}" x2="${tx}" y2="${ty}" stroke="#3a3f4a" stroke-width="4.2" stroke-linecap="round"/><line x1="${px}" y1="${py}" x2="${tx}" y2="${ty}" stroke="#c9ccd1" stroke-width="1.4" stroke-dasharray="4 3"/>`;
+    s += `<g transform="translate(${tx} ${ty}) rotate(${deg})"><rect x="${-S * .85}" y="${-S * .575}" width="${S * 1.7}" height="${S * 1.15}" rx="2" fill="${bad ? "#fdd" : "#fff"}" stroke="${bad ? "#c8161d" : "#23262b"}" stroke-width="1.3"/></g>`;
+    if (gap > 0) { const v = R * Math.sin(r), hh = .85 * Math.abs(Math.sin(r)) + .575 * Math.abs(Math.cos(r)); s += `<line x1="${tx}" y1="${Y(v + hh)}" x2="${tx}" y2="${wy}" stroke="${bad ? "#c8161d" : "#2f7d4f"}" stroke-width="1.3"/><path d="M${tx} ${wy} l-3 6 h6z M${tx} ${Y(v + hh)} l-3 -6 h6z" fill="${bad ? "#c8161d" : "#2f7d4f"}"/><text x="${tx + 5}" y="${(wy + Y(v + hh)) / 2 + 3}" font-size="9" font-weight="700" fill="${bad ? "#c8161d" : "#2f7d4f"}">${adlF1(gap)} m</text>`; }
+    s += `<text x="${px}" y="${Y(-5.6)}" text-anchor="middle" font-size="8" fill="#23262b">◀ Fahrtrichtung (Front links)</text>`;
+    $("grS").innerHTML = s;
+    let blk = ""; for (let t = 0; t <= 90; t++) if (gapOf(t, R, d) < 1) { blk = t; break; }
+    const crit = blk === "" ? null : blk;
+    $("grR").innerHTML = `<div class="simrow"><span>Korb quer zum Fahrzeug</span><b>${adlF1(R * Math.sin(r))} m</b></div><div class="simrow"><span>Korbkante bis Wand</span><b class="${gap < 1 ? "bad" : "ok"}">${gap > 0 ? adlF1(gap) + " m" : "Berührung"}</b></div><div class="simrow"><span>Wandseite gesperrt (Abstand &lt; 1 m)</span><b>${crit === null ? "nein" : crit + "° bis " + (180 - crit) + "°"}</b></div><div class="simmsg ${gap < 1 ? "bad" : "ok"}">${gap < 1 ? (gap <= 0 ? "Der Korb würde die Wand berühren." : "Weniger als 1 m Abstand zur Wand: so nicht schwenken.") : crit === null ? "Bei dieser Ausladung ist der ganze Kreis frei." : "Zur Wand hin nur bis " + (crit - 1) + "° schwenken; der Wandabstand zählt im roten Bereich."}</div>`;
+  };
+  $("grt").oninput = e => { GR.th = +e.target.value; draw(); }; $("grr").oninput = e => { GR.R = +e.target.value; draw(); }; $("grd").oninput = e => { GR.d = +e.target.value; draw(); };
+  app.querySelectorAll("[data-gw]").forEach(b => b.onclick = () => { GR.w = +b.dataset.gw; draw(); });
+  draw();
+}
+
+/* ---------- Rettungs-Szenario ---------- */
+const RS = { n: 4, d: 7, a: 52, L: 15, ko: false, tr: false };
+function rettungView() {
+  adlPage("adlre", "Rettungs-Szenario", "Eine Person wartet am Fenster. Stelle die Leiter so ein, dass die Rettung gelingt.", `
+    <div class="simbox"><svg id="reS" viewBox="0 0 340 298" role="img" aria-label="Rettung am Fenster"></svg></div>
+    <div class="simro" id="reR" role="status"></div>
+    <div class="simc"><div class="simg"><span>Person am Fenster im</span><div id="ren" class="simchips"></div></div>
+      <label>Abstand Drehachse – Wand <b id="redv"></b><input type="range" id="red" min="3" max="15" step="0.1"></label>
+      <label>Aufrichtewinkel <b id="reav"></b><input type="range" id="rea" min="-20" max="76" step="1"></label>
+      <label>Auszug <b id="relv"></b><input type="range" id="rel" min="12" max="28.4" step="0.1"></label>
+      <div class="simg"><span>Korbarm · Ladung · Aufgabe</span><div class="simchips"><button type="button" class="chip" id="reko">Korbarm abgewinkelt</button><button type="button" class="chip" id="retr">Mit Rettungstrage (+50 kg)</button><button type="button" class="chip" id="reng">Neue Aufgabe</button></div></div></div>
+    <p class="foot">Annahmen: Retter und gerettete Person im Korb (2 × 100 kg, mit Trage +50 kg), Zuladungsgrenze nach Ausladungsdiagramm S. 260 (gerundet). Die Person erreicht den Korb bei 1 bis 2 m Abstand zur Fassade (Anleitung: mindestens 1 m Abstand zu Gebäuden); Korbboden auf Fensterbankhöhe ± 0,5 m. Korbarm 1,5 m (geschätzt). Nur zur Ausbildung.</p>`);
+  const $ = id => document.getElementById(id), U = 8.2, gy = 275, ox = 118, X = x => ox + U * x, Y = h => gy - U * h, kk = U / 81.6, FH = 3, NF = 10;
+  $("ren").innerHTML = Array.from({ length: 10 }, (_, n) => `<button type="button" class="chip" data-n="${n}">${n ? n + ". Stock" : "EG"}</button>`).join("");
+  const draw = () => {
+    const { n, d, a, L } = RS, b = RS.ko ? Math.min(60, a + 40) : 0, da = (a - b) * Math.PI / 180, ar = a * Math.PI / 180;
+    const tx0 = MS_P.x + L * Math.cos(ar), th0 = MS_P.h + L * Math.sin(ar), ex = tx0 + MS_KA * Math.cos(da), ey = th0 + MS_KA * Math.sin(da);
+    const ccx = ex + .6, flo = ey - 1, front = ccx + .85, gap = d - front, sill = n * FH + .73, dh = flo - sill, kg = 200 + (RS.tr ? 50 : 0), lim = adlAllowedKg(ccx);
+    const okH = Math.abs(dh) <= .5, okG = gap >= 1 && gap <= 2, okL = lim >= kg, win = okH && okG && okL;
+    $("red").value = d; $("rea").value = a; $("rel").value = L; $("redv").textContent = adlF1(d) + " m"; $("reav").textContent = a + "°"; $("relv").textContent = adlF1(L) + " m";
+    document.querySelectorAll("#ren .chip").forEach(c => c.classList.toggle("on", +c.dataset.n === n)); $("reko").classList.toggle("on", RS.ko); $("retr").classList.toggle("on", RS.tr);
+    const wx = X(d), hw = Math.max(6, 336 - wx);
+    let g = `<rect x="0" y="0" width="340" height="298" fill="#e3eef8"/><line x1="0" y1="${gy}" x2="340" y2="${gy}" stroke="#23262b" stroke-width="2"/>${adlTruck(X(0), gy, kk)}<line x1="${X(0)}" y1="${gy}" x2="${X(0)}" y2="10" stroke="#23262b" stroke-dasharray="6 3 1 3" opacity=".4"/>`;
+    const rt = Y(FH * NF); g += `<rect x="${wx}" y="${rt}" width="${hw}" height="${gy - rt}" fill="#e6ddd2" stroke="#23262b" stroke-width="1.2"/><rect x="${wx - 2}" y="${rt - 5}" width="${hw + 2}" height="5" fill="#8d8680" stroke="#23262b"/>`;
+    for (let f = 0; f < NF; f++) {
+      const y0 = Y(f * FH), y1 = Y((f + 1) * FH), nw = Math.min(3, Math.floor((hw - 4) / 15)); if (f) g += `<line x1="${wx}" y1="${y0}" x2="336" y2="${y0}" stroke="#23262b" stroke-width="1.3"/>`;
+      for (let q = 0; q < nw; q++) { const x0 = wx + 6 + q * 15, tgt = f === n && q === 0; g += `<rect x="${x0}" y="${y1 + 5}" width="10" height="${(FH - 1.1) * U - 2}" fill="${tgt ? "#ffe27a" : "#a9c8de"}" stroke="${tgt ? "#c8161d" : "#4a5560"}" stroke-width="${tgt ? 1.6 : 1}"/>`;
+        if (tgt) g += `<circle cx="${x0 + 5}" cy="${y1 + 9}" r="2.1" fill="#f0c9a0"/><line x1="${x0 + 5}" y1="${y1 + 11}" x2="${x0 + 5}" y2="${y1 + 18}" stroke="#3a3f4a" stroke-width="2"/><line x1="${x0 + 5}" y1="${y1 + 13}" x2="${x0 + 1}" y2="${y1 + 9}" stroke="#c8161d" stroke-width="1.3"/><line x1="${x0 + 5}" y1="${y1 + 13}" x2="${x0 + 9}" y2="${y1 + 9}" stroke="#c8161d" stroke-width="1.3"/>`; }
+      if (hw > 60) g += `<text x="334" y="${y0 - 3}" text-anchor="end" font-size="6.5" fill="#6b645d">${f ? f + ". Stock" : "Erdgeschoss"}</text>`;
+    }
+    const px = X(MS_P.x), py = Y(MS_P.h), lx = X(tx0), ly = Y(th0), ax = X(ex), ay = Y(ey), cx = X(ccx), cyb = Y(flo);
+    g += adlLadder(px, py, a, L, U) + `<line x1="${lx}" y1="${ly}" x2="${ax}" y2="${ay}" stroke="#23262b" stroke-width="3" stroke-linecap="round"/><line x1="${ax}" y1="${ay}" x2="${cx - .85 * U}" y2="${cyb - 1.15 * U + 2}" stroke="#23262b" stroke-width="3" stroke-linecap="round"/><circle cx="${lx}" cy="${ly}" r="2.4" fill="#fff" stroke="#23262b" stroke-width="1.2"/><circle cx="${ax}" cy="${ay}" r="2.4" fill="#fff" stroke="#23262b" stroke-width="1.2"/>`;
+    g += `<rect x="${cx - .85 * U}" y="${cyb - 1.15 * U}" width="${1.7 * U}" height="${1.15 * U}" rx="2" fill="${win ? "#d4f5dc" : "#fff"}" fill-opacity=".8" stroke="#23262b" stroke-width="1.3"/><rect x="${cx + .85 * U - 4}" y="${cyb - 1.15 * U}" width="4" height="${1.15 * U}" fill="#c8161d"/>`;
+    g += `<circle cx="${cx - 3}" cy="${cyb - 1.15 * U - 3}" r="2.4" fill="#f0c9a0"/><rect x="${cx - 5}" y="${cyb - 1.15 * U - 1}" width="4.4" height="${1.15 * U * .8}" fill="#3a3f4a"/><circle cx="${cx + 4}" cy="${cyb - 1.15 * U - 3}" r="2.4" fill="#f0c9a0"/><rect x="${cx + 2}" y="${cyb - 1.15 * U - 1}" width="4.4" height="${1.15 * U * .8}" fill="${RS.tr ? "#8a93a1" : "#c8161d"}"/>`;
+    if (gap > 0) g += `<line x1="${cx + .85 * U}" y1="${cyb - .6 * U}" x2="${wx}" y2="${cyb - .6 * U}" stroke="${okG ? "#2f7d4f" : "#c8161d"}" stroke-width="1.4"/><text x="${(cx + .85 * U + wx) / 2}" y="${cyb - .6 * U - 3}" font-size="8" text-anchor="middle" font-weight="700" fill="${okG ? "#2f7d4f" : "#c8161d"}">${adlF1(gap)} m</text>`;
+    $("reS").innerHTML = g;
+    const row = (ok, t, v) => `<div class="simrow"><span>${ok ? "✓" : "✗"} ${t}</span><b class="${ok ? "ok" : "bad"}">${v}</b></div>`;
+    $("reR").innerHTML = row(okH, "Höhe (Korbboden – Fensterbank)", (dh >= 0 ? "+" : "") + adlF1(dh) + " m") + row(okG, "Abstand Korb – Fassade (1 bis 2 m)", gap > 0 ? adlF1(gap) + " m" : "Berührung") + row(okL, "Zuladung " + kg + " kg bei " + adlF1(ccx) + " m Ausladung", lim ? "max. " + lim + " kg" : "nicht zulässig")
+      + `<div class="simmsg ${win ? "ok" : "bad"}">${win ? "Rettung gelingt: Person kann in den Korb steigen." : !okH ? (dh > 0 ? "Korb zu hoch: Leiter etwas absenken." : "Korb zu tief: Leiter weiter aufrichten.") : !okG ? (gap < 1 ? "Zu nah an der Fassade (mindestens 1 m)." : "Zu weit von der Fassade: Person kommt nicht in den Korb.") : "Überlast bei dieser Ausladung: näher ans Gebäude stellen oder ohne Trage."}</div>`;
+  };
+  $("red").oninput = e => { RS.d = +e.target.value; draw(); }; $("rea").oninput = e => { RS.a = +e.target.value; draw(); }; $("rel").oninput = e => { RS.L = +e.target.value; draw(); };
+  app.querySelectorAll("#ren .chip").forEach(c => c.onclick = () => { RS.n = +c.dataset.n; draw(); });
+  $("reko").onclick = () => { RS.ko = !RS.ko; draw(); }; $("retr").onclick = () => { RS.tr = !RS.tr; draw(); };
+  $("reng").onclick = () => { RS.n = 1 + Math.floor(Math.random() * 7); RS.d = Math.round((4 + Math.random() * 6) * 2) / 2; RS.a = 40; RS.L = 14; RS.ko = false; RS.tr = Math.random() < .3; draw(); };
+  draw();
+}
+
+/* ---------- Stützen-Reihenfolge ---------- */
+const ST_STEPS = [
+  ["Aufstellplatz wählen, Schräglage prüfen", "Standfläche max. 14°. Schräglage vor dem Einschalten des Nebenantriebs an den Anzeigen (Libelle) kontrollieren, Bodenfreiheit unter dem Fahrzeug sicherstellen. (S. 88)"],
+  ["Feststellbremse einlegen", "Voraussetzung für den Abstützbetrieb. (S. 88)"],
+  ["Motor läuft, Nebenantrieb einlegen", "Schaltgetriebe: nur bei betätigtem Kupplungspedal. Automatikgetriebe müssen in Stellung Neutral stehen. (S. 88)"],
+  ["Leitersatz in der Leiterablage prüfen", "Der Leitersatz muss korrekt in der Leiterablage abgelegt sein. (S. 88)"],
+  ["Abstützung auf der ersten Seite ausfahren", "Dort beginnen, wo der Rettungseinsatz stattfindet. Bedienhebel nach aussen bewegen und halten, bis die Stützen Bodenkontakt haben; die Abstützung dabei immer beobachten (Quetschgefahr). (S. 88, 93)"],
+  ["Abstützung auf der anderen Seite ausfahren", "Bedienhebel halten: alle Stützen fahren noch einige Zentimeter weiter nach unten, die Hinterachse wird entlastet. (S. 93)"],
+  ["Bodenkontakt der Vorderräder prüfen", "Beide Vorderräder müssen ausreichend Bodenkontakt haben, Sichtprüfung; bei Bedarf Stützen einzeln ansteuern. (S. 88, 94)"],
+  ["Symbol Druckfreigabe abwarten: betriebsbereit", "Erscheint in der Bildschirmanzeige, sobald die Drehleiter betriebsbereit ist. (S. 93)"]
+];
+function stuetzenView() {
+  adlPage("adlst", "Stützen-Reihenfolge", "Tippe die Schritte zum Abstützen in der richtigen Reihenfolge an.", `<div id="stB"></div><div class="simro" id="stR" role="status"></div><div class="simchips" style="margin-top:10px"><button type="button" class="chip" id="stN">Neu mischen</button></div>
+    <p class="foot">Reihenfolge nach Betriebsanleitung L32A-XS, Kapitel 7.5 «Drehleiter abstützen» (S. 88 bis 94). Nur zur Ausbildung.</p>`);
+  const $ = id => document.getElementById(id); let order, next, err;
+  const start = () => { order = ST_STEPS.map((s, i) => i).sort(() => Math.random() - .5); next = 0; err = 0; draw(""); };
+  const draw = msg => {
+    $("stB").innerHTML = `<div class="stl">${order.slice().sort((x, y) => (x < next ? x : 99 + order.indexOf(x)) - (y < next ? y : 99 + order.indexOf(y))).map(i => `<button type="button" class="st ${i < next ? "done" : ""}" data-i="${i}" ${i < next ? "disabled" : ""}><b>${i < next ? i + 1 : "?"}</b><span>${ST_STEPS[i][0]}</span></button>`).join("")}</div>`;
+    $("stR").innerHTML = next >= ST_STEPS.length ? `<div class="simmsg ok">Geschafft! Alle ${ST_STEPS.length} Schritte in der richtigen Reihenfolge, ${err ? err + " Fehlversuch" + (err > 1 ? "e" : "") : "ohne Fehler"}.</div>` : `<div class="simrow"><span>Schritt</span><b>${next + 1} von ${ST_STEPS.length}</b></div><div class="simrow"><span>Fehlversuche</span><b class="${err ? "bad" : "ok"}">${err}</b></div>${msg || ""}`;
+    app.querySelectorAll(".st").forEach(b => b.onclick = () => { const i = +b.dataset.i; if (i === next) { next++; draw(`<div class="simmsg ok"><b>${ST_STEPS[i][0]}</b><br>${ST_STEPS[i][1]}</div>`); } else { err++; b.classList.add("wrong"); draw(`<div class="simmsg bad">Nicht der nächste Schritt. Überlege: Was kommt vor «${ST_STEPS[i][0]}»?</div>`); } });
+  };
+  $("stN").onclick = start; start();
+}
+
+/* ---------- Bedienelemente-Trainer ---------- */
+const BD_SETS = {
+  haupt: { t: "Hauptbedienstand", img: "adl-bd1.jpg", ar: "210 / 274", pts: [
+    [1, "Klappbares Dach", .62, .102, "Dach über dem Hauptbedienstand. Ausklappen: Entriegelungsknopf ziehen und halten, Dach ausklappen. Einklappen: zuerst die Bedieneinheit wegschwenken, dann Knopf halten und Dach einklappen."],
+    [2, "Entriegelungsknopf für klappbares Dach", .72, .281, "Ziehen und halten, solange das Dach aus- oder eingeklappt wird."],
+    [3, "Bedienhebel zur Steuerung des Leitersatzes", .70, .456, "Leitersatz ausfahren/einfahren, Korbarm neigen/aufrichten, Leitersatz drehen, neigen/aufrichten. Die Belegung hängt von der Fahrzeugkonfiguration ab, Schilder am Hebel zeigen die Richtung. Immer zuerst den Freigabetaster betätigen und halten, dann den Hebel bewegen."],
+    [4, "Notbetriebsklappe Leitersatzbewegungen", .47, .646, "Klappe für den Notbetrieb der Leitersatzbewegungen (S. 212 ff.). Vor dem Notbetrieb zuerst andere Fehlerquellen ausschliessen (Tank, Motor, Nebenantrieb, Notausschalter) und danach alle Notbetriebsklappen wieder korrekt schliessen."],
+    [5, "Notbetriebsklappe Rettungskorb nivellieren", .60, .657, "Klappe für den Notbetrieb zum Nivellieren des Rettungskorbs. Nach dem Notbetrieb korrekt schliessen."],
+    [6, "Taster Gegensprechanlage", .586, .865, "Steuert die Kommunikation zwischen Hauptbedienstand und Rettungskorb."],
+    [7, "Libelle", .50, .814, "Gradanzeige zur Abschätzung der Schräglage des Fahrzeugs (je eine im Fahrerhaus, am Heck und am Hauptbedienstand). Schräglage nach dem Abstützen max. 9° (7° bei über 18 t Gesamtmasse), Standfläche max. 14°."],
+    [8, "Freigabetaster Hubrettungssatz", .386, .847, "Am Boden des Hauptbedienstands, muss zu Beginn jeder Bewegung betätigt und gehalten werden. Wird er zuerst am Hauptbedienstand betätigt, ist die Steuerung im Korb ohne Funktion und umgekehrt. Loslassen während der Bewegung stoppt schlagartig, der Leitersatz kann schwingen."],
+    [9, "Bedieneinheit mit Bildschirm", .26, .328, "Einschwenken, bis optimale Sicht vorhanden ist; vor dem Einklappen des Dachs wegschwenken."],
+    [10, "Mikrofon Gegensprechanlage / Funk", .486, .263, "Schwanenhalsmikrofon zur Kommunikation mit dem Rettungskorb. Ein optionales zweites Mikrofon dient der Kommunikation über Funk."]] },
+  korb: { t: "Korbbedienstand", img: "adl-bd2.jpg", ar: "360 / 240", pts: [
+    [1, "Bedienhebel zur Steuerung des Leitersatzes", .12, .50, "Steuerung des Leitersatzes vom Korb aus, Richtungsschilder am Hebel. Funktioniert nur, wenn der Freigabetaster am Hauptbedienstand nicht zuerst betätigt wurde (der Hauptbedienstand kann die Steuerung aber übernehmen)."],
+    [2, "Mikrofon Sprechanlage", .19, .42, "Sprechverbindung zum Hauptbedienstand."],
+    [3, "Schutzabdeckung", .53, .20, "Schutzabdeckung über dem Bedienstand im Rettungskorb."],
+    [4, "Not-Halt-Schalter", .76, .46, "Not-Halt-Schalter am Bedienstand im Korb für den Notfall."],
+    [5, "Bedienhebel zur Steuerung des Leitersatzes", .78, .61, "Zweiter Bedienhebel zur Steuerung des Leitersatzes im Korb."],
+    [6, "Magnethalter", .91, .62, "Magnethalter am Bedienstand."],
+    [7, "Griffaussparung", .85, .72, "Hier den Bedienstand aus der Halterung lösen, in Arbeitsstellung bringen und einrasten lassen. Nach dem Einsatz wieder in Fahrstellung bringen; erst danach kann der Rettungskorb eingeklappt werden."],
+    [8, "RBC LCS Display 10 Zoll", .42, .58, "Bildschirm des Bedienstands im Rettungskorb."]] }
+};
+const BD = { set: "haupt", mode: "lern", sel: null, q: null, ok: 0, tot: 0 };
+function bedienView() {
+  adlPage("adlbd", "Bedienelemente-Trainer", "Tippe auf ein Element: Name und Funktion erscheinen. Oder prüfe dich selbst.", `
+    <div class="simchips" id="bds" style="margin-bottom:8px"></div><div class="simchips" id="bdm" style="margin-bottom:10px"></div>
+    <div class="bdw" id="bdw"></div><div class="simro" id="bdr" role="status"></div>
+    <p class="foot">Bilder und Beschreibungen aus der Betriebsanleitung L32A-XS: 7.6.1 Aufbau des Hauptbedienstands (S. 105 bis 108), 7.7.3 Bedienstand im Rettungskorb (S. 149/150), Notbetrieb 7.16 (S. 212 ff.). Nur zur Ausbildung.</p>`);
+  const $ = id => document.getElementById(id);
+  const ask = () => { const pts = BD_SETS[BD.set].pts; BD.q = pts[Math.floor(Math.random() * pts.length)]; };
+  const draw = () => {
+    const S = BD_SETS[BD.set];
+    $("bds").innerHTML = Object.keys(BD_SETS).map(k => `<button type="button" class="chip ${BD.set === k ? "on" : ""}" data-s="${k}">${BD_SETS[k].t}</button>`).join("");
+    $("bdm").innerHTML = [["lern", "Lernen"], ["pruef", "Prüfen"]].map(m => `<button type="button" class="chip ${BD.mode === m[0] ? "on" : ""}" data-m="${m[0]}">${m[1]}</button>`).join("");
+    $("bdw").style.aspectRatio = S.ar;
+    $("bdw").innerHTML = `<img src="${S.img}" alt="${S.t}">` + S.pts.map(p => `<button type="button" class="hs ${BD.mode === "lern" && BD.sel === p ? "on" : ""}" data-p="${p[0]}" style="left:${p[2] * 100}%;top:${p[3] * 100}%" aria-label="${p[1]}">${BD.mode === "lern" ? p[0] : ""}</button>`).join("");
+    if (BD.mode === "lern") $("bdr").innerHTML = BD.sel ? `<div class="simrow"><span>Nr. ${BD.sel[0]}</span><b>${BD.sel[1]}</b></div><div class="simmsg ok" style="font-weight:600">${BD.sel[4]}</div>` : `<div class="sinfo">Tippe auf eine Nummer im Bild.</div>`;
+    else { if (!BD.q || !S.pts.includes(BD.q)) ask(); $("bdr").innerHTML = `<div class="simrow"><span>Wo ist …</span><b>${BD.q[1]}</b></div><div class="simrow"><span>Treffer</span><b>${BD.ok} von ${BD.tot}</b></div><div id="bdf"></div>`; }
+    app.querySelectorAll("[data-s]").forEach(b => b.onclick = () => { BD.set = b.dataset.s; BD.sel = null; BD.q = null; draw(); });
+    app.querySelectorAll("[data-m]").forEach(b => b.onclick = () => { BD.mode = b.dataset.m; BD.sel = null; BD.q = null; BD.ok = 0; BD.tot = 0; draw(); });
+    app.querySelectorAll(".hs").forEach(b => b.onclick = () => {
+      const p = S.pts.find(x => x[0] === +b.dataset.p);
+      if (BD.mode === "lern") { BD.sel = p; draw(); return; }
+      BD.tot++; const right = p === BD.q; if (right) BD.ok++; const prev = BD.q; ask(); draw();
+      $("bdf").innerHTML = right ? `<div class="simmsg ok">Richtig: ${prev[1]}.</div>` : `<div class="simmsg bad">Nicht ganz: «${p[1]}». Gesucht war «${prev[1]}» (Nr. ${prev[0]}).</div>`;
+    });
+  };
+  draw();
 }
