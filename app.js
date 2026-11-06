@@ -1,4 +1,4 @@
-const APP_VERSION = "1.162";
+const APP_VERSION = "1.163";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -813,7 +813,7 @@ function adlView() {
   app.innerHTML = `<section class="hero"><h1>Autodrehleiter</h1><p>Anleitungen zur Drehleiter L32A-XS der Feuerwehr Zuchwil.</p></section>
     <div class="menu rgmenu">
       <button class="mbtn main pdfbtn" id="adlsim"><span>Drehleiter-Simulator</span><small>Ausladung, Personen, Zuladungsreserve interaktiv</small></button>
-      <button class="mbtn main pdfbtn" id="adljoy"><span>Joistik Training</span><small>3D-Simulator: Bedienhebel der Drehleiter üben</small></button>
+      <button class="mbtn main pdfbtn" id="adljoy"><span>Joystick Training</span><small>3D-Simulator: Bedienhebel der Drehleiter üben</small></button>
       <button class="mbtn main pdfbtn" id="adlmas"><span>Drehleiter Masse</span><small>Abstützbreite und Wandabstand</small></button>
       <button class="mbtn main pdfbtn" id="adlpdf"><span>Betriebsanleitung L32A-XS</span><small>PDF · ${RGDEF.adl.pages} S.</small></button>
       <button class="mbtn main pdfbtn" id="adlpdf2"><span>Einweisungsunterlage</span><small>PDF · ${RGDEF.adl2.pages} S. · Kurzfassung zum Lernen</small></button>
@@ -821,16 +821,16 @@ function adlView() {
     <p class="foot">Unterlagen des Herstellers Rosenbauer, Ausgabe 12/2022, nur zur internen Verwendung.</p>`;
   document.getElementById("adlsim").onclick = () => simView();
   document.getElementById("adlmas").onclick = () => masseView();
-  document.getElementById("adljoy").onclick = () => joistikView();
+  document.getElementById("adljoy").onclick = () => joystickView();
   document.getElementById("adlpdf").onclick = () => { state.pdfBack = () => adlView(); rgView("adl"); };
   document.getElementById("adlpdf2").onclick = () => { state.pdfBack = () => adlView(); rgView("adl2"); };
   window.scrollTo(0, 0);
 }
-/* Joistik Training: 3D-Hebel-Simulator (eigene Seite joistik.html im Rahmen) */
-function joistikView() {
+/* Joystick Training: 3D-Hebel-Simulator (eigene Seite joystick.html im Rahmen) */
+function joystickView() {
   document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
-  state.mod = null; state.sub = null; state.view = "joistik"; backBtn.hidden = false;
-  app.innerHTML = '<iframe id="joyf" title="Joistik Training" src="joistik.html?v=' + APP_VERSION + '" allow="fullscreen" style="position:fixed;left:0;right:0;bottom:0;border:0;width:100%;background:#0f1216"></iframe>';
+  state.mod = null; state.sub = null; state.view = "joystick"; backBtn.hidden = false;
+  app.innerHTML = '<iframe id="joyf" title="Joystick Training" src="joystick.html?v=' + APP_VERSION + '" allow="fullscreen" style="position:fixed;left:0;right:0;bottom:0;border:0;width:100%;background:#0f1216"></iframe>';
   const fit = () => { const f = document.getElementById("joyf"); if (!f) return; const t = Math.ceil(document.querySelector(".top").getBoundingClientRect().bottom); f.style.top = t + "px"; f.style.height = (window.innerHeight - t) + "px"; };
   fit(); window.addEventListener("resize", fit, { once: true }); window.scrollTo(0, 0);
 }
@@ -1296,7 +1296,7 @@ async function lektionen(m, el) {
   });
 }
 
-backBtn.addEventListener("click", () => { if (state.view === "games") { if (state.gm) gamesView(); else { gmStop(); start(); } return; } if (state.view === "les" && state.lc === "v" && state.vorHome) { state.vorHome = false; state.lc = null; start(); return; } if (state.view === "les" && (state.lc === "vl" || state.lc === "vn")) { state.lc = "v"; lesView(); window.scrollTo(0, 0); return; } if (state.view === "sub" && !state.mod) { home(); return; } if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "sim") { adlView(); return; } if (["masse", "joistik"].includes(state.view)) { adlView(); return; } if (state.view === "adl" || state.view === "gq" || state.view === "sgv" || state.view === "spick") { (state.sub ? subView(state.sub) : home()); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else (state.sub ? subView(state.sub) : home()); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) (state.sub ? subView(state.sub) : home()); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
+backBtn.addEventListener("click", () => { if (state.view === "games") { if (state.gm) gamesView(); else { gmStop(); start(); } return; } if (state.view === "les" && state.lc === "v" && state.vorHome) { state.vorHome = false; state.lc = null; start(); return; } if (state.view === "les" && (state.lc === "vl" || state.lc === "vn")) { state.lc = "v"; lesView(); window.scrollTo(0, 0); return; } if (state.view === "sub" && !state.mod) { home(); return; } if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "sim") { adlView(); return; } if (["masse", "joystick"].includes(state.view)) { adlView(); return; } if (state.view === "adl" || state.view === "gq" || state.view === "sgv" || state.view === "spick") { (state.sub ? subView(state.sub) : home()); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else (state.sub ? subView(state.sub) : home()); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) (state.sub ? subView(state.sub) : home()); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
 /* ---------- Anmeldepflicht ---------- */
 let gateOffline = false;
 function gateNeeded() { return !!FWZ.enabled && !FWZ.user && !gateOffline; }
