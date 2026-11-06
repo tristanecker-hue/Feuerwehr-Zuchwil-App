@@ -1,4 +1,4 @@
-const APP_VERSION = "1.164";
+const APP_VERSION = "1.165";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -987,12 +987,12 @@ function masseView() {
         if (f === 0) wall += `<rect x="${wx}" y="${y0 - 3}" width="${hw}" height="3" fill="#8d8680"/>`;
         if (hw > 60) wall += `<text x="334" y="${y0 - 3}" text-anchor="end" font-size="6.5" fill="#6b645d">${f === 0 ? "Erdgeschoss" : f + ". Stock"}</text>`;
       }
-      const px = X(MS_P.x), py = Y(MS_P.h), tx = X(sel.tx), ty = Y(sel.th), d = (sel.a - sel.b) * Math.PI / 180, kx = tx + MS_KA * U * Math.cos(d) * 1, ky = ty - MS_KA * U * Math.sin(d), cxp = X(sel.x) - .85 * U, cyp = ky + 1 * U;
+      const px = X(MS_P.x), py = Y(MS_P.h), tx = X(sel.tx), ty = Y(sel.th), d = (sel.a - sel.b) * Math.PI / 180, cx0 = tx, cy0 = ty - .35 * U;
       const lx = X(MS_P.x + sel.L * Math.cos(sel.a * Math.PI / 180)), ly = Y(MS_P.h + sel.L * Math.sin(sel.a * Math.PI / 180));
-      g += wall + adlLadder(px, py, sel.a, sel.L, U) + `${adlArm(lx, ly, tx, ty, U)}<line x1="${tx}" y1="${ty}" x2="${cxp - .85 * U}" y2="${cyp - 1.15 * U + 2}" stroke="#23262b" stroke-width="3" stroke-linecap="round"/><circle cx="${lx}" cy="${ly}" r="2.4" fill="#fff" stroke="#23262b" stroke-width="1.2"/><circle cx="${tx}" cy="${ty}" r="2.4" fill="#fff" stroke="#23262b" stroke-width="1.2"/>
-        <rect x="${cxp - .85 * U}" y="${cyp - 1.15 * U}" width="${1.7 * U}" height="${1.15 * U}" rx="2" fill="#fff" fill-opacity=".6" stroke="#23262b" stroke-width="1.3"/><rect x="${cxp + .85 * U - 4}" y="${cyp - 1.15 * U}" width="4" height="${1.15 * U}" fill="#c8161d"/>
+      g += wall + adlLadder(px, py, sel.a, sel.L, U) + `${adlArm(lx, ly, tx, ty, U)}<circle cx="${lx}" cy="${ly}" r="2.4" fill="#fff" stroke="#23262b" stroke-width="1.2"/><circle cx="${tx}" cy="${ty}" r="2.4" fill="#fff" stroke="#23262b" stroke-width="1.2"/>
+        <rect x="${cx0}" y="${cy0}" width="${1.4 * U}" height="${1.35 * U}" rx="2" fill="#fff" fill-opacity=".6" stroke="#23262b" stroke-width="1.3"/><rect x="${cx0 + 1.4 * U - 4}" y="${cy0}" width="4" height="${1.35 * U}" fill="#c8161d"/>
         <line x1="${wx}" y1="${gy}" x2="${wx}" y2="${gy + 22}" stroke="#2f7d4f" stroke-dasharray="3 2"/>` + tick(X(0), wx, gy + 20, f1(sel.x) + " m", "#2f7d4f");
-      g += `<line x1="8" y1="${Y(H)}" x2="${cxp - .85 * U}" y2="${Y(H)}" stroke="#c8161d" stroke-dasharray="3 3" opacity=".6"/><text x="10" y="${Y(H) - 3}" font-size="9" fill="#c8161d">${f1(H)} m</text>`;
+      g += `<line x1="8" y1="${Y(H)}" x2="${cx0}" y2="${Y(H)}" stroke="#c8161d" stroke-dasharray="3 3" opacity=".6"/><text x="10" y="${Y(H) - 3}" font-size="9" fill="#c8161d">${f1(H)} m</text>`;
     }
     $("msC").innerHTML = g;
     $("msCr").innerHTML = sel ? `<div class="simrow"><span>Korb auf Höhe</span><b>${(f => f ? f + ". Stock" : "Erdgeschoss")(Math.floor(MS.H / 3))}</b></div><div class="simrow"><span>Min. Abstand Drehachse – Wand</span><b>${f1(sel.x)} m</b></div><div class="simrow"><span>Mit 1 m Sicherheitsabstand</span><b>${f1(sel.x + 1)} m</b></div><div class="simrow"><span>Aufrichtewinkel · Auszug</span><b>${Math.round(sel.a)}° · ${f1(sel.L)} m</b></div><div class="simrow"><span>Korbarm zum Leitersatz</span><b>${Math.round(sel.b)}°${sel.b ? "" : " (gestreckt)"}</b></div>${bg && bs && bs.x - bg.x > .05 ? `<div class="simmsg ok">Mit Gelenkarm ${f1(bs.x - bg.x)} m näher an die Wand als mit gestrecktem Korbarm (${f1(bs.x)} m).</div>` : `<div class="simmsg ok">Auf dieser Höhe bringt der Gelenkarm keinen Vorteil.</div>`}` : `<div class="simmsg bad">Diese Einsatzhöhe ist mit den Leitergrenzen (Auszug 12–28,4 m, Winkel bis 76°) nicht erreichbar.</div>`;
