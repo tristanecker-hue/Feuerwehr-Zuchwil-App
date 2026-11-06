@@ -1,4 +1,4 @@
-const APP_VERSION = "1.161";
+const APP_VERSION = "1.162";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -813,6 +813,7 @@ function adlView() {
   app.innerHTML = `<section class="hero"><h1>Autodrehleiter</h1><p>Anleitungen zur Drehleiter L32A-XS der Feuerwehr Zuchwil.</p></section>
     <div class="menu rgmenu">
       <button class="mbtn main pdfbtn" id="adlsim"><span>Drehleiter-Simulator</span><small>Ausladung, Personen, Zuladungsreserve interaktiv</small></button>
+      <button class="mbtn main pdfbtn" id="adljoy"><span>Joistik Training</span><small>3D-Simulator: Bedienhebel der Drehleiter üben</small></button>
       <button class="mbtn main pdfbtn" id="adlmas"><span>Drehleiter Masse</span><small>Abstützbreite und Wandabstand</small></button>
       <button class="mbtn main pdfbtn" id="adlpdf"><span>Betriebsanleitung L32A-XS</span><small>PDF · ${RGDEF.adl.pages} S.</small></button>
       <button class="mbtn main pdfbtn" id="adlpdf2"><span>Einweisungsunterlage</span><small>PDF · ${RGDEF.adl2.pages} S. · Kurzfassung zum Lernen</small></button>
@@ -820,9 +821,18 @@ function adlView() {
     <p class="foot">Unterlagen des Herstellers Rosenbauer, Ausgabe 12/2022, nur zur internen Verwendung.</p>`;
   document.getElementById("adlsim").onclick = () => simView();
   document.getElementById("adlmas").onclick = () => masseView();
+  document.getElementById("adljoy").onclick = () => joistikView();
   document.getElementById("adlpdf").onclick = () => { state.pdfBack = () => adlView(); rgView("adl"); };
   document.getElementById("adlpdf2").onclick = () => { state.pdfBack = () => adlView(); rgView("adl2"); };
   window.scrollTo(0, 0);
+}
+/* Joistik Training: 3D-Hebel-Simulator (eigene Seite joistik.html im Rahmen) */
+function joistikView() {
+  document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
+  state.mod = null; state.sub = null; state.view = "joistik"; backBtn.hidden = false;
+  app.innerHTML = '<iframe id="joyf" title="Joistik Training" src="joistik.html?v=' + APP_VERSION + '" allow="fullscreen" style="position:fixed;left:0;right:0;bottom:0;border:0;width:100%;background:#0f1216"></iframe>';
+  const fit = () => { const f = document.getElementById("joyf"); if (!f) return; const t = Math.ceil(document.querySelector(".top").getBoundingClientRect().bottom); f.style.top = t + "px"; f.style.height = (window.innerHeight - t) + "px"; };
+  fit(); window.addEventListener("resize", fit, { once: true }); window.scrollTo(0, 0);
 }
 /* Zuchwil-Drehleiter (Seitenansicht) nach Fahrzeugvorlage: ox/oy = Pixelposition der Drehachse am Boden, kk = Pixel pro Vorlageneinheit */
 function adlTruck(ox, oy, kk) {
@@ -911,8 +921,14 @@ function simView() {
   app.querySelectorAll("[data-p]").forEach(b => b.onclick = () => { const p = b.dataset.p; if (p === "h") { SIM.a = 76; SIM.L = 28.4; } else if (p === "r") { SIM.a = 5; SIM.L = 28.4; } else { SIM.a = 0; SIM.L = 14; } draw(); });
   draw(); window.scrollTo(0, 0);
 }
+/* Korbarm als Gitterteil (wie ein Leiterteil), von der Leiterspitze (x1,y1) zum Armende (x2,y2) */
+function adlArm(x1, y1, x2, y2, U) {
+  const L = Math.hypot(x2 - x1, y2 - y1) / U, ang = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI, h = .46, n = Math.max(3, Math.round(L / (h * 1.05))), w = L / n;
+  let d = `M0 ${-h / 2}`; for (let q = 0; q < n; q++) d += ` L${w * (q + .5)} ${h / 2} L${w * (q + 1)} ${-h / 2}`;
+  return `<g transform="translate(${x1} ${y1}) rotate(${ang}) scale(${U})"><rect x="0" y="${-h / 2}" width="${L}" height="${h}" fill="none" stroke="#23262b" stroke-width="${2.4 / U}"/><path d="${d}" fill="none" stroke="#23262b" stroke-width="${1.2 / U}"/></g>`;
+}
 /* Drehleiter Masse L32A-XS: Abstützbreite, minimaler Wandabstand (Gelenkarm) */
-const MS = { w: 4.8, H: 15, ko: true, ov: 4.4 }, MS_P = { x: -2.14, h: 3.73 }, MS_KA = 1.5;
+const MS = { w: 4.8, H: 15, ko: true, ov: 4.4 }, MS_P = { x: -2.14, h: 3.73 }, MS_KA = 3.6;
 function masseMin(H, free) {
   let best = null; const R = Math.PI / 180;
   for (let a = -20; a <= 76; a += .5) for (let L = 12; L <= 28.4; L += .2) for (let b = 0; b <= (free ? 75 : 0); b += 2.5) {
@@ -973,7 +989,7 @@ function masseView() {
       }
       const px = X(MS_P.x), py = Y(MS_P.h), tx = X(sel.tx), ty = Y(sel.th), d = (sel.a - sel.b) * Math.PI / 180, kx = tx + MS_KA * U * Math.cos(d) * 1, ky = ty - MS_KA * U * Math.sin(d), cxp = X(sel.x) - .85 * U, cyp = ky + 1 * U;
       const lx = X(MS_P.x + sel.L * Math.cos(sel.a * Math.PI / 180)), ly = Y(MS_P.h + sel.L * Math.sin(sel.a * Math.PI / 180));
-      g += wall + adlLadder(px, py, sel.a, sel.L, U) + `<line x1="${lx}" y1="${ly}" x2="${tx}" y2="${ty}" stroke="#23262b" stroke-width="3" stroke-linecap="round"/><line x1="${tx}" y1="${ty}" x2="${cxp - .85 * U}" y2="${cyp - 1.15 * U + 2}" stroke="#23262b" stroke-width="3" stroke-linecap="round"/><circle cx="${lx}" cy="${ly}" r="2.4" fill="#fff" stroke="#23262b" stroke-width="1.2"/><circle cx="${tx}" cy="${ty}" r="2.4" fill="#fff" stroke="#23262b" stroke-width="1.2"/>
+      g += wall + adlLadder(px, py, sel.a, sel.L, U) + `${adlArm(lx, ly, tx, ty, U)}<line x1="${tx}" y1="${ty}" x2="${cxp - .85 * U}" y2="${cyp - 1.15 * U + 2}" stroke="#23262b" stroke-width="3" stroke-linecap="round"/><circle cx="${lx}" cy="${ly}" r="2.4" fill="#fff" stroke="#23262b" stroke-width="1.2"/><circle cx="${tx}" cy="${ty}" r="2.4" fill="#fff" stroke="#23262b" stroke-width="1.2"/>
         <rect x="${cxp - .85 * U}" y="${cyp - 1.15 * U}" width="${1.7 * U}" height="${1.15 * U}" rx="2" fill="#fff" fill-opacity=".6" stroke="#23262b" stroke-width="1.3"/><rect x="${cxp + .85 * U - 4}" y="${cyp - 1.15 * U}" width="4" height="${1.15 * U}" fill="#c8161d"/>
         <line x1="${wx}" y1="${gy}" x2="${wx}" y2="${gy + 22}" stroke="#2f7d4f" stroke-dasharray="3 2"/>` + tick(X(0), wx, gy + 20, f1(sel.x) + " m", "#2f7d4f");
       g += `<line x1="8" y1="${Y(H)}" x2="${cxp - .85 * U}" y2="${Y(H)}" stroke="#c8161d" stroke-dasharray="3 3" opacity=".6"/><text x="10" y="${Y(H) - 3}" font-size="9" fill="#c8161d">${f1(H)} m</text>`;
@@ -1280,7 +1296,7 @@ async function lektionen(m, el) {
   });
 }
 
-backBtn.addEventListener("click", () => { if (state.view === "games") { if (state.gm) gamesView(); else { gmStop(); start(); } return; } if (state.view === "les" && state.lc === "v" && state.vorHome) { state.vorHome = false; state.lc = null; start(); return; } if (state.view === "les" && (state.lc === "vl" || state.lc === "vn")) { state.lc = "v"; lesView(); window.scrollTo(0, 0); return; } if (state.view === "sub" && !state.mod) { home(); return; } if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "sim") { adlView(); return; } if (["masse"].includes(state.view)) { adlView(); return; } if (state.view === "adl" || state.view === "gq" || state.view === "sgv" || state.view === "spick") { (state.sub ? subView(state.sub) : home()); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else (state.sub ? subView(state.sub) : home()); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) (state.sub ? subView(state.sub) : home()); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
+backBtn.addEventListener("click", () => { if (state.view === "games") { if (state.gm) gamesView(); else { gmStop(); start(); } return; } if (state.view === "les" && state.lc === "v" && state.vorHome) { state.vorHome = false; state.lc = null; start(); return; } if (state.view === "les" && (state.lc === "vl" || state.lc === "vn")) { state.lc = "v"; lesView(); window.scrollTo(0, 0); return; } if (state.view === "sub" && !state.mod) { home(); return; } if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "sim") { adlView(); return; } if (["masse", "joistik"].includes(state.view)) { adlView(); return; } if (state.view === "adl" || state.view === "gq" || state.view === "sgv" || state.view === "spick") { (state.sub ? subView(state.sub) : home()); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else (state.sub ? subView(state.sub) : home()); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) (state.sub ? subView(state.sub) : home()); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
 /* ---------- Anmeldepflicht ---------- */
 let gateOffline = false;
 function gateNeeded() { return !!FWZ.enabled && !FWZ.user && !gateOffline; }
