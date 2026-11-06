@@ -1,4 +1,4 @@
-const APP_VERSION = "1.165";
+const APP_VERSION = "1.166";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -869,7 +869,7 @@ function simView() {
       <div class="simg"><span>Zuladungsreserve wählen</span><div id="simres" class="simchips"></div></div>
       <div class="simg"><span>Personen im Korb</span><div id="simn" class="simchips"></div></div>
       <div class="simg"><span>Zusatz · Schnellwahl</span><div class="simchips"><button type="button" class="chip" id="simtr">Trage +50 kg</button><button type="button" class="chip" data-p="h">Max. Höhe</button><button type="button" class="chip" data-p="r">Max. Ausl.</button><button type="button" class="chip" data-p="t">Ablage</button></div></div></div>
-    <p class="foot">Prinzipdarstellung nach dem Ausladungsdiagramm der Betriebsanleitung (S. 260), aus dem Diagramm abgelesen und gerundet; volle Abstützbreite. Pro Person werden 100 kg gerechnet (500 kg / 5 Personen). Nur zur Ausbildung, nicht für den Einsatz. Massgebend ist immer die Anzeige am Fahrzeug.</p>`;
+    <p class="foot">Der Korbarm (3,6 m, gestreckt) ist Teil des Auszugs. Prinzipdarstellung nach dem Ausladungsdiagramm der Betriebsanleitung (S. 260), aus dem Diagramm abgelesen und gerundet; volle Abstützbreite. Pro Person werden 100 kg gerechnet (500 kg / 5 Personen). Nur zur Ausbildung, nicht für den Einsatz. Massgebend ist immer die Anzeige am Fahrzeug.</p>`;
   const P0 = { x: -2.14, h: 3.73 }, CX = .6, CY = -1.0, X = x => 81 + 9 * x, Y = h => 300 - 9 * h, $ = id => document.getElementById(id);
   const PIC = (m) => `<svg class="pic ${m}" viewBox="0 0 12 22" aria-hidden="true"><circle cx="6" cy="3.4" r="2.7"/><path d="M2.4 7.4h7.2a1.4 1.4 0 0 1 1.4 1.4v6.2H9.2v6.6H6.9V16H5.1v5.6H2.8V15H1V8.8a1.4 1.4 0 0 1 1.4-1.4z"/></svg>`;
   const resList = [["4", 1], ["3", 2], ["2", 3], ["1", 4]];
@@ -896,7 +896,7 @@ function simView() {
     const U = 9, kk = 9 / 81.6, trk = adlTruck(X(0), Y(0), kk);
     const px = X(P0.x), py = Y(P0.h), tx = X(k.tx), ty = Y(k.th), e = k.L - 12, H = [1.5, 1.25, 1.05, .85], st = [0, 1 + e / 3, 2 + 2 * e / 3, 3 + e], ln0 = [9.5, 9, 9, 9];
     const truss = (s0, l, h, i) => { const n = Math.max(3, Math.round(l / (h * 1.05))), w = l / n; let d = `M${s0} ${-h / 2}`; for (let q = 0; q < n; q++) d += ` L${s0 + w * (q + .5)} ${h / 2} L${s0 + w * (q + 1)} ${-h / 2}`; return `<rect x="${s0}" y="${-h / 2}" width="${l}" height="${h}" fill="none" stroke="#2a2d33" stroke-width=".2"/><path d="${d}" fill="none" stroke="#5b5f66" stroke-width=".09"/>`; };
-    const ladder = `<g transform="translate(${px} ${py}) rotate(${-SIM.a}) scale(${U})">${st.map((s0, i) => truss(s0, ln0[i], H[i], i)).join("")}</g><circle cx="${px}" cy="${py}" r="2.2" fill="#c9ccd1" stroke="#23262b" stroke-width="1"/>`;
+    const ladder = `<g transform="translate(${px} ${py}) rotate(${-SIM.a}) scale(${U})"><g transform="scale(${(k.L - MS_KA) / k.L} 1)">${st.map((s0, i) => truss(s0, ln0[i], H[i], i)).join("")}</g>${truss(k.L - MS_KA, MS_KA, .46, 0)}<circle cx="${k.L - MS_KA}" cy="0" r=".2" fill="#fff" stroke="#23262b" stroke-width=".1"/><circle cx="${k.L}" cy="0" r=".2" fill="#fff" stroke="#23262b" stroke-width=".1"/></g><circle cx="${px}" cy="${py}" r="2.2" fill="#c9ccd1" stroke="#23262b" stroke-width="1"/>`;
     const cxp = X(k.fx), cyp = Y(k.fh), cw = U * 1.7, chh = U * 1.15, pc = ["#23262b", "#2b3a55", "#3b3f46", "#23262b", "#2b3a55"];
     const cage = `<g><polyline points="${tx},${ty} ${cxp - cw / 2 - 1},${Y(k.fh + 1.3)} ${cxp - cw / 2},${Y(k.fh + 1.1)}" fill="none" stroke="#23262b" stroke-width="1.6" stroke-linejoin="round"/>${SIM.tr ? `<g><rect x="${cxp - cw / 2 - 3}" y="${cyp - U * .5}" width="${cw + 14}" height="3" rx="1.5" fill="#fff" stroke="#23262b" stroke-width=".9"/><line x1="${cxp + cw / 2 + 11}" y1="${cyp - U * .5 - 2}" x2="${cxp + cw / 2 + 11}" y2="${cyp - U * .5 + 3}" stroke="#23262b" stroke-width=".9"/><path d="M${cxp - cw / 2 + 2} ${cyp - U * .5 - 1} h${cw + 6}" stroke="#c8161d" stroke-width="1.2" stroke-dasharray="2 2"/></g>` : ""}
       ${Array.from({ length: SIM.n }, (_, i) => { const hx = cxp - cw / 2 + 6 + i * (cw - 10) / 4; return `<rect x="${hx - 2}" y="${cyp - U * 1.55}" width="4" height="${U * 1.3}" rx="1.6" fill="${pc[i]}"/><circle cx="${hx}" cy="${cyp - U * 1.7}" r="2.2" fill="#f0c9a4"/><path d="M${hx - 2.5} ${cyp - U * 1.75} a2.5 2.5 0 0 1 5 0 z" fill="${reserveOk ? "#c8161d" : "#ffd54a"}"/>`; }).join("")}
