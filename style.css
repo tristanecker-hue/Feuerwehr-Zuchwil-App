@@ -627,3 +627,5 @@ html.dv .adlf{align-content:start}html.dv .adlf+.foot{max-width:none}
 /* Autodrehleiter: Szene, Stützen-Ablauf, Bedienelemente-Trainer */
 .rgmenu .pdfbtn small{white-space:normal;text-align:left}
 
+
+#rgqr .sres{max-height:42vh;overflow:auto}
