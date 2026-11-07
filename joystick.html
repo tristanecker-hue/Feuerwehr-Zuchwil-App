@@ -193,7 +193,7 @@ function exitStep(dt,now){if(!task||!task.done)return;
  if(!task.out){cage.updateWorldMatrix(true,false);const fl=cage.localToWorld(new THREE.Vector3(CDX/2,-1,0));if(fl.y>.45)return;const wp=new THREE.Vector3();vic2.getWorldPosition(wp);cage.remove(vic2);W.add(vic2);vic2.rotation.set(0,0,0);vic2.position.set(wp.x-W.position.x,.64,wp.z);task.out={t:0,x0:vic2.position.x,z0:vic2.position.z}}
  const o=task.out;o.t+=dt;const u=Math.min(1,o.t/5),z1=7.4,x1=o.x0+4;vic2.position.x=o.x0+(x1-o.x0)*u;vic2.position.z=o.z0+(z1-o.z0)*u;const sw=u<1?Math.sin(o.t*9)*.6:0;vic2.children[3].rotation.x=sw;vic2.children[4].rotation.x=-sw;vic2.position.y=.64+(u<1?Math.abs(Math.sin(o.t*9))*.04:0);vic2.children[5].rotation.z=2.9-(u<1?.3*sw:0);vic2.children[6].rotation.z=-2.9+(u<1?.3*sw:0)}
 function victimStep(now){const done=task&&task.done,w=Math.sin(now/170);vic.arms.forEach((p,i)=>{p.rotation.z=(i?-1:1)*(done?2.9:.55+.4*w*(i?-1:1))});if(!(done&&task.out))bubS.visible=true;bubS.material.map=done?bubOk:bubMap;if(done){if(task.out){bubS.position.set(vic2.position.x,vic2.position.y+1.5,vic2.position.z);bubS.visible=task.out.t<7}else{cage.updateWorldMatrix(true,false);const q=cage.localToWorld(new THREE.Vector3(.9,1.5,.3));bubS.position.set(q.x-W.position.x,q.y,q.z)}}else bubS.position.set(vic.position.x+.2,vic.position.y+2.05+.05*Math.sin(now/120),vic.position.z)}
-let auto=false;let T=new THREE.Vector3(),Th=new THREE.Vector3(),task=null;const drv={in:0,v:0,ok:true};
+let auto=false,dm=1.75;let T=new THREE.Vector3(),Th=new THREE.Vector3(),task=null;const drv={in:0,v:0,ok:true};
 /* Zustand */
 const L={yaw:0,pitch:2,len:8.5,arm:0,ax:0}, V={yaw:0,pitch:0,len:0,arm:0};
 const lights={bl:true,wb:false},LIFT=4,LIM={pitch:[-17,75],len:[8.5,30.5],arm:[-75,0]}, RATE={yaw:11,pitch:7,len:1.5,arm:20};
@@ -291,7 +291,7 @@ if(auto){if(moving||!fr.on||!ok){auto=false;warn("Korbeinstieg abgebrochen")}els
  /* Kamera */
  const CW=cv.clientWidth,H2=cv.clientHeight;if(cv.width!==CW*R.getPixelRatio()||cv.height!==H2*R.getPixelRatio()){R.setSize(CW,H2,false);cam.aspect=CW/H2;cam.updateProjectionMatrix()}
  const fv=view==="ov"?50:50*look.z;if(Math.abs(cam.fov-fv)>.01){cam.fov=fv;cam.updateProjectionMatrix()}
- if(view==="ov"){const c=new THREE.Vector3((P.x+ax.x)/2-1,Math.max(3.5,(P.y+3)/2),(P.z+ax.z)/2+1);cc.lerp(c,Math.min(1,dt*3));const d=orb0.d*(.7+reach/45);cam.position.set(cc.x+Math.cos(orb0.e)*Math.sin(orb0.a)*d,Math.max(1,cc.y+Math.sin(orb0.e)*d),cc.z+Math.cos(orb0.e)*Math.cos(orb0.a)*d);cam.lookAt(cc)}
+ if(view==="ov"){const c=new THREE.Vector3((P.x+ax.x)/2-1,Math.max(3.5,(P.y+3)/2),(P.z+ax.z)/2+1);cc.lerp(c,Math.min(1,dt*3));dm+=((drv.ok?1.75:1)-dm)*Math.min(1,dt*1.5);const d=orb0.d*(.7+reach/45)*dm;cam.position.set(cc.x+Math.cos(orb0.e)*Math.sin(orb0.a)*d,Math.max(1,cc.y+Math.sin(orb0.e)*d),cc.z+Math.cos(orb0.e)*Math.cos(orb0.a)*d);cam.lookAt(cc)}
  else if(view==="free"){}
  else if(view==="st"){const p=new THREE.Vector3(.4,3.1,.6);tt.localToWorld(p);const q=new THREE.Vector3(14,4.6,0);tt.localToWorld(q);cam.position.copy(p);cam.lookAt(q);lk()}
  else{const p=new THREE.Vector3(.5,-.1,0);cage.localToWorld(p);const q=new THREE.Vector3(6,-.9,0);cage.localToWorld(q);cam.position.copy(p);cam.lookAt(q);lk()}
