@@ -20,7 +20,7 @@ button{font:inherit;color:var(--ink);cursor:pointer}
 .task.done{border-color:var(--grn)}.task .t{color:var(--grn);font-weight:700}
 .msg{position:fixed;left:50%;transform:translateX(-50%);top:46%;background:#000b;border:1px solid var(--amb);color:var(--amb);padding:8px 16px;border-radius:10px;font-size:19px;font-weight:600;opacity:0;transition:opacity .2s;pointer-events:none;text-align:center;max-width:90%}
 .msg.on{opacity:1}
-.dock{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:space-between;align-items:flex-end;gap:8px;padding:12px 16px calc(14px + env(safe-area-inset-bottom,0px))}
+.dock.off{display:none}.dock{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:space-between;align-items:flex-end;gap:8px;padding:12px 16px calc(14px + env(safe-area-inset-bottom,0px))}
 .lv{display:flex;flex-direction:column;align-items:center;gap:4px}
 .lv small{color:var(--mut);font-size:14px;letter-spacing:.08em;text-transform:uppercase}
 .plate{position:relative;width:min(40vw,176px);aspect-ratio:1;background:#0a0c10;border:1px solid var(--line);border-radius:16px}
@@ -28,7 +28,7 @@ button{font:inherit;color:var(--ink);cursor:pointer}
 .plate .u{top:6px;left:29%}.plate .d{bottom:6px;left:29%}.plate .l{left:5px;top:38%;width:27%;text-align:left}.plate .r{right:5px;top:38%;width:27%;text-align:right}
 .knob{position:absolute;left:50%;top:50%;width:36%;height:36%;margin:-18% 0 0 -18%;border-radius:50%;background:radial-gradient(circle at 35% 30%,#7e8996,#2c333c 70%);border:2px solid #0006;box-shadow:0 6px 14px #0008;touch-action:none;cursor:grab}
 .plate::before,.plate::after{content:"";position:absolute;background:#ffffff22}.plate::before{left:50%;top:22%;bottom:22%;width:1px}.plate::after{top:50%;left:22%;right:22%;height:1px}
-.drive{position:fixed;left:50%;transform:translateX(-50%);bottom:min(54vw,250px);display:flex;gap:12px;z-index:4}.drive.off{display:none}.drive button{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:0 22px;min-height:50px;font-size:19px;font-weight:700;letter-spacing:.04em;touch-action:none;-webkit-user-select:none}.drive button.on{background:var(--grn);border-color:var(--grn)}
+.drive{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(36px + env(safe-area-inset-bottom,0px));display:flex;gap:16px;z-index:4}.drive.off{display:none}.drive button{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:0 26px;min-height:68px;min-width:130px;font-size:21px;font-weight:700;letter-spacing:.04em;touch-action:none;-webkit-user-select:none}.drive button.on{background:var(--grn);border-color:var(--grn)}
 .frei{display:flex;flex-direction:column;align-items:center;gap:6px;padding-bottom:4px}
 #fr{width:min(24vw,120px);aspect-ratio:1;border-radius:50%;border:3px solid #fff3;background:radial-gradient(circle at 35% 30%,#f2644f,#a3211a 75%);font-size:15px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;line-height:1.05;box-shadow:0 6px 16px #0009;touch-action:none}
 #fr.on{background:radial-gradient(circle at 35% 30%,#5fe09a,#1f8c52 75%);border-color:#fff8}
@@ -45,7 +45,7 @@ button{font:inherit;color:var(--ink);cursor:pointer}
 <div class="msg" id="msg"></div>
 <div class="help">Zuerst den Freigabetaster antippen (bleibt aktiv), danach den Hebel bewegen. Tastatur: Leertaste = Freigabe · W A S D = linker Hebel · Pfeiltasten = rechter Hebel. Ansicht ziehen = drehen, Mausrad = zoomen.</div>
 <div class="drive" id="drive"><button id="dback">◀ Zurück</button><button id="dfwd">Vor ▶</button></div>
-<div class="dock">
+<div class="dock off" id="dock">
 <div class="lv"><div class="plate" id="pl"><i class="u" id="lu"></i><i class="d" id="ld"></i><i class="l" id="ll"></i><i class="r" id="lr"></i><div class="knob" id="kl"></div></div><small>Linker Hebel</small></div>
 <div class="frei"><button id="fr">Freigabe<br>aus</button><small id="fs">Antippen zum Aktivieren</small></div>
 <div class="lv"><div class="plate" id="pr"><i class="u" id="ru"></i><i class="d" id="rd"></i><i class="l" id="rl"></i><i class="r" id="rr"></i><div class="knob" id="kr"></div></div><small>Rechter Hebel</small></div>
@@ -215,7 +215,7 @@ function keyv(a,b,c,d){return[(K[d]?1:0)-(K[c]?1:0),(K[a]?1:0)-(K[b]?1:0)]}
 /* Belegung */
 function labels(){const A={l:{u:"Leiter aufrichten",d:"Leiter neigen",l:"Drehen links",r:"Drehen rechts"},r:{u:"Ausfahren",d:"Einfahren",l:"Arm neigen",r:"Arm heben"}};
  const a=swap?A.r:A.l,b=swap?A.l:A.r;for(const k of"udlr"){$("l"+k).textContent=a[k];$("r"+k).textContent=b[k]}}
-$("sup").onclick=()=>{if(sup.t===0)sup.t=1;else{const rest=L.len<8.7&&L.pitch<3.5&&Math.abs(L.yaw)<3&&L.arm>-3;if(!rest){warn("Zuerst Leiter in Ruhelage: eingefahren, abgesenkt, nach vorn.");return}sup.t=0}};
+$("sup").onclick=()=>{if(sup.t===0)sup.t=1;else{const rest=L.len<8.7&&L.pitch<3.5&&Math.abs(L.yaw)<3&&L.arm>-3&&L.ax<.02;if(!rest){warn("Zuerst Leiter in Ruhelage: eingefahren, abgesenkt, nach vorn.");return}sup.t=0}};
 $("swp").onclick=()=>{swap=!swap;$("swp").textContent="Belegung "+(swap?"B":"A");labels()};labels();
 /* Ansicht */
 let view="ov",orb0={a:-2.55,e:.28,d:30};
@@ -249,10 +249,10 @@ $("bl").onclick=()=>{lights.bl=!lights.bl;$("bl").classList.toggle("on",lights.b
 $("tk").onclick=()=>{const e=$("task");if(e.classList.contains("gone"))showTask(task&&task.done?0:8000);else{clearTimeout(tkT);e.classList.add("gone")}};$("hv").onclick=()=>{$("hud").classList.toggle("off");$("hv").classList.toggle("on")};
 let mt=0;function warn(t){$("msg").textContent=t;$("msg").classList.add("on");mt=1.6}
 /* Schleife */
-let last=performance.now(),tt0=0,last0=false;function stepUI(){showTask(0);$("task").classList.remove("done");$("task").innerHTML="<b>Schritt 1</b><strong>Drehleiter platzieren:</strong> mit «Vor» und «Zurück» neben das Haus fahren (Zielfenster beachten, Aufgabe mit «Aufgabe»). Dann «Stützen ausfahren», Freigabetaster antippen und das Leiterpaket mit dem linken Hebel zuerst etwas anheben.";addX()}stepUI();
+let last=performance.now(),tt0=0,last0=false;function stepUI(){showTask(0);$("task").classList.remove("done");$("task").innerHTML="<b>Schritt 1</b><strong>Drehleiter platzieren:</strong> mit «Vor» und «Zurück» neben das Haus fahren (Zielfenster beachten, Aufgabe mit «Aufgabe»). Dann «Stützen ausfahren»: erst danach erscheinen die Joysticks. Freigabetaster antippen und das Leiterpaket mit dem linken Hebel zuerst etwas anheben. Beim Ausfahren fährt zuerst das Gelenk aus.";addX()}stepUI();
 const UP=new THREE.Vector3(0,1,0);function lk(){cam.rotateOnWorldAxis(UP,look.y);cam.rotateX(-look.p)}
 function loop(now){const ph=Math.floor(now/110)%8,onA=lights.bl&&(ph===0||ph===2),onB=lights.bl&&(ph===4||ph===6);wbM.color.setHex(lights.wb&&Math.floor(now/450)%2===0?0xffa31a:0x4a2a05);lbM[0].color.setHex(onA?0x57b0ff:0x0b2a5a);lbM[1].color.setHex(onB?0x57b0ff:0x0b2a5a);blL.intensity=(onA||onB)?1.2:0;blL.position.z=onA?-.4:.4;requestAnimationFrame(loop);const dt=Math.min(.05,(now-last)/1e3);last=now;
- {const rest=L.len<8.7&&L.pitch<3.5&&Math.abs(L.yaw)<3&&L.arm>-3&&L.ax<.02;drv.ok=rest&&sup.t===0&&sup.v<.001;$("drive").classList.toggle("off",!drv.ok);const tg=drv.ok?drv.in*7:0;drv.v+=(tg-drv.v)*Math.min(1,dt*3);let tx=-W.position.x+drv.v*dt;if(tx>26){tx=26;drv.v=0}if(tx<-24){tx=-24;drv.v=0}W.position.x=-tx;T.copy(Th).add(W.position)}
+ {const rest=L.len<8.7&&L.pitch<3.5&&Math.abs(L.yaw)<3&&L.arm>-3&&L.ax<.02;drv.ok=rest&&sup.t===0&&sup.v<.001;$("drive").classList.toggle("off",!drv.ok);$("dock").classList.toggle("off",!(sup.v>=1));const tg=drv.ok?drv.in*7:0;drv.v+=(tg-drv.v)*Math.min(1,dt*3);let tx=-W.position.x+drv.v*dt;if(tx>26){tx=26;drv.v=0}if(tx<-24){tx=-24;drv.v=0}W.position.x=-tx;T.copy(Th).add(W.position)}
  const kl=keyv("KeyW","KeyS","KeyA","KeyD"),kr=keyv("ArrowUp","ArrowDown","ArrowLeft","ArrowRight");
  let a=[ST.l[0]+kl[0],ST.l[1]+kl[1]],b=[ST.r[0]+kr[0],ST.r[1]+kr[1]];[a,b].forEach(v=>{v[0]=Math.max(-1,Math.min(1,v[0]));v[1]=Math.max(-1,Math.min(1,v[1]))});
  if(swap){const t=a;a=b;b=t}
@@ -262,7 +262,7 @@ function loop(now){const ph=Math.floor(now/110)%8,onA=lights.bl&&(ph===0||ph===2
  const ok=sup.v>=1;$("sup").textContent=sup.v>0&&sup.v<1?(sup.t?"Fährt aus…":"Fährt ein…"):(sup.t?"Stützen einfahren":"Stützen ausfahren");$("sup").classList.toggle("on",ok);
  if(ok!==last0){last0=ok;if(!ok)stepUI();else{taskUI();peekGoal()}}
  if(moving&&!ok){want={yaw:0,pitch:0,arm:0,len:0};warn("Zuerst die Stützen ausfahren!")}else if(moving&&!fr.on){want={yaw:0,pitch:0,arm:0,len:0};warn("Zuerst den Freigabetaster antippen!")}else if(L.pitch<LIFT&&Math.abs(L.yaw)<4&&(want.yaw||want.len||want.arm)){want.yaw=want.len=want.arm=0;warn("Leiterpaket zuerst anheben!")}
- if(moving&&fr.on){if(want.arm<0&&L.ax<1&&L.arm>-.3){want.arm=0;L.ax=Math.min(1,L.ax+dt*.5);warn("Korbarm fährt aus …")}else if(want.arm>0&&L.arm>-.3&&L.ax>0){want.arm=0;if(L.arm<0)L.arm=0;L.ax=Math.max(0,L.ax-dt*.5)}}
+ if(moving&&fr.on){if(want.len>0&&L.ax<1){want.len=0;L.ax=Math.min(1,L.ax+dt*.5);warn("Korbarm fährt aus …")}else if(want.len<0&&L.len<8.6&&L.ax>0&&L.arm>-.3){want.len=0;L.ax=Math.max(0,L.ax-dt*.5)}else if(want.arm<0&&L.ax<1&&L.arm>-.3){want.arm=0;L.ax=Math.min(1,L.ax+dt*.5);warn("Korbarm fährt aus …")}else if(want.arm>0&&L.arm>-.3&&L.ax>0){want.arm=0;if(L.arm<0)L.arm=0;L.ax=Math.max(0,L.ax-dt*.5)}}
  const old={...L};
  for(const k in V){V[k]+=(want[k]-V[k])*Math.min(1,dt*6)}
  L.yaw+=V.yaw*RATE.yaw*dt;L.pitch+=V.pitch*RATE.pitch*dt;L.len+=V.len*RATE.len*dt;L.arm+=V.arm*RATE.arm*dt;
