@@ -627,9 +627,3 @@ html.dv .adlf{align-content:start}html.dv .adlf+.foot{max-width:none}
 /* Autodrehleiter: Szene, Stützen-Ablauf, Bedienelemente-Trainer */
 .rgmenu .pdfbtn small{white-space:normal;text-align:left}
 
-.helm { position: absolute; left: 50%; top: -14px; width: 62%; transform: translate(-50%, -55%); pointer-events: none; z-index: 3; filter: drop-shadow(0 4px 6px rgba(0,0,0,.5)); animation: helmdrop .55s cubic-bezier(.3,1.6,.5,1) both, helmbob 1.1s ease-in-out .55s infinite alternate; }
-.helm svg { display: block; width: 100%; height: auto; }
-.helm.out { animation: helmup .45s ease-in both; }
-@keyframes helmdrop { from { opacity: 0; transform: translate(-50%, -260%) rotate(-18deg); } to { opacity: 1; transform: translate(-50%, -55%) rotate(0); } }
-@keyframes helmbob { from { transform: translate(-50%, -55%) rotate(-3deg); } to { transform: translate(-50%, -58%) rotate(3deg); } }
-@keyframes helmup { to { opacity: 0; transform: translate(-50%, -200%) rotate(14deg); } }

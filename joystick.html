@@ -177,6 +177,13 @@ const FF=(()=>{const man=new THREE.Group(),bd=new THREE.Group();bd.rotation.y=Ma
  const hm=new THREE.Mesh(new THREE.SphereGeometry(.15,20,12,0,Math.PI*2,0,Math.PI/2),hl);hm.position.y=.045;hm.scale.set(1,.95,1.05);hm.rotation.x=-.12;hm.castShadow=true;hd.add(hm);
  cy(.17,.17,.02,hl,0,.0,.02,hd).position.set(0,.03,.03);
  box(.02,.1,.02,st,0,.1,.145,hd);
+ {const rdH=new THREE.MeshStandardMaterial({color:0xc4141b,roughness:.35,metalness:.1}),wh=new THREE.MeshStandardMaterial({color:0xf1f1ee,roughness:.5}),gd=new THREE.MeshStandardMaterial({color:0xe0b020,roughness:.4,metalness:.4});
+  hm.material=rdH;
+  box(.035,.05,.3,rdH,0,.2,0,hd).rotation.x=-.1;                                  /* Helmkamm */
+  const bd2=new THREE.Mesh(new THREE.CylinderGeometry(.155,.155,.035,22,1,true),wh);bd2.position.set(0,.05,.005);bd2.rotation.x=-.12;hd.add(bd2);  /* weisses Band */
+  const ng=new THREE.Mesh(new THREE.CylinderGeometry(.158,.2,.11,20,1,true,Math.PI-1.25,2.5),new THREE.MeshStandardMaterial({color:0xc4141b,roughness:.35,side:THREE.DoubleSide}));ng.position.set(0,-.005,-.01);ng.rotation.x=-.12;hd.add(ng);   /* Nackenschutz */
+  const vs=new THREE.Mesh(new THREE.CylinderGeometry(.158,.172,.03,20,1,true,-.9,1.8),new THREE.MeshStandardMaterial({color:0x8f0f14,roughness:.4,side:THREE.DoubleSide}));vs.position.set(0,.03,0);vs.rotation.x=-.12;hd.add(vs);   /* Stirnrand */
+  const bg=new THREE.Mesh(new THREE.CircleGeometry(.032,14),gd);bg.position.set(0,.12,.152);bg.rotation.x=-.25;hd.add(bg);}   /* Wappen */
  man.position.set(-.9,-.92,0);man.visible=false;cage.add(man);
  return {man,bd,legs,arms,hd,tor}})();
 const man=FF.man;let manT=0;
