@@ -23,9 +23,9 @@ button{font:inherit;color:var(--ink);cursor:pointer}
 .dock.off{display:none}.chip.off{display:none}#ke.on{background:var(--grn);border-color:var(--grn)}.dock{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:space-between;align-items:flex-end;gap:8px;padding:12px 16px calc(14px + env(safe-area-inset-bottom,0px))}
 .lv{display:flex;flex-direction:column;align-items:center;gap:4px}
 .lv small{color:var(--mut);font-size:14px;letter-spacing:.08em;text-transform:uppercase}
-.plate{position:relative;width:min(36vw,160px);aspect-ratio:1;background:linear-gradient(#ececec,#d3d3d3);border:1px solid #fff5;border-radius:16px;box-shadow:inset 0 0 0 2px #0002}
-.tile{position:absolute;inset:0;pointer-events:none}.tile svg{display:block;width:100%;height:100%}
-.knob{position:absolute;left:50%;top:50%;width:38%;aspect-ratio:1;margin:-19% 0 0 -19%;border-radius:50%;background:radial-gradient(circle at 40% 32%,#f4f4f4 0,#b9b9b9 38%,#6b6b6b 72%,#3a3a3a 100%);border:2px solid #0007;box-shadow:0 0 0 3px #c9c9c9,0 0 0 4px #444,0 0 0 7px #dcdcdc,0 0 0 8px #444,0 8px 14px #0007;touch-action:none;cursor:grab}
+.plate{position:relative;width:min(34vw,150px);aspect-ratio:4/5.6;background:linear-gradient(#ececec,#d3d3d3);border:1px solid #fff5;border-radius:14px;box-shadow:inset 0 0 0 2px #0002}
+.tile{position:absolute;left:17%;width:66%;bottom:6%;aspect-ratio:100/90;border-radius:3px;overflow:hidden;pointer-events:none}.tile svg{display:block;width:100%;height:100%}
+.knob{position:absolute;left:50%;top:30%;width:42%;aspect-ratio:1;margin:-21% 0 0 -21%;border-radius:50%;background:radial-gradient(circle at 40% 32%,#f4f4f4 0,#b9b9b9 38%,#6b6b6b 72%,#3a3a3a 100%);border:2px solid #0007;box-shadow:0 0 0 3px #c9c9c9,0 0 0 4px #444,0 0 0 7px #dcdcdc,0 0 0 8px #444,0 8px 14px #0007;touch-action:none;cursor:grab}
 .drive{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(36px + env(safe-area-inset-bottom,0px));display:flex;gap:16px;z-index:4}.drive.off{display:none}.drive button{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:0 26px;min-height:68px;min-width:130px;font-size:21px;font-weight:700;letter-spacing:.04em;touch-action:none;-webkit-user-select:none}.drive button.on{background:var(--grn);border-color:var(--grn)}
 .frei{display:flex;flex-direction:column;align-items:center;gap:6px;padding-bottom:4px}
 #fr{width:min(24vw,120px);aspect-ratio:1;border-radius:50%;border:3px solid #fff3;background:radial-gradient(circle at 35% 30%,#f2644f,#a3211a 75%);font-size:15px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;line-height:1.05;box-shadow:0 6px 16px #0009;touch-action:none}
@@ -254,7 +254,7 @@ function hit(){S.updateMatrixWorld(true);cageC(P);
 /* Eingabe */
 const ST={l:[0,0],r:[0,0]},K={},fr={on:false};let swap=true;
 function setup(id,key){const pl=$(id),kn=pl.querySelector(".knob");let act=null;
- const mv=e=>{const b=pl.getBoundingClientRect(),R0=b.width*.2;let dx=(e.clientX-(b.left+b.width/2))/R0,dy=(e.clientY-(b.top+b.height/2))/R0,m=Math.hypot(dx,dy);if(m>1){dx/=m;dy/=m}ST[key]=[dx,-dy];kn.style.transform=`translate(${dx*R0}px,${dy*R0}px)`};
+ const mv=e=>{const b=pl.getBoundingClientRect(),R0=b.width*.2;let dx=(e.clientX-(b.left+b.width/2))/R0,dy=(e.clientY-(b.top+b.height*.3))/R0,m=Math.hypot(dx,dy);if(m>1){dx/=m;dy/=m}ST[key]=[dx,-dy];kn.style.transform=`translate(${dx*R0}px,${dy*R0}px)`};
  kn.onpointerdown=e=>{act=e.pointerId;kn.setPointerCapture(act);mv(e);e.preventDefault()};
  kn.onpointermove=e=>{if(act===e.pointerId)mv(e)};
  const up=e=>{if(act===e.pointerId){act=null;ST[key]=[0,0];kn.style.transform=""}};kn.onpointerup=up;kn.onpointercancel=up;kn.onlostpointercapture=up}
@@ -279,8 +279,8 @@ const PG=(()=>{const D=Math.PI/180,f=n=>+n.toFixed(2);
  const yaw=cw=>base+'<path d="M-17 -6L17 -12"/>'+(cw?arc(0,3,6.5,-30,250,"end"):arc(0,3,6.5,210,-70,"end"));
  return{ext:base+'<path d="M-16 -12L16 10"/>'+ar([14,8],[-10,-8],true),inn:base+'<path d="M-16 -12L16 10"/>'+ar([-12,-10],[12,6],true),
   armUp:tri(true,true),armDn:tri(false,true),pUp:tri(true,false),pDn:tri(false,false),yawL:yaw(false),yawR:yaw(true)}})();
-function tileSvg(a){const g=(k,x,y,r)=>`<g transform="translate(${x} ${y}) rotate(${r}) scale(.5)" fill="none" stroke="#1d2024" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><title>${PGN[k]}</title>${PG[k]}</g>`;
- return `<svg viewBox="0 0 100 100" aria-hidden="false">`+g(a.u,50,14,0)+g(a.d,50,86,0)+g(a.l,14,50,90)+g(a.r,86,50,-90)+`</svg>`}
+function tileSvg(a){const g=(k,x,y,r)=>`<g transform="translate(${x} ${y}) rotate(${r}) scale(.66)" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><title>${PGN[k]}</title>${PG[k]}</g>`,ah=(x,y,a)=>{const p=t=>`${x+4*Math.cos(a+Math.PI+t)} ${y+4*Math.sin(a+Math.PI+t)}`;return `M${p(.5)}L${x} ${y}L${p(-.5)}`};
+ return `<svg viewBox="0 0 100 90" aria-hidden="false"><rect width="100" height="90" fill="#000"/>`+g(a.u,50,17,0)+g(a.d,50,73,0)+g(a.l,17,45,90)+g(a.r,83,45,-90)+`<g stroke="#fff" stroke-width="1.8"><path d="M50 36V54M41 45H59" stroke-linecap="round"/><path d="${ah(50,35,-Math.PI/2)}${ah(50,55,Math.PI/2)}${ah(40,45,Math.PI)}${ah(60,45,0)}" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g></svg>`}
 function labels(){const A={l:{u:"pUp",d:"pDn",l:"yawL",r:"yawR"},r:{u:"ext",d:"inn",l:"armDn",r:"armUp"}};
  const a=swap?A.r:A.l,b=swap?A.l:A.r;$("tl").innerHTML=tileSvg(a);$("tr").innerHTML=tileSvg(b)}
 $("sup").onclick=()=>{if(sup.t===0)sup.t=1;else{const rest=L.len<8.7&&L.pitch<3.5&&Math.abs(L.yaw)<3&&L.arm>-3&&L.ax<.02;if(!rest){warn("Zuerst Leiter in Ruhelage: eingefahren, abgesenkt, nach vorn.");return}sup.t=0}};
