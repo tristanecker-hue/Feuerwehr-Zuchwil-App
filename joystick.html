@@ -53,14 +53,38 @@ button{font:inherit;color:var(--ink);cursor:pointer}
 (function(){
 const $=id=>document.getElementById(id), D=Math.PI/180, f1=n=>n.toFixed(1).replace(".",",");
 const cv=$("cv"), R=new THREE.WebGLRenderer({canvas:cv,antialias:true}); R.setPixelRatio(Math.min(devicePixelRatio,2)); R.shadowMap.enabled=true;
-const S=new THREE.Scene(); S.background=new THREE.Color(0x9fc4e4); S.fog=new THREE.Fog(0x9fc4e4,60,160);
-const cam=new THREE.PerspectiveCamera(50,1,.1,300);
+const S=new THREE.Scene(); S.background=new THREE.Color(0x9fc4e4); S.fog=new THREE.Fog(0x9fc4e4,90,330);
+const cam=new THREE.PerspectiveCamera(50,1,.1,600);
 S.add(new THREE.HemisphereLight(0xffffff,0x6b7480,.85)); const sun=new THREE.DirectionalLight(0xffffff,.9); sun.position.set(-20,40,25); sun.castShadow=true; sun.shadow.mapSize.set(1024,1024); const sc=sun.shadow.camera; sc.left=-30;sc.right=30;sc.top=30;sc.bottom=-30;sc.far=120; S.add(sun);
 const M=(c,o)=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.7,metalness:.1},o||{}));
 const box=(w,h,d,m,x,y,z,p)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x||0,y||0,z||0);o.castShadow=o.receiveShadow=true;(p||S).add(o);return o};
 /* Boden */
-const gnd=new THREE.Mesh(new THREE.PlaneGeometry(400,400),M(0x8a9199,{roughness:1}));gnd.rotation.x=-Math.PI/2;gnd.receiveShadow=true;S.add(gnd);
-const grid=new THREE.GridHelper(120,60,0x6f7780,0x7c848c);grid.position.y=.01;S.add(grid);
+const gnd=new THREE.Mesh(new THREE.PlaneGeometry(600,600),M(0x6f9a52,{roughness:1}));gnd.rotation.x=-Math.PI/2;gnd.receiveShadow=true;S.add(gnd);
+const flat=(w,d,c,x,z,y)=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(w,d),M(c,{roughness:.95}));m.rotation.x=-Math.PI/2;m.position.set(x,y,z);m.receiveShadow=true;S.add(m);return m};
+flat(600,14.5,0x3d4046,0,.5,.02);          /* Strasse (Asphalt) */
+flat(600,2.6,0xc9c6bf,0,8.7,.03);           /* Trottoir vor dem Haus */
+flat(600,.9,0xaeaba5,0,7.55,.04);           /* Randstein */
+flat(600,.9,0xaeaba5,0,-6.75,.04);
+flat(600,.18,0xf2f2f2,0,6.9,.05);flat(600,.18,0xf2f2f2,0,-5.9,.05);   /* Randlinien */
+for(let x=-140;x<140;x+=6)flat(2.6,.16,0xf2f2f2,x,.5,.05);           /* Mittellinie gestrichelt */
+for(let x=-20;x<=22;x+=14)0;
+/* Baeume, Haeuser, Huegel, Laternen */
+const trunkM=M(0x6b4a2f),leafM=[M(0x3f7a3a),M(0x4f8f45),M(0x356c33)];
+function tree(x,z,sc,i){const g=new THREE.Group();const t=new THREE.Mesh(new THREE.CylinderGeometry(.18*sc,.26*sc,2.4*sc,8),trunkM);t.position.y=1.2*sc;t.castShadow=true;g.add(t);
+ for(let k=0;k<3;k++){const c=new THREE.Mesh(new THREE.IcosahedronGeometry((1.9-k*.35)*sc,1),leafM[(i+k)%3]);c.position.set(0,(3.0+k*1.25)*sc,0);c.castShadow=true;g.add(c)}
+ g.position.set(x,0,z);S.add(g)}
+let ti=0;for(const [x,z,sc] of [[-17,9.6,1],[-24,-9,1.1],[-30,7,.9],[-40,-10,1.2],[19,9.8,1],[26,-9.5,1.1],[34,8,.95],[44,-10,1.2],[-52,8,1.1],[56,7,1],[-14,-13,1],[14,-14,1.15],[-34,-16,1.3],[38,-18,1.2],[-60,-14,1.3],[66,-15,1.2]])tree(x,z,sc,ti++);
+const roofM=M(0x8a3b2c),wallC=[0xe9e2d3,0xd9cbb4,0xcfd8de,0xe6d3c0,0xdfe3d0];
+function villa(x,z,w,d,h,i){const g=new THREE.Group();const b=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),M(wallC[i%5]));b.position.y=h/2;g.add(b);
+ const r=new THREE.Mesh(new THREE.ConeGeometry(Math.max(w,d)*.78,h*.55,4),roofM);r.position.y=h+h*.275;r.rotation.y=Math.PI/4;r.scale.set(w/Math.max(w,d),1,d/Math.max(w,d));g.add(r);
+ for(let k=-1;k<=1;k+=2){const wn=new THREE.Mesh(new THREE.PlaneGeometry(1,1.3),M(0x7fa5c2,{roughness:.2}));wn.position.set(k*w*.25,h*.55,d/2+.02);g.add(wn)}
+ g.position.set(x,0,z);S.add(g)}
+[[-36,-34,10,8,6],[-12,-38,9,7,5.5],[14,-36,11,8,6.5],[40,-40,9,8,6],[66,-36,10,8,6],[-62,-38,10,8,6],[-90,-44,12,9,7],[92,-44,12,9,7]].forEach((v,i)=>villa(v[0],v[1],v[2],v[3],v[4],i));
+for(const [x,z,r,h,c] of [[-120,-150,70,38,0x6d8f6a],[-30,-170,90,50,0x7a9a78],[70,-160,80,44,0x6a8c68],[150,-140,60,36,0x7f9b80],[-170,-60,50,30,0x7a9a78],[170,-50,55,32,0x6d8f6a],[-40,190,100,40,0x7a9a78],[90,200,90,36,0x6d8f6a]]){const hm2=new THREE.Mesh(new THREE.SphereGeometry(r,24,12,0,Math.PI*2,0,Math.PI/2),M(c,{roughness:1}));hm2.scale.y=h/r;hm2.position.set(x,0,z);S.add(hm2)}
+function lamp(x,z){const g=new THREE.Group();const p=new THREE.Mesh(new THREE.CylinderGeometry(.07,.09,6,8),M(0x3a3d42));p.position.y=3;g.add(p);const a=box(1.2,.08,.08,M(0x3a3d42),-.55,6,0,g);box(.5,.14,.3,M(0xf3eecf,{emissive:0x403a20}),-1.1,5.93,0,g);g.position.set(x,0,z);S.add(g)}
+[-8,12,-28,32].forEach(x=>lamp(x,7.35));
+function car(x,z,c,r){const g=new THREE.Group();box(4.2,.8,1.8,M(c),0,.7,0,g);box(2.2,.7,1.6,M(c),-.2,1.4,0,g);box(2.0,.5,1.62,M(0x9db8c9,{roughness:.2}),-.2,1.42,0,g);for(const wx of[-1.4,1.4])for(const wz of[-.9,.9]){const w=new THREE.Mesh(new THREE.CylinderGeometry(.34,.34,.25,14),M(0x1a1b1e));w.rotation.x=Math.PI/2;w.position.set(wx,.34,wz);g.add(w)}g.position.set(x,0,z);g.rotation.y=r||0;S.add(g)}
+car(-20,5.4,0x2f5d9a);car(-30,5.5,0xdddddd);car(25,5.4,0x3a3d42);car(36,5.4,0xb0b4b8);
 /* Fahrzeug nach Originalvorlage Zuchwil (Seitenansicht als Textur, 81,6 px = 1 m, Drehachse bei x = 0, Front = +x) */
 const red=M(0xb3151b,{roughness:.5}),dark=M(0x1d2127),gray=M(0xb7bdc4),white=M(0xf2f2f2),glass=M(0x7aa6c4,{roughness:.2});
 const tl=new THREE.TextureLoader(),tex=u=>{const t=tl.load(u);t.anisotropy=4;return t};
@@ -140,6 +164,26 @@ for(let f=1;f<NF;f++)box(26,.08,.06,M(0x9a9288),2,f*FL,zw-.03,house);
 /* Ziel */
 const tgt=new THREE.Group();S.add(tgt);const ring=new THREE.Mesh(new THREE.TorusGeometry(1.0,.07,10,40),new THREE.MeshBasicMaterial({color:0x37b36b}));tgt.add(ring);
 const orb=new THREE.Mesh(new THREE.SphereGeometry(1.8,24,16),new THREE.MeshBasicMaterial({color:0x37b36b,transparent:true,opacity:.18,depthWrite:false}));tgt.add(orb);
+/* Person im Fenster (winkt, ruft um Hilfe) und Brandfenster mit Rauch */
+const vic=new THREE.Group();S.add(vic);
+{const sk=M(0xf0c9a4),sh=M(0x3b6ea5),ha=M(0x5a3b22);
+ const bd=new THREE.Mesh(new THREE.BoxGeometry(.6,.85,.3),sh);bd.position.y=.42;vic.add(bd);
+ const hd=new THREE.Mesh(new THREE.SphereGeometry(.21,16,12),sk);hd.position.y=1.05;vic.add(hd);
+ const hr=new THREE.Mesh(new THREE.SphereGeometry(.22,16,10,0,Math.PI*2,0,Math.PI/2),ha);hr.position.y=1.08;vic.add(hr);
+ vic.arms=[-1,1].map(k=>{const p=new THREE.Group();p.position.set(k*.36,.78,0);const a=new THREE.Mesh(new THREE.BoxGeometry(.14,.7,.14),sh);a.position.y=.33;p.add(a);const h=new THREE.Mesh(new THREE.SphereGeometry(.1,10,8),sk);h.position.y=.72;p.add(h);vic.add(p);return p});}
+const bub=(t)=>{const c=document.createElement("canvas");c.width=256;c.height=96;const g=c.getContext("2d");g.fillStyle="#fff";g.strokeStyle="#c8161d";g.lineWidth=6;g.beginPath();g.moveTo(14,6);g.lineTo(242,6);g.quadraticCurveTo(250,6,250,14);g.lineTo(250,62);g.quadraticCurveTo(250,70,242,70);g.lineTo(140,70);g.lineTo(120,92);g.lineTo(112,70);g.lineTo(14,70);g.quadraticCurveTo(6,70,6,62);g.lineTo(6,14);g.quadraticCurveTo(6,6,14,6);g.fill();g.stroke();g.fillStyle="#c8161d";g.font="700 44px Arial Narrow,Arial,sans-serif";g.textAlign="center";g.textBaseline="middle";g.fillText(t,128,39);return new THREE.CanvasTexture(c)};
+const bubS=new THREE.Sprite(new THREE.SpriteMaterial({map:bub("HILFE!"),transparent:true,depthTest:false}));bubS.scale.set(2.6,.975,1);bubS.renderOrder=5;S.add(bubS);
+const bubOk=bub("DANKE!"),bubMap=bubS.material.map;
+const fire=new THREE.Group();S.add(fire);
+const glow=new THREE.Mesh(new THREE.PlaneGeometry(1.3,1.4),new THREE.MeshBasicMaterial({color:0xff7a1a,transparent:true,opacity:.85}));glow.position.set(0,0,-.1);fire.add(glow);
+const soot=new THREE.Mesh(new THREE.PlaneGeometry(1.8,2.6),new THREE.MeshBasicMaterial({color:0x111111,transparent:true,opacity:.28,depthWrite:false}));soot.position.set(0,1.5,-.1);fire.add(soot);
+const smokeTex=(()=>{const c=document.createElement("canvas");c.width=c.height=64;const g=c.getContext("2d"),r=g.createRadialGradient(32,32,2,32,32,31);r.addColorStop(0,"rgba(70,70,74,.9)");r.addColorStop(.6,"rgba(90,90,95,.45)");r.addColorStop(1,"rgba(110,110,115,0)");g.fillStyle=r;g.fillRect(0,0,64,64);return new THREE.CanvasTexture(c)})();
+const SMK=[];for(let q=0;q<42;q++){const m=new THREE.Sprite(new THREE.SpriteMaterial({map:smokeTex,transparent:true,depthWrite:false,opacity:0}));m.age=q/42*4.5;S.add(m);SMK.push(m)}
+function smokeStep(dt){const fp=fire.position;for(const m of SMK){m.age+=dt;if(m.age>4.5){m.age=0;m.o=[fp.x+(Math.random()-.5)*.7,fp.y+.3,fp.z-.35];m.v=[.5+Math.random()*.5,1.5+Math.random()*.6,-(.15+Math.random()*.3)]}
+ if(!m.o){m.o=[fp.x,fp.y+.3,fp.z-.35];m.v=[.6,1.7,-.2]}
+ const a=m.age;m.position.set(m.o[0]+m.v[0]*a,m.o[1]+m.v[1]*a,m.o[2]+m.v[2]*a);const sc=1.1+a*1.15;m.scale.set(sc,sc,1);m.material.opacity=Math.max(0,.55*(1-a/4.5))*Math.min(1,a*2.5)}
+ glow.material.opacity=.7+.25*Math.sin(performance.now()/90)+.1*Math.sin(performance.now()/37)}
+function victimStep(now){const done=task&&task.done,w=Math.sin(now/170);vic.arms.forEach((p,i)=>{p.rotation.z=(i?-1:1)*(done?2.9:.55+.4*w*(i?-1:1))});bubS.visible=true;bubS.material.map=done?bubOk:bubMap;bubS.position.set(vic.position.x+.2,vic.position.y+2.05+(done?0:.05*Math.sin(now/120)),vic.position.z)}
 let T=new THREE.Vector3(),task=null;
 /* Zustand */
 const L={yaw:0,pitch:2,len:8.5,arm:0,ax:0}, V={yaw:0,pitch:0,len:0,arm:0};
@@ -186,11 +230,11 @@ cv.onpointermove=e=>{const o=pts.get(e.pointerId);if(!o)return;
 cv.onwheel=e=>{zoomBy(1+e.deltaY*.001);e.preventDefault()};
 /* Aufgabe */
 function newTask(){const w=wins[Math.floor(Math.random()*wins.length)];let g=0;while(true){const k=wins[Math.floor(Math.random()*wins.length)];if(k.f>=1&&k.f<=7){Object.assign(w,{});g=k;break}}
- task={w:g,t0:null,done:false,hold:0};T.set(g.x,g.y-.2+.5,zw-.95);tgt.position.set(g.x,g.y,zw-.15);tgt.visible=true;$("task").classList.remove("done");taskUI();if(sup.v>=1)peekGoal()}
+ task={w:g,t0:null,done:false,hold:0};T.set(g.x,g.y-.2+.5,zw-.95);tgt.position.set(g.x,g.y,zw-.15);tgt.visible=true;vic.position.set(g.x,g.y-.78,zw-.28);bubS.material.map=bubMap;{const cs=wins.filter(q=>q.f===g.f&&Math.abs(q.c-g.c)===2);const fw=cs[Math.floor(Math.random()*cs.length)];fire.position.set(fw.x,fw.y,zw-.12)}$("task").classList.remove("done");taskUI();if(sup.v>=1)peekGoal()}
 function addX(){const x=document.createElement('button');x.className='tx';x.textContent='✕';x.setAttribute('aria-label','Aufgabe ausblenden');x.onclick=()=>$('task').classList.add('gone');$('task').appendChild(x)}
 let peek=null;function peekGoal(){if(task&&!task.done)peek={t:0}}
 let tkT=0;function showTask(ms){const e=$("task");e.classList.remove("gone");clearTimeout(tkT);if(ms)tkT=setTimeout(()=>e.classList.add("gone"),ms)}
-function taskUI(){const w=task.w;$("task").innerHTML=task.done?`<b>Geschafft</b><span class="t">Korb am Fenster im ${w.f}. Stock · ${task.time.toFixed(1).replace(".",",")} s</span><br><button class="chip" id="nt" style="margin-top:6px">Neue Aufgabe</button>`:`<b>Aufgabe</b>Leiterpaket zuerst etwas anheben, dann: Fahre den Korb vor das grün markierte Fenster im <strong>${w.f}. Stock</strong>.`;
+function taskUI(){const w=task.w;$("task").innerHTML=task.done?`<b>Geschafft</b><span class="t">Person im ${w.f}. Stock erreicht · ${task.time.toFixed(1).replace(".",",")} s</span><br><button class="chip" id="nt" style="margin-top:6px">Neue Aufgabe</button>`:`<b>Aufgabe</b>Person in Not! Im <strong>${w.f}. Stock</strong> ruft jemand aus dem Fenster um Hilfe, nebenan raucht es. Leiterpaket zuerst etwas anheben, dann den Korb vor das grün markierte Fenster fahren.`;
  if(task.done){$("nt").onclick=newTask;showTask(0)}else showTask(8000);addX()}
 newTask();stepUI();
 $("bl").onclick=()=>{lights.bl=!lights.bl;$("bl").classList.toggle("on",lights.bl)};$("wb").onclick=()=>{lights.wb=!lights.wb;$("wb").classList.toggle("on",lights.wb)};
@@ -230,9 +274,10 @@ function loop(now){const ph=Math.floor(now/110)%8,onA=lights.bl&&(ph===0||ph===2
  else if(view==="free"){}
  else if(view==="st"){const p=new THREE.Vector3(.4,3.1,.6);tt.localToWorld(p);const q=new THREE.Vector3(14,4.6,0);tt.localToWorld(q);cam.position.copy(p);cam.lookAt(q);lk()}
  else{const p=new THREE.Vector3(.5,-.1,0);cage.localToWorld(p);const q=new THREE.Vector3(6,-.9,0);cage.localToWorld(q);cam.position.copy(p);cam.lookAt(q);lk()}
+ smokeStep(dt);victimStep(now);
  if(peek){peek.t+=dt;const D=3.6,u=peek.t/D;if(u>=1)peek=null;else{const k=Math.sin(Math.PI*Math.min(1,u)),e=k*k*(3-2*k);const p1=new THREE.Vector3(T.x+9,Math.max(2.5,T.y*.6),T.z-15),o=new THREE.PerspectiveCamera();o.position.copy(p1);o.lookAt(T);const q0=cam.quaternion.clone();cam.position.lerp(p1,e);cam.quaternion.copy(q0).slerp(o.quaternion,e)}}
  R.render(S,cam)}
-apply();requestAnimationFrame(loop);window.__trainer={cam,setView:v=>{view=v},cageW:()=>{S.updateMatrixWorld(true);return cage.localToWorld(new THREE.Vector3(.6,-.4,0))},L,T,cageC,fr:setFr,orb0,sup,get task(){return task},ST};
+apply();requestAnimationFrame(loop);window.__trainer={fire,vic,cam,setView:v=>{view=v},cageW:()=>{S.updateMatrixWorld(true);return cage.localToWorld(new THREE.Vector3(.6,-.4,0))},L,T,cageC,fr:setFr,orb0,sup,get task(){return task},ST};
 })();
 </script>
 
