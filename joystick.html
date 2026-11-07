@@ -199,7 +199,7 @@ const FF=(()=>{const man=new THREE.Group(),bd=new THREE.Group();bd.rotation.y=Ma
  return {man,bd,legs,arms,hd,tor}})();
 const man=FF.man;let manT=0;
 /* Haus */
-const TOL=()=>SCN===2?1.2:1.8;const FL=3,NF=9,ZW=10;let zw=ZW;
+const TOL=()=>SCN===2?1.0:1.8;const FL=3,NF=9,ZW=10;let zw=ZW;
 const house=new THREE.Group();W.add(house);
 const hm=M(0xe3dbd0);box(64,FL*NF,7,hm,2,FL*NF/2,zw+3.5,house);
 const wm=M(0x7fa5c2,{roughness:.2,metalness:.3}),fm=M(0xf5f5f5);
@@ -226,7 +226,7 @@ const SLOPE=Math.atan(TH2),ZS=zw+1.5,YS=ROOF(ZS);
  window.RW={x:0,y:YS,z:ZS};}
 const inCan=p=>{if(SCN!==2)return false;const x=p.x-W.position.x;if(Math.abs(x)>HW+.6||p.z<zw-EO-.1||p.z>zw+HD+EO)return false;const R=ROOF(p.z);return p.y<R+.12&&(p.z>=zw-.15||p.y>R-.3)};
 const wallHit=p=>p.z>zw-.15&&(SCN!==2||(Math.abs(p.x-W.position.x)<HW+.3&&p.y<HH));
-function setRoofTask(){const nz=-Math.sin(SLOPE),ny=Math.cos(SLOPE),d=1.9;Th.set(0,YS+ny*d,ZS+nz*d);T.copy(Th).add(W.position);tgt.position.set(0,YS+.1,ZS-.12);tgt.rotation.x=-(Math.PI/2+SLOPE);vic.position.set(0,YS-.1,ZS+.05);fire.position.set(-4.5,YS+.25,ZS+.4)}
+function setRoofTask(){const nz=-Math.sin(SLOPE),ny=Math.cos(SLOPE),d=1.4;Th.set(0,YS+ny*d,ZS+nz*d);T.copy(Th).add(W.position);tgt.position.set(0,YS+.1,ZS-.12);tgt.rotation.x=-(Math.PI/2+SLOPE);vic.position.set(0,YS-.1,ZS+.05);fire.position.set(-4.5,YS+.25,ZS+.4)}
 for(let f=1;f<NF;f++)box(64,.08,.06,M(0x9a9288),2,f*FL,zw-.03,house);
 /* Ziel */
 const tgt=new THREE.Group();W.add(tgt);const ring=new THREE.Mesh(new THREE.TorusGeometry(1.0,.07,10,40),new THREE.MeshBasicMaterial({color:0x37b36b}));tgt.add(ring);
