@@ -39,8 +39,8 @@ button{font:inherit;color:var(--ink);cursor:pointer}
 <canvas id="cv"></canvas>
 <div class="top"><div class="bar"><h1>Joystick <b>Training</b> · L32A-XS</h1>
 <div class="chips" id="views"><button class="chip on" data-v="ov">Übersicht</button><button class="chip" data-v="st">Bedienstand</button><button class="chip" data-v="ko">Im Korb</button></div>
-<div class="chips"><button class="chip off" id="ke">Korbeinstieg</button><button class="chip" id="sup">Stützen ausfahren</button><button class="chip" id="swp">Belegung A</button><button class="chip" id="bl">Blaulicht</button><button class="chip" id="wb">Warnblinker</button><button class="chip" id="tk">Aufgabe</button><button class="chip on" id="hv">Werte</button></div></div>
-<div class="row"><div class="hud" id="hud"></div>
+<div class="chips"><button class="chip off" id="ke">Korbeinstieg</button><button class="chip" id="sup">Stützen ausfahren</button><button class="chip" id="swp">Belegung A</button><button class="chip" id="bl">Blaulicht</button><button class="chip" id="wb">Warnblinker</button><button class="chip" id="tk">Aufgabe</button><button class="chip" id="hv">Werte</button></div></div>
+<div class="row"><div class="hud off" id="hud"></div>
 <div class="task" id="task"></div></div></div>
 <div class="msg" id="msg"></div>
 <div class="help">Zuerst den Freigabetaster antippen (bleibt aktiv), danach den Hebel bewegen. Tastatur: Leertaste = Freigabe · W A S D = linker Hebel · Pfeiltasten = rechter Hebel. Ansicht ziehen = drehen, Mausrad = zoomen.</div>
@@ -242,7 +242,7 @@ cv.onwheel=e=>{zoomBy(1+e.deltaY*.001);e.preventDefault()};
 function addX(){const x=document.createElement('button');x.className='tx';x.textContent='✕';x.setAttribute('aria-label','Aufgabe ausblenden');x.onclick=()=>$('task').classList.add('gone');$('task').appendChild(x)}
 let peek=null;function peekGoal(){if(task&&!task.done)peek={t:0}}
 function newTask(first){const tx=-W.position.x;let c=wins.filter(k=>k.f>=1&&k.f<=7&&Math.abs(k.c)<=8);
- if(first===true){const st=(Math.random()<.5?-1:1)*(16+Math.random()*10),t0=Math.max(-24,Math.min(26,Math.random()*40-14));W.position.x=-t0;const ok=c.filter(k=>Math.abs(k.x-t0)>13&&Math.abs(k.x-t0)<27);c=ok.length?ok:c}
+ if(first===true){const st=(Math.random()<.5?-1:1)*(16+Math.random()*10),t0=-24+Math.random()*30;W.position.x=-t0;const ok=c.filter(k=>k.x-t0>13&&k.x-t0<27);c=ok.length?ok:c}
  else c=c.filter(k=>Math.abs(k.x-tx)<8.5);
  const g=c[Math.floor(Math.random()*c.length)];
  task={w:g,t0:null,done:false,hold:0};Th.set(g.x,g.y-.2+.5,zw-.95);T.copy(Th).add(W.position);tgt.position.set(g.x,g.y,zw-.15);tgt.visible=true;vic.visible=true;vic2Reset();vic.position.set(g.x,g.y-.78,zw-.28);bubS.material.map=bubMap;{const cs=wins.filter(q=>q.f===g.f&&Math.abs(q.c-g.c)===2);const fw=cs[Math.floor(Math.random()*cs.length)];fire.position.set(fw.x,fw.y,zw-.12)}$("task").classList.remove("done");taskUI();if(sup.v>=1)peekGoal()}
@@ -256,7 +256,7 @@ $("bl").onclick=()=>{lights.bl=!lights.bl;$("bl").classList.toggle("on",lights.b
 $("tk").onclick=()=>{const e=$("task");if(e.classList.contains("gone"))showTask(task&&task.done?0:8000);else{clearTimeout(tkT);e.classList.add("gone")}};$("hv").onclick=()=>{$("hud").classList.toggle("off");$("hv").classList.toggle("on")};
 let mt=0;function warn(t){$("msg").textContent=t;$("msg").classList.add("on");mt=1.6}
 /* Schleife */
-let last=performance.now(),tt0=0,last0=false;function stepUI(){showTask(0);$("task").classList.remove("done");$("task").innerHTML="<b>Schritt 1</b><strong>Drehleiter platzieren:</strong> mit «Vor» und «Zurück» neben das Haus fahren (Zielfenster beachten, Aufgabe mit «Aufgabe»). Dann «Stützen ausfahren»: erst danach erscheinen die Joysticks. Freigabetaster antippen und das Leiterpaket mit dem linken Hebel zuerst etwas anheben. Beim Ausfahren fährt zuerst das Gelenk aus.";addX()}stepUI();
+let last=performance.now(),tt0=0,last0=false;function stepUI(){clearTimeout(tkT);$("task").classList.add("gone");$("task").classList.remove("done");$("task").innerHTML="<b>Schritt 1</b><strong>Drehleiter platzieren:</strong> mit «Vor» und «Zurück» neben das Haus fahren (Zielfenster beachten, Aufgabe mit «Aufgabe»). Dann «Stützen ausfahren»: erst danach erscheinen die Joysticks. Freigabetaster antippen und das Leiterpaket mit dem linken Hebel zuerst etwas anheben. Beim Ausfahren fährt zuerst das Gelenk aus.";addX()}stepUI();
 const UP=new THREE.Vector3(0,1,0);function lk(){cam.rotateOnWorldAxis(UP,look.y);cam.rotateX(-look.p)}
 function loop(now){const ph=Math.floor(now/110)%8,onA=lights.bl&&(ph===0||ph===2),onB=lights.bl&&(ph===4||ph===6);wbM.color.setHex(lights.wb&&Math.floor(now/450)%2===0?0xffa31a:0x4a2a05);lbM[0].color.setHex(onA?0x57b0ff:0x0b2a5a);lbM[1].color.setHex(onB?0x57b0ff:0x0b2a5a);blL.intensity=(onA||onB)?1.2:0;blL.position.z=onA?-.4:.4;requestAnimationFrame(loop);const dt=Math.min(.05,(now-last)/1e3);last=now;
  {const rest=L.len<8.7&&L.pitch<3.5&&Math.abs(L.yaw)<3&&L.arm>-3&&L.ax<.02;drv.ok=rest&&sup.t===0&&sup.v<.001;$("drive").classList.toggle("off",!drv.ok);$("dock").classList.toggle("off",!(sup.v>=1));$("ke").classList.toggle("off",!(sup.v>=1));$("ke").classList.toggle("on",auto);const tg=drv.ok?drv.in*7:0;drv.v+=(tg-drv.v)*Math.min(1,dt*3);let tx=-W.position.x+drv.v*dt;if(tx>26){tx=26;drv.v=0}if(tx<-24){tx=-24;drv.v=0}W.position.x=-tx;T.copy(Th).add(W.position)}
