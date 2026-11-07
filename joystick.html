@@ -45,7 +45,7 @@ button{font:inherit;color:var(--ink);cursor:pointer}
 <div class="msg" id="msg"></div>
 <div class="help">Zuerst den Freigabetaster antippen (bleibt aktiv), danach den Hebel bewegen. Tastatur: Leertaste = Freigabe · W A S D = linker Hebel · Pfeiltasten = rechter Hebel. Ansicht ziehen = drehen, Mausrad = zoomen.</div>
 <div class="drive" id="drive"><button id="dfwd">◀ Vor</button><button id="dback">Zurück ▶</button></div>
-<div class="scn" id="scn"><div class="scb"><h2>Szenario wählen</h2><button class="sbtn" id="sc1"><b>Basic</b><span>Person am Fenster: Drehleiter ans Haus fahren, abstützen und den Korb vor das Fenster bringen.</span></button><button class="sbtn" id="sc2"><b>Basic+</b><span>Haus mit Anbau und Satteldach: Die Leiter muss über den Dachfirst, den Korb bringst du mit dem Gelenk hinter das Dach vors Fenster.</span></button></div></div>
+<div class="scn" id="scn"><div class="scb"><h2>Szenario wählen</h2><button class="sbtn" id="sc1"><b>Basic</b><span>Person am Fenster: Drehleiter ans Haus fahren, abstützen und den Korb vor das Fenster bringen.</span></button><button class="sbtn" id="sc2"><b>Basic+</b><span>4-stöckiges Haus mit weitem Dachvorsprung: Das Dachfenster erreichst du nur, wenn du die Leiter steil über die Traufe führst und den Korb mit dem Gelenk absenkst.</span></button></div></div>
 <div class="dock off" id="dock">
 <div class="lv"><div class="plate" id="pl"><div class="knob" id="kl"></div><div class="tile" id="tl"></div></div></div>
 <div class="frei"><button id="fr">Freigabe<br>aus</button><small id="fs">Antippen zum Aktivieren</small></div>
@@ -78,7 +78,7 @@ function tree(x,z,sc,i){const g=new THREE.Group();const t=new THREE.Mesh(new THR
  for(let k=0;k<3;k++){const c=new THREE.Mesh(new THREE.IcosahedronGeometry((1.9-k*.35)*sc,1),leafM[(i+k)%3]);c.position.set(0,(3.0+k*1.25)*sc,0);c.castShadow=true;g.add(c)}
  g.position.set(x,0,z);W.add(g);(window.TREEG=window.TREEG||[]).push([g,x])}
 let SCN=1;const TREES=[[-44,7.8,1.1],[-30,7.8,1],[-17,7.8,1.15],[-3,7.8,1],[12,7.8,1.1],[26,7.8,1],[41,7.8,1.15],[55,7.8,1]];let ti=0;for(const [x,z,sc] of TREES)tree(x,z,sc,ti++);
-const inTree=p=>{for(const t of TREES){if(SCN===2&&Math.abs(t[0])<10)continue;const r=Math.hypot(p.x-(t[0]+W.position.x),p.z-t[1]),sc=t[2];if(r<.45&&p.y<2.5*sc)return true;if(r<1.6*sc&&p.y>2.2*sc&&p.y<7*sc)return true}return false};
+const inTree=p=>{for(const t of TREES){if(SCN===2&&Math.abs(t[0])<26)continue;const r=Math.hypot(p.x-(t[0]+W.position.x),p.z-t[1]),sc=t[2];if(r<.45&&p.y<2.5*sc)return true;if(r<1.6*sc&&p.y>2.2*sc&&p.y<7*sc)return true}return false};
 const roofM=M(0x8a3b2c),wallC=[0xe9e2d3,0xd9cbb4,0xcfd8de,0xe6d3c0,0xdfe3d0];
 function villa(x,z,w,d,h,i){const g=new THREE.Group();const b=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),M(wallC[i%5]));b.position.y=h/2;g.add(b);
  const r=new THREE.Mesh(new THREE.ConeGeometry(Math.max(w,d)*.78,h*.55,4),roofM);r.position.y=h+h*.275;r.rotation.y=Math.PI/4;r.scale.set(w/Math.max(w,d),1,d/Math.max(w,d));g.add(r);
@@ -206,25 +206,26 @@ const wm=M(0x7fa5c2,{roughness:.2,metalness:.3}),fm=M(0xf5f5f5);
 const wins=[];for(let f=0;f<NF;f++)for(let c=-9;c<=9;c++){const x=c*3.2-.4,y=f*FL+1.9;
  box(1.4,1.5,.12,wm,x,y,zw-.02,house);box(1.6,.1,.2,fm,x,y-.8,zw-.07,house);wins.push({f,c,x,y})}
 
-/* Szenario Basic+: Anbau mit rotem Satteldach vor dem Haus, Fenster dahinter */
+/* Szenario Basic+: 4-stoeckiges Haus mit weitem Dachvorsprung, Dachfenster nur mit Gelenk erreichbar */
 const CAN=new THREE.Group();CAN.visible=false;W.add(CAN);
-const RZ=5.6,RH=5.8,RV=3.2,RE=3.4;const ROOF=z=>z<4.2||z>10?-9:z<=RZ?RE+(z-4.2)*(RH-RE)/(RZ-4.2):RH-(z-RZ)*(RH-RV)/(10-RZ);
-{const rm=new THREE.MeshStandardMaterial({color:0xb23a28,roughness:.7,side:THREE.DoubleSide}),wl=M(0xe3dbd0);
- const plane=(z0,y0,z1,y1)=>{const L=Math.hypot(z1-z0,y1-y0),m=new THREE.Mesh(new THREE.BoxGeometry(20.8,.16,L),rm);m.position.set(0,(y0+y1)/2+.05,(z0+z1)/2);m.rotation.x=-Math.atan2(y1-y0,z1-z0);m.castShadow=true;CAN.add(m)};
- box(20.4,RE,.25,wl,0,RE/2,4.15,CAN);
- for(const x of[-7.5,-2.5,2.5,7.5]){box(1.5,1.6,.08,M(0x7fa5c2,{roughness:.2,metalness:.3}),x,1.9,4.0,CAN);box(1.7,.1,.2,M(0xf5f5f5),x,1.05,4.0,CAN)}
- plane(4.2,RE,RZ,RH);plane(RZ,RH,10,RV);box(20.9,.2,.2,M(0x7a2418),0,RH+.05,RZ,CAN);
- const sh=new THREE.Shape();sh.moveTo(4.2,0);sh.lineTo(4.2,RE);sh.lineTo(RZ,RH);sh.lineTo(10,RV);sh.lineTo(10,0);sh.lineTo(4.2,0);
- for(const sx of[-10.2,10.2]){const g=new THREE.Mesh(new THREE.ExtrudeGeometry(sh,{depth:.25,bevelEnabled:false}),wl);g.rotation.y=-Math.PI/2;g.position.set(sx+.125,0,0);CAN.add(g)}}
-{const wl=M(0xf1ece4),gl=M(0x7fa5c2,{roughness:.2,metalness:.3}),rd=M(0xa23020,{side:THREE.DoubleSide});
- const ang=Math.atan2(RH-RE,RZ-4.2);
- for(const x of[-7,-2.3,2.3,7]){const z=4.85,y=ROOF(z)+.15;
-  box(1.5,1.2,.9,wl,x,y+.2,z+.1,CAN);box(1.0,.8,.06,gl,x,y+.25,z-.36,CAN);box(1.2,.08,.18,M(0xf5f5f5),x,y-.2,z-.4,CAN);
-  const r=new THREE.Mesh(new THREE.CylinderGeometry(.95,.95,1.7,3,1),rd);r.rotation.set(0,0,Math.PI/2);r.rotation.order='YXZ';r.rotation.y=0;r.position.set(x,y+.95,z+.1);r.scale.set(.75,1,1);CAN.add(r)}
- const sm=[];const sg=new THREE.SphereGeometry(.45,8,6);
- for(let i=0;i<14;i++){const m=new THREE.Mesh(sg,new THREE.MeshBasicMaterial({color:0x555555,transparent:true,opacity:.5,depthWrite:false}));CAN.add(m);sm.push(m)}
- window.ROOFSMK=t=>{if(SCN!==2)return;sm.forEach((m,i)=>{const u=((t/3500)+i/14)%1;m.position.set(-2.3+u*1.6+Math.sin(u*9+i)*.2,ROOF(4.95)+1.8+u*5,4.9+u*.8);m.scale.setScalar(.7+u*2.2);m.material.opacity=.55*(1-u)})}}
-const inCan=p=>{if(SCN!==2)return false;const x=p.x-W.position.x;return Math.abs(x)<10.2&&p.z>4.05&&p.z<10&&p.y<ROOF(p.z)+.12};
+const EO=4.5,TH2=.45,HW=24,HH=12,HD=7,RH2=HH+(3.5+EO)*TH2;
+const ROOF=z=>z<zw-EO||z>zw+HD+EO?-9:z<=zw+3.5?HH+(z-(zw-EO))*TH2:HH+(zw+HD+EO-z)*TH2;
+const SLOPE=Math.atan(TH2),ZS=zw+1.5,YS=ROOF(ZS);
+{const wl=M(0xe3dbd0),rm=new THREE.MeshStandardMaterial({color:0xb23a28,roughness:.7,side:THREE.DoubleSide}),gl=M(0x7fa5c2,{roughness:.2,metalness:.3}),fr=M(0xf5f5f5);
+ box(2*HW,HH,HD,wl,0,HH/2,zw+HD/2,CAN);
+ for(let f=0;f<4;f++)for(const x of Array.from({length:12},(_,k)=>-22+4*k)){if(f===0&&(x===2||x===-2)){if(x===-2)box(1.6,2.3,.12,M(0x5a3b22),0,1.15,zw-.04,CAN);continue}box(1.4,1.5,.12,gl,x,f*3+1.9,zw-.02,CAN);box(1.6,.1,.2,fr,x,f*3+1.1,zw-.07,CAN)}
+ for(let f=1;f<4;f++)box(2*HW,.08,.06,M(0x9a9288),0,f*3,zw-.03,CAN);
+ const plane=(z0,y0,z1,y1)=>{const L=Math.hypot(z1-z0,y1-y0),m=new THREE.Mesh(new THREE.BoxGeometry(2*HW+1.2,.18,L),rm);m.position.set(0,(y0+y1)/2+.05,(z0+z1)/2);m.rotation.x=-Math.atan2(y1-y0,z1-z0);m.castShadow=true;CAN.add(m)};
+ plane(zw-EO,HH,zw+3.5,RH2);plane(zw+3.5,RH2,zw+HD+EO,HH);box(2*HW+1.3,.22,.22,M(0x7a2418),0,RH2+.07,zw+3.5,CAN);
+ const sh=new THREE.Shape();sh.moveTo(zw,HH);sh.lineTo(zw+3.5,RH2);sh.lineTo(zw+HD,HH);sh.lineTo(zw,HH);
+ for(const sx of[-HW,HW]){const g=new THREE.Mesh(new THREE.ExtrudeGeometry(sh,{depth:.3,bevelEnabled:false}),wl);g.rotation.y=-Math.PI/2;g.position.set(sx+.15,0,0);CAN.add(g)}
+ box(.9,2.2,.9,M(0x8a4a3a),-5,RH2+.2,zw+5,CAN);
+ const rw=(x,z,yy)=>{const g=new THREE.Group();g.position.set(x,ROOF(z)+.12,z);g.rotation.x=-SLOPE;box(1.5,.1,1.8,fr,0,0,0,g);box(1.2,.06,1.5,gl,0,.05,0,g);box(.06,.07,1.5,fr,0,.06,0,g);CAN.add(g)};
+ rw(0,ZS,0);rw(-4.5,ZS,0);rw(4.5,ZS,0);
+ window.RW={x:0,y:YS,z:ZS};}
+const inCan=p=>{if(SCN!==2)return false;const x=p.x-W.position.x;if(Math.abs(x)>HW+.6||p.z<zw-EO-.1||p.z>zw+HD+EO)return false;const R=ROOF(p.z);return p.y<R+.12&&(p.z>=zw-.15||p.y>R-.3)};
+const wallHit=p=>p.z>zw-.15&&(SCN!==2||(Math.abs(p.x-W.position.x)<HW+.3&&p.y<HH));
+function setRoofTask(){const nz=-Math.sin(SLOPE),ny=Math.cos(SLOPE),d=1.9;Th.set(0,YS+ny*d,ZS+nz*d);T.copy(Th).add(W.position);tgt.position.set(0,YS+.1,ZS-.12);tgt.rotation.x=-(Math.PI/2+SLOPE);vic.position.set(0,YS-.1,ZS+.05);fire.position.set(-4.5,YS+.25,ZS+.4)}
 for(let f=1;f<NF;f++)box(64,.08,.06,M(0x9a9288),2,f*FL,zw-.03,house);
 /* Ziel */
 const tgt=new THREE.Group();W.add(tgt);const ring=new THREE.Mesh(new THREE.TorusGeometry(1.0,.07,10,40),new THREE.MeshBasicMaterial({color:0x37b36b}));tgt.add(ring);
@@ -270,10 +271,10 @@ const P=new THREE.Vector3(),Q=new THREE.Vector3(),pv=new THREE.Vector3();
 function cageC(o){cage.updateWorldMatrix(true,false);return cage.localToWorld(o.set(CDX/2,-.35,0))}
 const inTruck=p=>Math.abs(p.z)<1.35&&((p.x>-2.9&&p.x<3.2&&p.y<1.9)||(p.x>=3.2&&p.x<7.8&&p.y<3.3));
 function hit(){S.updateMatrixWorld(true);cageC(P);
- for(const sx of[0,CDX])for(const sy of[-1,.35])for(const sz of[-1.1,1.1]){Q.set(sx,sy,sz);cage.localToWorld(Q);if(Q.z>zw-.15)return"Wand! Abstand halten.";if(Q.y<.05)return"Boden!";if(inTruck(Q))return"Fahrzeug im Weg!";if(inTree(Q))return"Baum im Weg!";if(inCan(Q))return"Dach im Weg!"}
+ for(const sx of[0,CDX])for(const sy of[-1,.35])for(const sz of[-1.1,1.1]){Q.set(sx,sy,sz);cage.localToWorld(Q);if(wallHit(Q))return"Wand! Abstand halten.";if(Q.y<.05)return"Boden!";if(inTruck(Q))return"Fahrzeug im Weg!";if(inTree(Q))return"Baum im Weg!";if(inCan(Q))return"Dach im Weg!"}
  for(let s=2;s<=L.len+1.5;s+=.25){Q.set(Math.min(s,L.len),-.35,0);lp.localToWorld(Q);if(inTruck(Q))return"Leiterpaket stösst an das Fahrzeug!";if(inTree(Q))return"Leiter stösst an einen Baum!";if(inCan(Q))return"Leiter stösst an das Dach!";if(Q.y<.1)return"Boden!"}
  {const ar=L.arm*D,ca=Math.cos(ar),sa=Math.sin(ar),al=1.5+(AL-1.5)*L.ax;for(let q=.3;q<=al+.01;q+=.25){Q.set(L.len+q*ca+.2*sa,q*sa-.2*ca,0);lp.localToWorld(Q);if(inTruck(Q))return"Korbarm stösst an das Fahrzeug!";if(inTree(Q))return"Korbarm stösst an einen Baum!";if(inCan(Q))return"Korbarm stösst an das Dach!";if(Q.y<.05)return"Boden!"}}
- Q.set(L.len,0,0);lp.localToWorld(Q);if(Q.z>zw-.15)return"Wand! Abstand halten.";return null}
+ Q.set(L.len,0,0);lp.localToWorld(Q);if(wallHit(Q))return"Wand! Abstand halten.";return null}
 /* Eingabe */
 const ST={l:[0,0],r:[0,0]},K={},fr={on:false};let swap=true;
 function setup(id,key){const pl=$(id),kn=pl.querySelector(".knob");let act=null;
@@ -326,18 +327,18 @@ cv.onwheel=e=>{zoomBy(1+e.deltaY*.001);e.preventDefault()};
 /* Aufgabe */
 function addX(){const x=document.createElement('button');x.className='tx';x.textContent='✕';x.setAttribute('aria-label','Aufgabe ausblenden');x.onclick=()=>$('task').classList.add('gone');$('task').appendChild(x)}
 let peek=null;function peekGoal(){if(task&&!task.done)peek={t:0}}
-function newTask(first){const tx=-W.position.x;let c=wins.filter(k=>k.f>=1&&k.f<=7&&Math.abs(k.c)<=8&&!TREES.some(t=>Math.abs(t[0]-k.x)<2.6));if(SCN===2)c=wins.filter(k=>k.f===1&&Math.abs(k.c)<=1);
+function newTask(first){const tx=-W.position.x;let c=wins.filter(k=>k.f>=1&&k.f<=7&&Math.abs(k.c)<=8&&!TREES.some(t=>Math.abs(t[0]-k.x)<2.6));if(SCN===2)c=[{f:4,c:0,x:0,y:YS,roof:true}];
  if(SCN===2){const g0=c[Math.floor(Math.random()*c.length)];if(first===true)W.position.x=-(g0.x-(15+Math.random()*9));c=[g0]}else if(first===true){const st=(Math.random()<.5?-1:1)*(16+Math.random()*10),t0=-24+Math.random()*30;W.position.x=-t0;const ok=c.filter(k=>k.x-t0>13&&k.x-t0<27);c=ok.length?ok:c}
  else if(SCN!==2)c=c.filter(k=>Math.abs(k.x-tx)<8.5);
  const g=c[Math.floor(Math.random()*c.length)];
- task={w:g,t0:null,done:false,hold:0};Th.set(g.x,g.y-.2+.5,zw-.95);T.copy(Th).add(W.position);tgt.position.set(g.x,g.y,zw-.15);tgt.visible=true;vic.visible=true;vic2Reset();vic.position.set(g.x,g.y-.78,zw-.28);bubS.material.map=bubMap;{const cs=wins.filter(q=>q.f===g.f&&Math.abs(q.c-g.c)===2);const fw=cs[Math.floor(Math.random()*cs.length)];fire.position.set(fw.x,fw.y,zw-.12)}$("task").classList.remove("done");taskUI();if(sup.v>=1)peekGoal()}
+ task={w:g,t0:null,done:false,hold:0};Th.set(g.x,g.y-.2+.5,zw-.95);T.copy(Th).add(W.position);tgt.position.set(g.x,g.y,zw-.15);tgt.visible=true;vic.visible=true;vic2Reset();vic.position.set(g.x,g.y-.78,zw-.28);bubS.material.map=bubMap;if(SCN===2){setRoofTask()}else{tgt.rotation.x=0;const cs=wins.filter(q=>q.f===g.f&&Math.abs(q.c-g.c)===2);const fw=cs[Math.floor(Math.random()*cs.length)];fire.position.set(fw.x,fw.y,zw-.12)}$("task").classList.remove("done");taskUI();if(sup.v>=1)peekGoal()}
 for(const [id,d] of [["dback",-1],["dfwd",1]]){const b=$(id);const on=e=>{e.preventDefault();drv.in=d;b.classList.add("on");try{b.setPointerCapture(e.pointerId)}catch(_){}};const off=()=>{if(drv.in===d)drv.in=0;b.classList.remove("on")};b.addEventListener("pointerdown",on);b.addEventListener("pointerup",off);b.addEventListener("pointercancel",off);b.addEventListener("lostpointercapture",off)}
 $("ke").onclick=()=>{if(auto){auto=false;warn("Korbeinstieg gestoppt");return}if(!fr.on){warn("Zuerst den Freigabetaster antippen!");return}{S.updateMatrixWorld(true);const c=cageC(new THREE.Vector3());if(!(Math.abs(L.yaw)<20&&c.x>4&&c.x<15&&Math.abs(c.z)<4&&c.y>3)){warn("Korbeinstieg nur möglich, wenn der Korb schon oberhalb in der Nähe der Kabine ist.");return}}auto=true;warn("Korb fährt vor die Fahrerkabine …")};
 let tkT=0;function showTask(ms){const e=$("task");e.classList.remove("gone");clearTimeout(tkT);if(ms)tkT=setTimeout(()=>e.classList.add("gone"),ms)}
-function taskUI(){const w=task.w;$("task").innerHTML=task.done?`<b>Geschafft</b><span class="t">Person im ${w.f}. Stock erreicht · ${task.time.toFixed(1).replace(".",",")} s</span><br><button class="chip" id="nt" style="margin-top:6px">Neue Aufgabe</button>`:`<b>Aufgabe</b>Person in Not! Im <strong>${w.f}. Stock</strong> ruft jemand aus dem Fenster um Hilfe, nebenan raucht es. ${SCN===2?"Das Fenster liegt hinter dem Satteldach eines Anbaus: Leiter über den Dachfirst führen und den Korb mit dem <strong>Gelenk</strong> (Korbarm) vor das grün markierte Fenster bringen.":"Leiterpaket zuerst etwas anheben, dann den Korb vor das grün markierte Fenster fahren."}`;
+function taskUI(){const w=task.w;$("task").innerHTML=task.done?`<b>Geschafft</b><span class="t">Person im ${SCN===2?"Dachgeschoss":w.f+". Stock"} erreicht · ${task.time.toFixed(1).replace(".",",")} s</span><br><button class="chip" id="nt" style="margin-top:6px">Neue Aufgabe</button>`:`<b>Aufgabe</b>Person in Not! ${SCN===2?"Im <strong>Dachgeschoss</strong> ruft jemand aus dem Dachfenster um Hilfe, nebenan raucht es.":"Im <strong>"+w.f+". Stock</strong> ruft jemand aus dem Fenster um Hilfe, nebenan raucht es."} ${SCN===2?"Das Dachfenster liegt hinter dem weiten Dachvorsprung: Leiter steil über die Traufe führen und den Korb mit dem <strong>Gelenk</strong> (Korbarm) vor das grün markierte Dachfenster absenken.":"Leiterpaket zuerst etwas anheben, dann den Korb vor das grün markierte Fenster fahren."}`;
  if(task.done){$("nt").onclick=()=>newTask();showTask(0)}else showTask(8000);addX()}
 newTask(true);stepUI();
-function startSc(n){SCN=n;CAN.visible=n===2;(window.TREEG||[]).forEach(([g,x])=>{g.visible=!(n===2&&Math.abs(x)<10)});orb.scale.setScalar(TOL()/1.8);$("scn").style.display="none";newTask(true);stepUI();peek={t:-.8}}
+function startSc(n){SCN=n;CAN.visible=n===2;house.visible=n!==2;(window.TREEG||[]).forEach(([g,x])=>{g.visible=!(n===2&&Math.abs(x)<26)});orb.scale.setScalar(TOL()/1.8);$("scn").style.display="none";newTask(true);stepUI();peek={t:-.8}}
 $("sc1").onclick=()=>startSc(1);$("sc2").onclick=()=>startSc(2);$("scc").onclick=()=>location.reload();
 $("bl").onclick=()=>{lights.bl=!lights.bl;$("bl").classList.toggle("on",lights.bl)};$("wb").onclick=()=>{lights.wb=!lights.wb;$("wb").classList.toggle("on",lights.wb);if(lights.wb){lights.bl=false;$("bl").classList.remove("on")}};$("bl").classList.add("on");
 $("tk").onclick=()=>{const e=$("task");if(e.classList.contains("gone"))showTask(task&&task.done?0:8000);else{clearTimeout(tkT);e.classList.add("gone")}};$("hv").onclick=()=>{$("hud").classList.toggle("off");$("hv").classList.toggle("on")};
