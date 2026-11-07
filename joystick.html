@@ -24,8 +24,8 @@ button{font:inherit;color:var(--ink);cursor:pointer}
 .lv{display:flex;flex-direction:column;align-items:center;gap:4px}
 .lv small{color:var(--mut);font-size:14px;letter-spacing:.08em;text-transform:uppercase}
 .plate{position:relative;width:min(40vw,176px);aspect-ratio:1;background:#0a0c10;border:1px solid var(--line);border-radius:16px}
-.plate i{position:absolute;font-style:normal;font-size:12px;line-height:1.02;color:#cfd6de;text-align:center;width:42%}
-.plate .u{top:6px;left:29%}.plate .d{bottom:6px;left:29%}.plate .l{left:5px;top:38%;width:27%;text-align:left}.plate .r{right:5px;top:38%;width:27%;text-align:right}
+.plate i{position:absolute;font-style:normal;line-height:0;width:30%;display:flex;justify-content:center}.plate i svg{width:100%;max-width:34px;height:auto}
+.plate .u{top:7px;left:35%}.plate .d{bottom:7px;left:35%}.plate .l{left:5px;top:50%;margin-top:-15px;width:24%}.plate .r{right:5px;top:50%;margin-top:-15px;width:24%}
 .knob{position:absolute;left:50%;top:50%;width:36%;height:36%;margin:-18% 0 0 -18%;border-radius:50%;background:radial-gradient(circle at 35% 30%,#7e8996,#2c333c 70%);border:2px solid #0006;box-shadow:0 6px 14px #0008;touch-action:none;cursor:grab}
 .plate::before,.plate::after{content:"";position:absolute;background:#ffffff22}.plate::before{left:50%;top:22%;bottom:22%;width:1px}.plate::after{top:50%;left:22%;right:22%;height:1px}
 .drive{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(36px + env(safe-area-inset-bottom,0px));display:flex;gap:16px;z-index:4}.drive.off{display:none}.drive button{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:0 26px;min-height:68px;min-width:130px;font-size:21px;font-weight:700;letter-spacing:.04em;touch-action:none;-webkit-user-select:none}.drive button.on{background:var(--grn);border-color:var(--grn)}
@@ -34,7 +34,7 @@ button{font:inherit;color:var(--ink);cursor:pointer}
 #fr.on{background:radial-gradient(circle at 35% 30%,#5fe09a,#1f8c52 75%);border-color:#fff8}
 .frei small{color:var(--mut);font-size:14px;text-align:center;max-width:130px;line-height:1.05}
 .help{position:fixed;left:16px;bottom:230px;color:var(--mut);font-size:14px;max-width:min(330px,60vw);line-height:1.15;text-shadow:0 1px 3px #000}
-@media(max-width:620px){.help{display:none}.bar h1{display:none}.chip{padding:3px 9px;font-size:13px;min-height:28px}.chips{gap:5px}.top{gap:6px;padding:8px 12px}.hud{font-size:13px;padding:5px 9px;gap:2px 12px}.task{font-size:14px;padding:6px 9px;max-width:100%;width:100%;box-sizing:border-box}.hud span,.hud b{white-space:nowrap}.plate{width:min(35vw,150px)}#fr{width:min(22vw,92px);font-size:12px}.frei small{font-size:12px;max-width:95px}.dock{padding-left:10px;padding-right:10px}.plate i{font-size:11px}.task b{font-size:11px}.task .chip{font-size:13px}.row{flex-direction:column;align-items:stretch}}
+@media(max-width:620px){.help{display:none}.bar h1{display:none}.chip{padding:3px 9px;font-size:13px;min-height:28px}.chips{gap:5px}.top{gap:6px;padding:8px 12px}.hud{font-size:13px;padding:5px 9px;gap:2px 12px}.task{font-size:14px;padding:6px 9px;max-width:100%;width:100%;box-sizing:border-box}.hud span,.hud b{white-space:nowrap}.plate{width:min(35vw,150px)}#fr{width:min(22vw,92px);font-size:12px}.frei small{font-size:12px;max-width:95px}.dock{padding-left:10px;padding-right:10px}.task b{font-size:11px}.task .chip{font-size:13px}.row{flex-direction:column;align-items:stretch}}
 </style>
 <canvas id="cv"></canvas>
 <div class="top"><div class="bar"><h1>Drehleiter <b>Simulator</b> · L32A-XS</h1>
@@ -244,7 +244,7 @@ function hit(){S.updateMatrixWorld(true);cageC(P);
  {const ar=L.arm*D,ca=Math.cos(ar),sa=Math.sin(ar),al=1.5+(AL-1.5)*L.ax;for(let q=.3;q<=al+.01;q+=.4){Q.set(L.len+q*ca+.2*sa,q*sa-.2*ca,0);lp.localToWorld(Q);if(inTruck(Q))return"Korbarm stösst an das Fahrzeug!";if(inTree(Q))return"Korbarm stösst an einen Baum!";if(Q.y<.05)return"Boden!"}}
  Q.set(L.len,0,0);lp.localToWorld(Q);if(Q.z>zw-.15)return"Wand! Abstand halten.";return null}
 /* Eingabe */
-const ST={l:[0,0],r:[0,0]},K={},fr={on:false};let swap=false;
+const ST={l:[0,0],r:[0,0]},K={},fr={on:false};let swap=true;
 function setup(id,key){const pl=$(id),kn=pl.querySelector(".knob");let act=null;
  const mv=e=>{const b=pl.getBoundingClientRect(),R0=b.width*.26;let dx=(e.clientX-(b.left+b.width/2))/R0,dy=(e.clientY-(b.top+b.height/2))/R0,m=Math.hypot(dx,dy);if(m>1){dx/=m;dy/=m}ST[key]=[dx,-dy];kn.style.transform=`translate(${dx*R0}px,${dy*R0}px)`};
  kn.onpointerdown=e=>{act=e.pointerId;kn.setPointerCapture(act);mv(e);e.preventDefault()};
@@ -256,10 +256,23 @@ fb.onclick=()=>setFr(!fr.on);
 addEventListener("keydown",e=>{if(e.code==="Space"){if(!e.repeat)setFr(!fr.on);e.preventDefault()}K[e.code]=1});addEventListener("keyup",e=>{K[e.code]=0});
 function keyv(a,b,c,d){return[(K[d]?1:0)-(K[c]?1:0),(K[a]?1:0)-(K[b]?1:0)]}
 /* Belegung */
-function labels(){const A={l:{u:"Leiter aufrichten",d:"Leiter neigen",l:"Drehen links",r:"Drehen rechts"},r:{u:"Ausfahren",d:"Einfahren",l:"Arm neigen",r:"Arm heben"}};
- const a=swap?A.r:A.l,b=swap?A.l:A.r;for(const k of"udlr"){$("l"+k).textContent=a[k];$("r"+k).textContent=b[k]}}
+const PG=(()=>{const o='<svg viewBox="0 0 28 28" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">',e='</svg>';
+ const lad=(x1,y1,x2,y2)=>{const dx=x2-x1,dy=y2-y1,n=Math.hypot(dx,dy),nx=-dy/n*2.2,ny=dx/n*2.2;let r=`<path d="M${x1+nx} ${y1+ny}L${x2+nx} ${y2+ny}M${x1-nx} ${y1-ny}L${x2-nx} ${y2-ny}" stroke-width="1.5"/>`;for(let k=1;k<5;k++){const t=k/5;r+=`<path d="M${x1+dx*t+nx} ${y1+dy*t+ny}L${x1+dx*t-nx} ${y1+dy*t-ny}" stroke-width="1.2"/>`}return r};
+ const head=(x,y,a)=>{const c=Math.cos(a),s=Math.sin(a),p=(r,t)=>`${x+r*Math.cos(a+t)} ${y+r*Math.sin(a+t)}`;return `<path d="M${p(5,2.6)}L${x} ${y}L${p(5,-2.6)}" />`};
+ return{
+  ext:o+lad(2,14,18,14)+'<path d="M19 14H26"/>'+head(26,14,0)+e,
+  inn:o+lad(10,14,26,14)+'<path d="M9 14H2"/>'+head(2,14,Math.PI)+e,
+  armUp:o+lad(2,19,11,19)+'<circle cx="12" cy="19" r="1.8" fill="#fff"/><path d="M13 18L22 8"/>'+head(22,8,-Math.PI/4)+e,
+  armDn:o+lad(2,9,11,9)+'<circle cx="12" cy="9" r="1.8" fill="#fff"/><path d="M13 10L22 20"/>'+head(22,20,Math.PI/4)+e,
+  yawL:o+'<path d="M22 10A9 9 0 1 0 22 18"/>'+head(22,18,Math.PI*.38)+e,
+  yawR:o+'<path d="M6 10A9 9 0 1 1 6 18"/>'+head(6,18,Math.PI*.62)+e,
+  pUp:o+lad(3,23,20,9)+'<path d="M24 24V10"/>'+head(24,9,-Math.PI/2)+e,
+  pDn:o+lad(3,9,20,23)+'<path d="M24 4V18"/>'+head(24,19,Math.PI/2)+e}})();
+const PGN={ext:"Ausfahren",inn:"Einfahren",armUp:"Arm heben",armDn:"Arm neigen",yawL:"Drehen links",yawR:"Drehen rechts",pUp:"Leiter aufrichten",pDn:"Leiter neigen"};
+function labels(){const A={l:{u:"pUp",d:"pDn",l:"yawL",r:"yawR"},r:{u:"ext",d:"inn",l:"armDn",r:"armUp"}};
+ const a=swap?A.r:A.l,b=swap?A.l:A.r;for(const k of"udlr"){for(const [p,c] of[["l",a],["r",b]]){const e=$(p+k);e.innerHTML=PG[c[k]];e.title=e.dataset.l=PGN[c[k]];e.setAttribute("aria-label",PGN[c[k]])}}}
 $("sup").onclick=()=>{if(sup.t===0)sup.t=1;else{const rest=L.len<8.7&&L.pitch<3.5&&Math.abs(L.yaw)<3&&L.arm>-3&&L.ax<.02;if(!rest){warn("Zuerst Leiter in Ruhelage: eingefahren, abgesenkt, nach vorn.");return}sup.t=0}};
-$("swp").onclick=()=>{swap=!swap;$("swp").textContent="Belegung "+(swap?"B":"A");labels()};labels();
+$("swp").onclick=()=>{swap=!swap;$("swp").textContent="Belegung "+(swap?"A":"B");labels()};labels();
 /* Ansicht */
 let view="ov",orb0={a:-2.55,e:.28,d:30};
 document.querySelectorAll("#views .chip").forEach(b=>b.onclick=()=>{view=b.dataset.v;look.y=look.p=0;look.z=1;document.querySelectorAll("#views .chip").forEach(x=>x.classList.toggle("on",x===b))});

@@ -1,4 +1,4 @@
-const APP_VERSION = "1.186";
+const APP_VERSION = "1.188";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -807,10 +807,46 @@ function sgvBlock(x) {
   return "";
 }
 /* Autodrehleiter: Anleitungen (PDF) */
+/* Suche in den Drehleiter-Anleitungen (PDF-Text, einmalig indexiert) */
+const ADLIDX = {}; let ADLQ = "", ADLBUILD = null;
+async function adlIndex(info) {
+  if (ADLIDX.adl && ADLIDX.adl2) return;
+  if (ADLBUILD) return ADLBUILD;
+  ADLBUILD = (async () => {
+    const lib = await import("./pdfjs/pdf.min.mjs"); lib.GlobalWorkerOptions.workerSrc = new URL("./pdfjs/pdf.worker.min.mjs", location.href).href;
+    for (const id of ["adl", "adl2"]) {
+      if (ADLIDX[id]) continue;
+      const tmp = document.createElement("span");
+      const file = await rgLoad(tmp, id);
+      let doc = RGDOCS[id]; if (!doc) { doc = await lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise; RGDOCS[id] = doc; }
+      const pages = [];
+      for (let i = 1; i <= doc.numPages; i++) {
+        if (info && info.isConnected) info.textContent = "Suche wird vorbereitet … " + RGDEF[id].short + (id === "adl2" ? " (Einweisung)" : "") + " S. " + i + "/" + doc.numPages;
+        try { const tc = await (await doc.getPage(i)).getTextContent(); pages.push(tc.items.map(x => x.str).join(" ").replace(/\s+/g, " ")); } catch (e) { pages.push(""); }
+      }
+      ADLIDX[id] = pages;
+    }
+  })();
+  try { await ADLBUILD; } finally { ADLBUILD = null; }
+}
+async function adlSearch(q, box) {
+  q = q.trim(); ADLQ = q;
+  if (q.length < 2) { box.innerHTML = ""; return; }
+  box.innerHTML = '<p class="sinfo" id="adli">Suche …</p>';
+  try { await adlIndex(document.getElementById("adli")); } catch (e) { box.innerHTML = '<p class="sinfo">' + esc((e && e.message) || "Suche nicht möglich.") + "</p>"; return; }
+  if (ADLQ !== q || !box.isConnected) return;
+  const words = fold(q).split(/\s+/).filter(Boolean), res = [];
+  for (const id of ["adl", "adl2"]) (ADLIDX[id] || []).forEach((t, i) => { if (t && words.every(w => fold(t).includes(w))) res.push({ id, page: i + 1, t }); });
+  const shown = res.slice(0, 60), nm = { adl: "Betriebsanleitung", adl2: "Einweisungsunterlage" };
+  box.innerHTML = `<p class="sinfo">${res.length} Treffer${res.length > 60 ? " (die ersten 60)" : ""}</p><div class="sres">` + shown.map((r, n) => `<button class="hit" data-n="${n}"><div class="where">${nm[r.id]} · Seite ${r.page}</div><p>${hl(snip(r.t, words), words)}</p></button>`).join("") + "</div>";
+  box.querySelectorAll(".hit[data-n]").forEach(b => b.addEventListener("click", () => { const r = shown[+b.dataset.n]; state.pdfBack = () => adlView(); rgView(r.id, r.page); }));
+}
 function adlView() {
   document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
   state.mod = null; state.sub = null; state.view = "adl"; backBtn.hidden = false;
   app.innerHTML = `<section class="hero"><h1>Autodrehleiter</h1><p>Anleitungen zur Drehleiter L32A-XS der Feuerwehr Zuchwil.</p></section>
+    <div class="srch"><input type="search" id="adlq" placeholder="In den Anleitungen suchen (z. B. Stützen, Korb, Notablass)" aria-label="Suche in den Anleitungen" autocomplete="off"></div>
+    <div id="adlres"></div>
     <div class="menu rgmenu">
       <button class="mbtn main pdfbtn" id="adlsim"><span>Ausladungs Simulator</span><small>Ausladung, Personen, Zuladungsreserve interaktiv</small></button>
       <button class="mbtn main pdfbtn" id="adljoy"><span>Drehleiter Simulator</span><small>3D-Simulator: Bedienhebel der Drehleiter üben</small></button>
@@ -819,6 +855,9 @@ function adlView() {
       <button class="mbtn main pdfbtn" id="adlpdf2"><span>Einweisungsunterlage</span><small>PDF · ${RGDEF.adl2.pages} S. · Kurzfassung zum Lernen</small></button>
     </div>
     <p class="foot">Unterlagen des Herstellers Rosenbauer, Ausgabe 12/2022, nur zur internen Verwendung.</p>`;
+  { const qi = document.getElementById("adlq"), qr = document.getElementById("adlres"); let tm = 0; qi.value = ADLQ;
+    qi.addEventListener("input", () => { clearTimeout(tm); tm = setTimeout(() => adlSearch(qi.value, qr), 350); });
+    if (ADLQ) adlSearch(ADLQ, qr); else setTimeout(() => { if (state.view === "adl") adlIndex().catch(() => {}); }, 1500); }
   document.getElementById("adlsim").onclick = () => simView();
   document.getElementById("adlmas").onclick = () => masseView();
   document.getElementById("adljoy").onclick = () => joystickView();
