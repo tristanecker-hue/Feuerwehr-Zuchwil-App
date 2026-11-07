@@ -216,6 +216,14 @@ const RZ=5.6,RH=5.8,RV=3.2,RE=3.4;const ROOF=z=>z<4.2||z>10?-9:z<=RZ?RE+(z-4.2)*
  plane(4.2,RE,RZ,RH);plane(RZ,RH,10,RV);box(20.9,.2,.2,M(0x7a2418),0,RH+.05,RZ,CAN);
  const sh=new THREE.Shape();sh.moveTo(4.2,0);sh.lineTo(4.2,RE);sh.lineTo(RZ,RH);sh.lineTo(10,RV);sh.lineTo(10,0);sh.lineTo(4.2,0);
  for(const sx of[-10.2,10.2]){const g=new THREE.Mesh(new THREE.ExtrudeGeometry(sh,{depth:.25,bevelEnabled:false}),wl);g.rotation.y=-Math.PI/2;g.position.set(sx+.125,0,0);CAN.add(g)}}
+{const wl=M(0xf1ece4),gl=M(0x7fa5c2,{roughness:.2,metalness:.3}),rd=M(0xa23020,{side:THREE.DoubleSide});
+ const ang=Math.atan2(RH-RE,RZ-4.2);
+ for(const x of[-7,-2.3,2.3,7]){const z=4.85,y=ROOF(z)+.15;
+  box(1.5,1.2,.9,wl,x,y+.2,z+.1,CAN);box(1.0,.8,.06,gl,x,y+.25,z-.36,CAN);box(1.2,.08,.18,M(0xf5f5f5),x,y-.2,z-.4,CAN);
+  const r=new THREE.Mesh(new THREE.CylinderGeometry(.95,.95,1.7,3,1),rd);r.rotation.set(0,0,Math.PI/2);r.rotation.order='YXZ';r.rotation.y=0;r.position.set(x,y+.95,z+.1);r.scale.set(.75,1,1);CAN.add(r)}
+ const sm=[];const sg=new THREE.SphereGeometry(.45,8,6);
+ for(let i=0;i<14;i++){const m=new THREE.Mesh(sg,new THREE.MeshBasicMaterial({color:0x555555,transparent:true,opacity:.5,depthWrite:false}));CAN.add(m);sm.push(m)}
+ window.ROOFSMK=t=>{if(SCN!==2)return;sm.forEach((m,i)=>{const u=((t/3500)+i/14)%1;m.position.set(-2.3+u*1.6+Math.sin(u*9+i)*.2,ROOF(4.95)+1.8+u*5,4.9+u*.8);m.scale.setScalar(.7+u*2.2);m.material.opacity=.55*(1-u)})}}
 const inCan=p=>{if(SCN!==2)return false;const x=p.x-W.position.x;return Math.abs(x)<10.2&&p.z>4.05&&p.z<10&&p.y<ROOF(p.z)+.12};
 for(let f=1;f<NF;f++)box(64,.08,.06,M(0x9a9288),2,f*FL,zw-.03,house);
 /* Ziel */
@@ -337,7 +345,7 @@ let mt=0;function warn(t){$("msg").textContent=t;$("msg").classList.add("on");mt
 /* Schleife */
 let last=performance.now(),tt0=0,last0=false;function stepUI(){clearTimeout(tkT);$("task").classList.add("gone");$("task").classList.remove("done");$("task").innerHTML="<b>Schritt 1</b><strong>Drehleiter platzieren:</strong> mit «Vor» und «Zurück» neben das Haus fahren (Zielfenster beachten, Aufgabe mit «Aufgabe»). Dann «Stützen ausfahren»: erst danach erscheinen die Joysticks. Freigabetaster antippen und das Leiterpaket mit dem linken Hebel zuerst etwas anheben. Beim Ausfahren fährt zuerst das Gelenk aus.";addX()}stepUI();
 const UP=new THREE.Vector3(0,1,0);function lk(){cam.rotateOnWorldAxis(UP,look.y);cam.rotateX(-look.p)}
-function loop(now){const ph=Math.floor(now/110)%8,onA=lights.bl&&(ph===0||ph===2),onB=lights.bl&&(ph===4||ph===6);wbM.color.setHex(lights.wb&&Math.floor(now/450)%2===0?0xffa31a:0x4a2a05);lbM[0].color.setHex(onA?0x57b0ff:0x0b2a5a);lbM[1].color.setHex(onB?0x57b0ff:0x0b2a5a);blL.intensity=(onA||onB)?1.2:0;blL.position.z=onA?-.4:.4;requestAnimationFrame(loop);const dt=Math.min(.05,(now-last)/1e3);last=now;
+function loop(now){const ph=Math.floor(now/110)%8,onA=lights.bl&&(ph===0||ph===2),onB=lights.bl&&(ph===4||ph===6);wbM.color.setHex(lights.wb&&Math.floor(now/450)%2===0?0xffa31a:0x4a2a05);lbM[0].color.setHex(onA?0x57b0ff:0x0b2a5a);lbM[1].color.setHex(onB?0x57b0ff:0x0b2a5a);blL.intensity=(onA||onB)?1.2:0;blL.position.z=onA?-.4:.4;requestAnimationFrame(loop);const dt=Math.min(.05,(now-last)/1e3);last=now;if(window.ROOFSMK)ROOFSMK(now);
  {const rest=L.len<8.7&&L.pitch<3.5&&Math.abs(L.yaw)<3&&L.arm>-3&&L.ax<.02;drv.ok=rest&&sup.t===0&&sup.v<.001;$("drive").classList.toggle("off",!drv.ok);$("dock").classList.toggle("off",!(sup.v>=1));$("ke").classList.toggle("off",!(sup.v>=1));$("ke").classList.toggle("on",auto);const tg=drv.ok?drv.in*7:0;drv.v+=(tg-drv.v)*Math.min(1,dt*3);let tx=-W.position.x+drv.v*dt;for(const w of WHEELS)w.rotation.z-=drv.v*dt/.66;if(tx>26){tx=26;drv.v=0}if(tx<-24){tx=-24;drv.v=0}W.position.x=-tx;T.copy(Th).add(W.position)}
  const kl=keyv("KeyW","KeyS","KeyA","KeyD"),kr=keyv("ArrowUp","ArrowDown","ArrowLeft","ArrowRight");
  let a=[ST.l[0]+kl[0],ST.l[1]+kl[1]],b=[ST.r[0]+kr[0],ST.r[1]+kr[1]];[a,b].forEach(v=>{v[0]=Math.max(-1,Math.min(1,v[0]));v[1]=Math.max(-1,Math.min(1,v[1]))});
