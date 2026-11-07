@@ -1,4 +1,4 @@
-const APP_VERSION = "1.170";
+const APP_VERSION = "1.171";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -869,7 +869,7 @@ function simView() {
       <div class="simg"><span>Zuladungsreserve wählen</span><div id="simres" class="simchips"></div></div>
       <div class="simg"><span>Personen im Korb</span><div id="simn" class="simchips"></div></div>
       <div class="simg"><span>Zusatz · Schnellwahl</span><div class="simchips"><button type="button" class="chip" id="simtr">Trage +50 kg</button><button type="button" class="chip" data-p="h">Max. Höhe</button><button type="button" class="chip" data-p="r">Max. Ausl.</button><button type="button" class="chip" data-p="t">Ablage</button></div></div></div>
-    <p class="foot">Der Korbarm (3,6 m, gestreckt) ist Teil des Auszugs. Prinzipdarstellung nach dem Ausladungsdiagramm der Betriebsanleitung (S. 260), aus dem Diagramm abgelesen und gerundet; volle Abstützbreite. Pro Person werden 100 kg gerechnet (500 kg / 5 Personen). Nur zur Ausbildung, nicht für den Einsatz. Massgebend ist immer die Anzeige am Fahrzeug.</p>`;
+    <p class="foot">Der Korbarm (4,2 m, gestreckt) ist Teil des Auszugs. Prinzipdarstellung nach dem Ausladungsdiagramm der Betriebsanleitung (S. 260), aus dem Diagramm abgelesen und gerundet; volle Abstützbreite. Pro Person werden 100 kg gerechnet (500 kg / 5 Personen). Nur zur Ausbildung, nicht für den Einsatz. Massgebend ist immer die Anzeige am Fahrzeug.</p>`;
   const P0 = { x: -2.14, h: 3.73 }, CX = .6, CY = -1.0, X = x => 81 + 9 * x, Y = h => 300 - 9 * h, $ = id => document.getElementById(id);
   const PIC = (m) => `<svg class="pic ${m}" viewBox="0 0 12 22" aria-hidden="true"><circle cx="6" cy="3.4" r="2.7"/><path d="M2.4 7.4h7.2a1.4 1.4 0 0 1 1.4 1.4v6.2H9.2v6.6H6.9V16H5.1v5.6H2.8V15H1V8.8a1.4 1.4 0 0 1 1.4-1.4z"/></svg>`;
   const resList = [["4", 1], ["3", 2], ["2", 3], ["1", 4]];
@@ -928,7 +928,7 @@ function adlArm(x1, y1, x2, y2, U) {
   return `<g transform="translate(${x1} ${y1}) rotate(${ang}) scale(${U})"><rect x="0" y="${-h / 2}" width="${L}" height="${h}" fill="none" stroke="#23262b" stroke-width="${2.4 / U}"/><path d="${d}" fill="none" stroke="#23262b" stroke-width="${1.2 / U}"/></g>`;
 }
 /* Drehleiter Masse L32A-XS: Abstützbreite, minimaler Wandabstand (Gelenkarm) */
-const MS = { w: 4.8, H: 15, ko: true, ov: 4.4 }, MS_P = { x: -2.14, h: 3.73 }, MS_KA = 3.6;
+const MS = { w: 4.8, H: 15, ko: true, ov: 4.4 }, MS_P = { x: -2.14, h: 3.73 }, MS_KA = 4.2;
 function masseMin(H, free) {
   let best = null; const R = Math.PI / 180;
   for (let a = -20; a <= 76; a += .5) for (let L = 12; L <= 28.4; L += .2) for (let b = 0; b <= (free ? 75 : 0); b += 2.5) {
