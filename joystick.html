@@ -1,5 +1,5 @@
 <!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Joystick Training</title>
+<title>Drehleiter Simulator</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&display=swap">
 <style>
 :root{--bg:#0f1216;--panel:rgba(18,22,28,.82);--line:#2b333d;--ink:#eef1f4;--mut:#9aa5b1;--red:#e5392d;--grn:#37b36b;--amb:#f0a229;--hud:'Barlow Condensed','Arial Narrow',system-ui,sans-serif}
@@ -37,7 +37,7 @@ button{font:inherit;color:var(--ink);cursor:pointer}
 @media(max-width:620px){.help{display:none}.bar h1{display:none}.chip{padding:3px 9px;font-size:13px;min-height:28px}.chips{gap:5px}.top{gap:6px;padding:8px 12px}.hud{font-size:13px;padding:5px 9px;gap:2px 12px}.task{font-size:14px;padding:6px 9px;max-width:100%;width:100%;box-sizing:border-box}.hud span,.hud b{white-space:nowrap}.plate{width:min(35vw,150px)}#fr{width:min(22vw,92px);font-size:12px}.frei small{font-size:12px;max-width:95px}.dock{padding-left:10px;padding-right:10px}.plate i{font-size:11px}.task b{font-size:11px}.task .chip{font-size:13px}.row{flex-direction:column;align-items:stretch}}
 </style>
 <canvas id="cv"></canvas>
-<div class="top"><div class="bar"><h1>Joystick <b>Training</b> · L32A-XS</h1>
+<div class="top"><div class="bar"><h1>Drehleiter <b>Simulator</b> · L32A-XS</h1>
 <div class="chips" id="views"><button class="chip on" data-v="ov">Übersicht</button><button class="chip" data-v="st">Bedienstand</button><button class="chip" data-v="ko">Im Korb</button></div>
 <div class="chips"><button class="chip off" id="ke">Korbeinstieg</button><button class="chip" id="sup">Stützen ausfahren</button><button class="chip" id="swp">Belegung A</button><button class="chip" id="bl">Blaulicht</button><button class="chip" id="wb">Warnblinker</button><button class="chip" id="tk">Aufgabe</button><button class="chip" id="hv">Werte</button></div></div>
 <div class="row"><div class="hud off" id="hud"></div>
@@ -100,13 +100,13 @@ box(6.0,1.5,2.4,red,.2,1.1,0,truck);box(2.0,2.9,2.4,red,4.2,1.7,0,truck);
 box(.3,1.5,2.4,red,-2.7,1.15,0,truck);
 const cv2=(w,h,f)=>{const c=document.createElement("canvas");c.width=w;c.height=h;f(c.getContext("2d"),w,h);const t=new THREE.CanvasTexture(c);t.anisotropy=4;return t};
 /* Frontansicht Kabine (gezeichnet): Frontscheibe, Gitter, Scheinwerfer, Stossstange, Blaulicht */
-const cs=new THREE.Shape();[[7.68,.25],[7.68,1.95],[7.6,2.12],[7.29,3.16],[7.1,3.31],[5.33,3.31],[5.33,.25]].forEach((p,k)=>k?cs.lineTo(p[0],p[1]):cs.moveTo(p[0],p[1]));
-const cabm=new THREE.Mesh(new THREE.ExtrudeGeometry(cs,{depth:2.4,bevelEnabled:false}),red);cabm.position.z=-1.2;cabm.castShadow=true;truck.add(cabm);
+const cs=new THREE.Shape();cs.moveTo(5.45,.37);cs.lineTo(7.45,.37);cs.quadraticCurveTo(7.56,.37,7.56,.5);cs.lineTo(7.56,1.85);cs.quadraticCurveTo(7.56,1.95,7.5,1.98);cs.lineTo(7.26,3.07);cs.quadraticCurveTo(7.22,3.19,7.08,3.19);cs.lineTo(5.6,3.19);cs.quadraticCurveTo(5.45,3.19,5.45,3.05);cs.lineTo(5.45,.37);
+const cabm=new THREE.Mesh(new THREE.ExtrudeGeometry(cs,{depth:2.1,curveSegments:14,bevelEnabled:true,bevelThickness:.14,bevelSize:.12,bevelSegments:6}),red);cabm.position.z=-1.05;cabm.castShadow=true;truck.add(cabm);
 const TF=cv2(256,160,(g,w,h)=>{g.fillStyle="#b3151b";g.fillRect(0,0,w,h);g.fillStyle="#2a2e34";g.fillRect(0,100,w,60);g.fillStyle="#9aa0a8";g.fillRect(40,108,w-80,40);g.fillStyle="#c9ccd1";g.fillRect(52,20,w-104,64);g.fillStyle="#7d8189";for(let k=0;k<6;k++)g.fillRect(56,24+k*10,w-112,4);
  g.fillStyle="#fff7d0";g.fillRect(8,28,34,38);g.fillRect(w-42,28,34,38);g.fillStyle="#f4f1ee";g.fillRect(0,86,w,6);g.fillStyle="#e8663a";g.fillRect(0,92,w,4);g.fillStyle="#fff";g.font="bold 14px sans-serif";g.textAlign="center";g.fillText("ZUCHWIL",w/2,134)});
 const lowf=new THREE.Mesh(new THREE.PlaneGeometry(2.4,1.7),new THREE.MeshBasicMaterial({map:TF}));lowf.position.set(7.685,1.1,0);lowf.rotation.y=Math.PI/2;truck.add(lowf);
 const TW2=cv2(256,128,(g,w,h)=>{g.fillStyle="#b3151b";g.fillRect(0,0,w,h);g.fillStyle="#6f93ad";g.fillRect(10,12,w/2-14,h-24);g.fillRect(w/2+4,12,w/2-14,h-24);g.fillStyle="rgba(255,255,255,.18)";g.beginPath();g.moveTo(24,12);g.lineTo(60,12);g.lineTo(30,h-12);g.lineTo(10,h-12);g.fill()});
-{const d=new THREE.Vector3(-.31,1.04,0).normalize(),n=new THREE.Vector3(d.y,-d.x,0),X=new THREE.Vector3(0,0,-1);const ws=new THREE.Mesh(new THREE.PlaneGeometry(2.3,1.085),new THREE.MeshBasicMaterial({map:TW2}));ws.matrixAutoUpdate=false;ws.matrix.makeBasis(X,d,n);ws.matrix.setPosition(7.445+n.x*.01,2.64+n.y*.01,0);truck.add(ws)}
+{const d=new THREE.Vector3(-.24,1.12,0).normalize(),n=new THREE.Vector3(d.y,-d.x,0),X=new THREE.Vector3(0,0,-1);const ws=new THREE.Mesh(new THREE.PlaneGeometry(2.25,1.1),new THREE.MeshBasicMaterial({map:TW2}));ws.matrixAutoUpdate=false;ws.matrix.makeBasis(X,d,n);ws.matrix.setPosition(7.5+n.x*.02,2.53+n.y*.02,0);truck.add(ws)}
 const lbM=[0,1].map(k=>new THREE.MeshBasicMaterial({color:0x0b2a5a}));[-.38,.38].forEach((z,k)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(.22,.14,.7),lbM[k]);m.position.set(6.7,3.38,z);truck.add(m)});
 const wbM=new THREE.MeshBasicMaterial({color:0x4a2a05});[[7.72,1.05,-1.0,.1,.18,.32],[7.72,1.05,1.0,.1,.18,.32],[-2.9,1.45,-1.0,.1,.2,.3],[-2.9,1.45,1.0,.1,.2,.3],[7.3,1.35,-1.22,.3,.16,.05],[7.3,1.35,1.22,.3,.16,.05]].forEach(a=>{const m=new THREE.Mesh(new THREE.BoxGeometry(a[3],a[4],a[5]),wbM);m.position.set(a[0],a[1],a[2]);truck.add(m)});
 [-.98,.98].forEach(z=>{const m=new THREE.Mesh(new THREE.BoxGeometry(.22,.14,.22),wbM);m.position.set(6.7,3.38,z);truck.add(m)});
@@ -324,7 +324,7 @@ if(auto){if(moving||!fr.on||!ok){auto=false;warn("Korbeinstieg abgebrochen")}els
  smokeStep(dt);victimStep(now);exitStep(dt,now);
  if(peek){peek.t+=dt;const D=3.6,u=peek.t/D;if(u>=1)peek=null;else if(u>0){const k=Math.sin(Math.PI*Math.min(1,u)),e=k*k*(3-2*k);const p1=new THREE.Vector3(T.x+9,Math.max(2.5,T.y*.6),T.z-15),o=new THREE.PerspectiveCamera();o.position.copy(p1);o.lookAt(T);const q0=cam.quaternion.clone();cam.position.lerp(p1,e);cam.quaternion.copy(q0).slerp(o.quaternion,e)}}
  R.render(S,cam)}
-apply();requestAnimationFrame(loop);window.__trainer={apply,hit,Th,W,vic,vic2,fire,vic,cam,setView:v=>{view=v},cageW:()=>{S.updateMatrixWorld(true);return cage.localToWorld(new THREE.Vector3(.6,-.4,0))},L,T,cageC,fr:setFr,orb0,sup,get task(){return task},ST};
+apply();requestAnimationFrame(loop);window.__trainer={killPeek:()=>{peek=null},apply,hit,Th,W,vic,vic2,fire,vic,cam,setView:v=>{view=v},cageW:()=>{S.updateMatrixWorld(true);return cage.localToWorld(new THREE.Vector3(.6,-.4,0))},L,T,cageC,fr:setFr,orb0,sup,get task(){return task},ST};
 })();
 </script>
 

@@ -1,4 +1,4 @@
-const APP_VERSION = "1.177";
+const APP_VERSION = "1.178";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -812,8 +812,8 @@ function adlView() {
   state.mod = null; state.sub = null; state.view = "adl"; backBtn.hidden = false;
   app.innerHTML = `<section class="hero"><h1>Autodrehleiter</h1><p>Anleitungen zur Drehleiter L32A-XS der Feuerwehr Zuchwil.</p></section>
     <div class="menu rgmenu">
-      <button class="mbtn main pdfbtn" id="adlsim"><span>Drehleiter-Simulator</span><small>Ausladung, Personen, Zuladungsreserve interaktiv</small></button>
-      <button class="mbtn main pdfbtn" id="adljoy"><span>Joystick Training</span><small>3D-Simulator: Bedienhebel der Drehleiter üben</small></button>
+      <button class="mbtn main pdfbtn" id="adlsim"><span>Ausladungssimulator</span><small>Ausladung, Personen, Zuladungsreserve interaktiv</small></button>
+      <button class="mbtn main pdfbtn" id="adljoy"><span>Drehleiter Simulator</span><small>3D-Simulator: Bedienhebel der Drehleiter üben</small></button>
       <button class="mbtn main pdfbtn" id="adlmas"><span>Drehleiter Masse</span><small>Abstützbreite und Wandabstand</small></button>
       <button class="mbtn main pdfbtn" id="adlpdf"><span>Betriebsanleitung L32A-XS</span><small>PDF · ${RGDEF.adl.pages} S.</small></button>
       <button class="mbtn main pdfbtn" id="adlpdf2"><span>Einweisungsunterlage</span><small>PDF · ${RGDEF.adl2.pages} S. · Kurzfassung zum Lernen</small></button>
@@ -826,11 +826,11 @@ function adlView() {
   document.getElementById("adlpdf2").onclick = () => { state.pdfBack = () => adlView(); rgView("adl2"); };
   window.scrollTo(0, 0);
 }
-/* Joystick Training: 3D-Hebel-Simulator (eigene Seite joystick.html im Rahmen) */
+/* Drehleiter Simulator (3D): 3D-Hebel-Simulator (eigene Seite joystick.html im Rahmen) */
 function joystickView() {
   document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
   state.mod = null; state.sub = null; state.view = "joystick"; backBtn.hidden = false;
-  app.innerHTML = '<iframe id="joyf" title="Joystick Training" src="joystick.html?v=' + APP_VERSION + '" allow="fullscreen" style="position:fixed;left:0;right:0;bottom:0;border:0;width:100%;background:#0f1216"></iframe>';
+  app.innerHTML = '<iframe id="joyf" title="Drehleiter Simulator" src="joystick.html?v=' + APP_VERSION + '" allow="fullscreen" style="position:fixed;left:0;right:0;bottom:0;border:0;width:100%;background:#0f1216"></iframe>';
   const fit = () => { const f = document.getElementById("joyf"); if (!f) return; const t = Math.ceil(document.querySelector(".top").getBoundingClientRect().bottom); f.style.top = t + "px"; f.style.height = (window.innerHeight - t) + "px"; };
   fit(); window.addEventListener("resize", fit, { once: true }); window.scrollTo(0, 0);
 }
@@ -856,12 +856,12 @@ function adlLadder(px, py, a, L, U) {
   const truss = (s0, l, h) => { const n = Math.max(3, Math.round(l / (h * 1.05))), w = l / n; let d = `M${s0} ${-h / 2}`; for (let q = 0; q < n; q++) d += ` L${s0 + w * (q + .5)} ${h / 2} L${s0 + w * (q + 1)} ${-h / 2}`; return `<rect x="${s0}" y="${-h / 2}" width="${l}" height="${h}" fill="none" stroke="#2a2d33" stroke-width=".2"/><path d="${d}" fill="none" stroke="#5b5f66" stroke-width=".09"/>`; };
   return `<g transform="translate(${px} ${py}) rotate(${-a}) scale(${U})">${st.map((s0, q) => truss(s0, ln0[q], H[q])).join("")}</g><circle cx="${px}" cy="${py}" r="2.2" fill="#c9ccd1" stroke="#23262b" stroke-width="1"/>`;
 }
-/* Drehleiter-Simulator L32A-XS nach Ausladungsdiagramm (Betriebsanleitung S. 260, Prinzipdarstellung) */
+/* Ausladungssimulator L32A-XS nach Ausladungsdiagramm (Betriebsanleitung S. 260, Prinzipdarstellung) */
 const SIM_LIM = [["500 kg", 16.7, 5], ["4", 18.2, 4], ["3", 19.3, 3], ["2", 20.9, 2], ["1", 22.7, 1]], SIM_USE = 24.7, SIM = { a: 45, L: 20, res: 1, n: 1, tr: false };
 function simView() {
   document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
   state.mod = null; state.sub = null; state.view = "sim"; backBtn.hidden = false;
-  app.innerHTML = `<section class="hero"><h1>Drehleiter-Simulator</h1><p>L32A-XS: Leiter bewegen, Zuladungsreserve wählen, Personen in den Korb setzen.</p></section>
+  app.innerHTML = `<section class="hero"><h1>Ausladungssimulator</h1><p>L32A-XS: Leiter bewegen, Zuladungsreserve wählen, Personen in den Korb setzen.</p></section>
     <div class="simbox"><svg id="simsvg" viewBox="0 0 333 380" role="img" aria-label="Seitenansicht Drehleiter"></svg></div>
     <div class="simro" id="simro" role="status"></div>
     <div class="simc"><label>Aufrichtewinkel <b id="sva"></b><input type="range" id="sia" min="-20" max="76" step="1"></label>
