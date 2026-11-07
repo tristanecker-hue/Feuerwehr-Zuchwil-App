@@ -1,4 +1,4 @@
-const APP_VERSION = "1.180";
+const APP_VERSION = "1.181";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -273,21 +273,36 @@ function extinguishFx(lb, fire) {
     requestAnimationFrame(frame);
   });
 }
+function helmOn(lb) {
+  if (lb.querySelector(".helm")) return;
+  const d = document.createElement("div"); d.className = "helm";
+  d.innerHTML = `<svg viewBox="0 0 120 90" aria-hidden="true"><defs><linearGradient id="hg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f23a2e"/><stop offset="1" stop-color="#b3000a"/></linearGradient></defs>
+<path d="M14 62 Q10 80 22 84 L98 84 Q110 80 106 62 Z" fill="#8f0008"/>
+<path d="M18 62 Q20 18 60 14 Q100 18 102 62 Z" fill="url(#hg)"/>
+<path d="M54 14 Q60 4 66 14 L66 62 L54 62 Z" fill="#c4000c" stroke="#7a0006" stroke-width="1.5"/>
+<path d="M22 54 Q60 44 98 54 L100 62 L20 62 Z" fill="#f1f1ee"/>
+<path d="M30 40 Q60 30 90 40" fill="none" stroke="#ffffff55" stroke-width="3" stroke-linecap="round"/>
+<path d="M24 62 L96 62 Q92 72 60 72 Q28 72 24 62 Z" fill="#2a2d33"/>
+<circle cx="60" cy="38" r="7" fill="#f1c40f" stroke="#7a0006" stroke-width="1.5"/>
+</svg>`;
+  lb.appendChild(d);
+}
+function helmOff(lb) { const h = lb.querySelector(".helm"); if (!h) return; h.classList.add("out"); setTimeout(() => h.remove(), 500); }
 async function appUpdate() {
   const v = document.getElementById("verf"); if (!v) return;
   const lb = document.getElementById("logoup"); if (lb.classList.contains("busy")) return;
   const fx = c => { lb.classList.remove("busy", "ok", "upd"); void lb.offsetWidth; if (c) lb.classList.add(c); };
   const fire = lb._fire || (lb._fire = fireFx(lb)); fire.level(1);
-  fx("busy"); v.textContent = "Suche nach Update …"; const t0 = Date.now(), wait = () => new Promise(r => setTimeout(r, Math.max(0, 900 - (Date.now() - t0))));
+  helmOn(lb); fx("busy"); v.textContent = "Suche nach Update …"; const t0 = Date.now(), wait = () => new Promise(r => setTimeout(r, Math.max(0, 900 - (Date.now() - t0))));
   try {
     const t = await (await fetch("app.js?u=" + Date.now(), { cache: "no-store" })).text();
     const nv = (t.match(/APP_VERSION = "([^"]+)"/) || [])[1];
-    if (nv && nv === APP_VERSION) { await wait(); await extinguishFx(lb, fire); fire.level(0); fx("ok"); setTimeout(() => lb.classList.remove("ok"), 1200); v.textContent = "Die App ist aktuell (V" + APP_VERSION + ")"; setTimeout(() => { const e = document.getElementById("verf"); if (e) e.textContent = "V" + APP_VERSION + " · Logo antippen zum Aktualisieren"; }, 3500); return; }
+    if (nv && nv === APP_VERSION) { await wait(); await extinguishFx(lb, fire); fire.level(0); helmOff(lb); fx("ok"); setTimeout(() => lb.classList.remove("ok"), 1200); v.textContent = "Die App ist aktuell (V" + APP_VERSION + ")"; setTimeout(() => { const e = document.getElementById("verf"); if (e) e.textContent = "V" + APP_VERSION + " · Logo antippen zum Aktualisieren"; }, 3500); return; }
     await wait(); fire.level(2); fx("upd"); v.textContent = "Neue Version" + (nv ? " V" + nv : "") + " wird geladen …";
     if ("caches" in window) for (const k of await caches.keys()) await caches.delete(k);
     if ("serviceWorker" in navigator) for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
     await new Promise(r => setTimeout(r, 900)); await extinguishFx(lb, fire); await new Promise(r => setTimeout(r, 300)); location.reload();
-  } catch (e) { fire.level(0); lb.classList.remove("busy", "ok", "upd"); v.textContent = "Keine Verbindung, Update nicht möglich."; }
+  } catch (e) { fire.level(0); helmOff(lb); lb.classList.remove("busy", "ok", "upd"); v.textContent = "Keine Verbindung, Update nicht möglich."; }
 }
 
 /* ---------- Suche ---------- */
