@@ -330,8 +330,8 @@ bypass=false;if(auto){if(moving||!fr.on||!ok){auto=false;warn("Korbeinstieg abge
  const fv=view==="ov"?50:50*look.z;if(Math.abs(cam.fov-fv)>.01){cam.fov=fv;cam.updateProjectionMatrix()}
  if(view==="ov"){const c=new THREE.Vector3((P.x+ax.x)/2-1,Math.max(3.5,(P.y+3)/2),(P.z+ax.z)/2+1);cc.lerp(c,Math.min(1,dt*3));dm+=((drv.ok?1.75:1)-dm)*Math.min(1,dt*1.5);const d=orb0.d*(.7+reach/45)*dm;cam.position.set(cc.x+Math.cos(orb0.e)*Math.sin(orb0.a)*d,Math.max(1,cc.y+Math.sin(orb0.e)*d),cc.z+Math.cos(orb0.e)*Math.cos(orb0.a)*d);cam.lookAt(cc)}
  else if(view==="free"){}
- else if(view==="st"){const p=new THREE.Vector3(.4,3.1,.6);tt.localToWorld(p);const q=new THREE.Vector3(14,4.6,0);tt.localToWorld(q);cam.position.copy(p);cam.lookAt(q);lk()}
- else{const p=new THREE.Vector3(.5,-.1,0);cage.localToWorld(p);const q=new THREE.Vector3(6,-.9,0);cage.localToWorld(q);cam.position.copy(p);cam.lookAt(q);lk()}
+ else if(view==="st"){const p=new THREE.Vector3(.4,3.1,.6);tt.localToWorld(p);const q=new THREE.Vector3(L.len+AL*.6,-.4,0);lp.localToWorld(q);cam.position.copy(p);cam.lookAt(q);lk()}
+ else{S.updateMatrixWorld(true);const m=new THREE.Vector3();man.getWorldPosition(m);const f=new THREE.Vector3(1,0,0).transformDirection(cage.matrixWorld);f.y=0;f.normalize();const p=m.clone().addScaledVector(f,-3.4);p.y=m.y+3.2;const q=m.clone().addScaledVector(f,4);q.y=m.y-1.2;cam.position.copy(p);cam.lookAt(q);lk()}
  smokeStep(dt);victimStep(now);exitStep(dt,now);
  if(peek){peek.t+=dt;const D=3.6,u=peek.t/D;if(u>=1)peek=null;else if(u>0){const k=Math.sin(Math.PI*Math.min(1,u)),e=k*k*(3-2*k);const p1=new THREE.Vector3(T.x+9,Math.max(2.5,T.y*.6),T.z-15),o=new THREE.PerspectiveCamera();o.position.copy(p1);o.lookAt(T);const q0=cam.quaternion.clone();cam.position.lerp(p1,e);cam.quaternion.copy(q0).slerp(o.quaternion,e)}}
  R.render(S,cam)}
