@@ -1,4 +1,4 @@
-const APP_VERSION = "1.192";
+const APP_VERSION = "1.193";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -858,8 +858,20 @@ function hausView() {
     card("A", "bstände", "Das Fahrzeug im richtigen Abstand zum Objekt und zu Hindernissen abstellen.", ["Der Maschinist muss sein Fahrzeug kennen und wissen, welche Abstände einzuhalten sind", "Länge und Breite des Fahrzeugs mit Abstützung beachten"], svgs.A) +
     card("U", "ntergrund", "Tragfähigkeit nach der Abstützung beachten.", ["Keine Abstützung auf unbefestigtem oder aufgeweichtem Untergrund", "Abstand zu Gully-/Schachtdeckeln und Trottoirrändern mindestens 0,5 m", "Vorsicht im Gelände bei Schnee und Eis"], svgs.U) +
     card("S", "icherheit", "Für die Sicherheit ist der Maschinist verantwortlich.", ["Standsicherheit beachten (Belastung durch Zusatzgeräte)", "Absicherung der Einsatzstelle", "Anleitern von oben oder von der Seite", "Abstand bei Elektrizität, Wind", "Standort nur angeben, wenn er nicht selbstverständlich ist"], svgs.S) +
-    `</div><p class="foot">Zusammenfassung der Standardregel (HAUS-Regel) für Hubrettungsfahrzeuge, eigene Zeichnungen zur Veranschaulichung.</p>`;
+    `</div><p class="foot">Standardregel (HAUS-Regel) für Hubrettungsfahrzeuge, nur zur internen Ausbildung.</p>`;
   window.scrollTo(0, 0);
+  hausImgs().then(im => { if (!im || state.view !== "haus") return; app.querySelectorAll(".haus .simbox").forEach((b, i) => { const k = "HAUS"[i]; if (im[k]) b.innerHTML = `<img src="${im[k]}" alt="${esc(b.querySelector("svg").getAttribute("aria-label") || "")}" style="width:100%;height:auto;display:block;border-radius:8px">`; }); }).catch(() => {});
+}
+let HAUSIM = null;
+async function hausImgs() {
+  if (HAUSIM) return HAUSIM;
+  if (!window.FWZ_CODE) return null;
+  const r = await fetch("haus.enc"); if (!r.ok) return null;
+  const raw = new Uint8Array(await r.arrayBuffer());
+  const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(window.FWZ_CODE), "PBKDF2", false, ["deriveKey"]);
+  const key = await crypto.subtle.deriveKey({ name: "PBKDF2", salt: raw.slice(0, 16), iterations: 600000, hash: "SHA-256" }, base, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
+  const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: raw.slice(16, 28) }, key, raw.slice(28));
+  return HAUSIM = JSON.parse(new TextDecoder().decode(pt));
 }
 function adlView() {
   document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
