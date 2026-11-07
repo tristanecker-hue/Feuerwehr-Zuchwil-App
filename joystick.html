@@ -116,7 +116,7 @@ const TRL=new THREE.TextureLoader().load("data:image/png;base64,iVBORw0KGgoAAAAN
 const rm=new THREE.Mesh(new THREE.PlaneGeometry(2.5,1.85),new THREE.MeshBasicMaterial({map:TRL,transparent:true,alphaTest:.3}));rm.position.set(-2.86,1.0,0);rm.rotation.y=-Math.PI/2;truck.add(rm);
 /* Stuetzen: fahren aus (sup.v 0..1) */
 const sup={v:0,t:0},legs=[];
-for(const x of[-2.08,4.04]){const beam=box(.35,.35,1,gray,x,.9,0,truck);const lg=[];for(const s of[-1,1]){const g=new THREE.Group();g.position.set(x,0,s*1.3);truck.add(g);box(.3,.7,.3,red,0,.65,0,g);box(.8,.12,.8,dark,0,.06,0,g);box(.22,.14,.07,wbM,0,.88,s*.18,g);box(.07,.14,.2,wbM,.17,.88,s*.05,g);box(.07,.14,.2,wbM,-.17,.88,s*.05,g);lg.push([g,s])}legs.push({beam,lg})}
+for(const x of[-1.55,3.4]){const beam=box(.35,.35,1,gray,x,.9,0,truck);const lg=[];for(const s of[-1,1]){const g=new THREE.Group();g.position.set(x,0,s*1.3);truck.add(g);box(.3,.7,.3,red,0,.65,0,g);box(.8,.12,.8,dark,0,.06,0,g);box(.22,.14,.07,wbM,0,.88,s*.18,g);box(.07,.14,.2,wbM,.17,.88,s*.05,g);box(.07,.14,.2,wbM,-.17,.88,s*.05,g);lg.push([g,s])}legs.push({beam,lg})}
 function setSup(v){for(const o of legs){const z=1.3+1.1*v;o.beam.scale.z=2*z;for(const[g,s]of o.lg){g.position.z=s*z;g.position.y=(1-v)*.5}}}setSup(0);
 /* Drehkranz (dreht um die Drehachse) */
 const tt=new THREE.Group();truck.add(tt);
