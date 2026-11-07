@@ -174,8 +174,9 @@ const vic=new THREE.Group();W.add(vic);
  const bd=new THREE.Mesh(new THREE.BoxGeometry(.6,.85,.3),sh);bd.position.y=.42;vic.add(bd);
  const hd=new THREE.Mesh(new THREE.SphereGeometry(.21,16,12),sk);hd.position.y=1.05;vic.add(hd);
  const hr=new THREE.Mesh(new THREE.SphereGeometry(.22,16,10,0,Math.PI*2,0,Math.PI/2),ha);hr.position.y=1.08;vic.add(hr);
+ vic.legs=[-1,1].map(k=>{const p=new THREE.Group();p.position.set(k*.15,0,0);const l=new THREE.Mesh(new THREE.BoxGeometry(.2,.8,.24),M(0x2d3340));l.position.y=-.4;p.add(l);p.visible=false;vic.add(p);return p});
  vic.arms=[-1,1].map(k=>{const p=new THREE.Group();p.position.set(k*.36,.78,0);const a=new THREE.Mesh(new THREE.BoxGeometry(.14,.7,.14),sh);a.position.y=.33;p.add(a);const h=new THREE.Mesh(new THREE.SphereGeometry(.1,10,8),sk);h.position.y=.72;p.add(h);vic.add(p);return p});}
-const vic2=vic.clone();vic2.scale.setScalar(.8);vic2.position.set(1.05,-.93,.3);vic2.children[3].rotation.z=2.6;vic2.children[4].rotation.z=-2.6;vic2.visible=false;cage.add(vic2);
+const vic2=vic.clone();vic2.scale.setScalar(.8);vic2.position.set(1.05,-.36,.3);vic2.children[5].rotation.z=2.6;vic2.children[6].rotation.z=-2.6;vic2.children[3].visible=vic2.children[4].visible=true;vic2.visible=false;cage.add(vic2);function vic2Reset(){if(vic2.parent!==cage){vic2.parent.remove(vic2);cage.add(vic2)}vic2.position.set(1.05,-.36,.3);vic2.rotation.set(0,0,0);vic2.children[3].rotation.x=vic2.children[4].rotation.x=0;vic2.children[5].rotation.z=2.6;vic2.children[6].rotation.z=-2.6;vic2.visible=false}
 const bub=(t)=>{const c=document.createElement("canvas");c.width=256;c.height=96;const g=c.getContext("2d");g.fillStyle="#fff";g.strokeStyle="#c8161d";g.lineWidth=6;g.beginPath();g.moveTo(14,6);g.lineTo(242,6);g.quadraticCurveTo(250,6,250,14);g.lineTo(250,62);g.quadraticCurveTo(250,70,242,70);g.lineTo(140,70);g.lineTo(120,92);g.lineTo(112,70);g.lineTo(14,70);g.quadraticCurveTo(6,70,6,62);g.lineTo(6,14);g.quadraticCurveTo(6,6,14,6);g.fill();g.stroke();g.fillStyle="#c8161d";g.font="700 44px Arial Narrow,Arial,sans-serif";g.textAlign="center";g.textBaseline="middle";g.fillText(t,128,39);return new THREE.CanvasTexture(c)};
 const bubS=new THREE.Sprite(new THREE.SpriteMaterial({map:bub("HILFE!"),transparent:true,depthTest:false}));bubS.scale.set(2.6,.975,1);bubS.renderOrder=5;W.add(bubS);
 const bubOk=bub("DANKE!"),bubMap=bubS.material.map;
@@ -188,11 +189,14 @@ function smokeStep(dt){const fp=fire.position;for(const m of SMK){m.age+=dt;if(m
  if(!m.o){m.o=[fp.x,fp.y+.3,fp.z-.35];m.v=[.6,1.7,-.2]}
  const a=m.age;m.position.set(m.o[0]+m.v[0]*a,m.o[1]+m.v[1]*a,m.o[2]+m.v[2]*a);const sc=1.1+a*1.15;m.scale.set(sc,sc,1);m.material.opacity=Math.max(0,.55*(1-a/4.5))*Math.min(1,a*2.5)}
  glow.material.opacity=.7+.25*Math.sin(performance.now()/90)+.1*Math.sin(performance.now()/37)}
-function victimStep(now){const done=task&&task.done,w=Math.sin(now/170);vic.arms.forEach((p,i)=>{p.rotation.z=(i?-1:1)*(done?2.9:.55+.4*w*(i?-1:1))});bubS.visible=true;bubS.material.map=done?bubOk:bubMap;if(done){cage.updateWorldMatrix(true,false);const q=cage.localToWorld(new THREE.Vector3(.9,1.5,.3));bubS.position.set(q.x-W.position.x,q.y,q.z)}else bubS.position.set(vic.position.x+.2,vic.position.y+2.05+.05*Math.sin(now/120),vic.position.z)}
+function exitStep(dt,now){if(!task||!task.done)return;
+ if(!task.out){cage.updateWorldMatrix(true,false);const fl=cage.localToWorld(new THREE.Vector3(CDX/2,-1,0));if(fl.y>.45)return;const wp=new THREE.Vector3();vic2.getWorldPosition(wp);cage.remove(vic2);W.add(vic2);vic2.rotation.set(0,0,0);vic2.position.set(wp.x-W.position.x,.64,wp.z);task.out={t:0,x0:vic2.position.x,z0:vic2.position.z}}
+ const o=task.out;o.t+=dt;const u=Math.min(1,o.t/5),z1=7.4,x1=o.x0+4;vic2.position.x=o.x0+(x1-o.x0)*u;vic2.position.z=o.z0+(z1-o.z0)*u;const sw=u<1?Math.sin(o.t*9)*.6:0;vic2.children[3].rotation.x=sw;vic2.children[4].rotation.x=-sw;vic2.position.y=.64+(u<1?Math.abs(Math.sin(o.t*9))*.04:0);vic2.children[5].rotation.z=2.9-(u<1?.3*sw:0);vic2.children[6].rotation.z=-2.9+(u<1?.3*sw:0)}
+function victimStep(now){const done=task&&task.done,w=Math.sin(now/170);vic.arms.forEach((p,i)=>{p.rotation.z=(i?-1:1)*(done?2.9:.55+.4*w*(i?-1:1))});if(!(done&&task.out))bubS.visible=true;bubS.material.map=done?bubOk:bubMap;if(done){if(task.out){bubS.position.set(vic2.position.x,vic2.position.y+1.5,vic2.position.z);bubS.visible=task.out.t<7}else{cage.updateWorldMatrix(true,false);const q=cage.localToWorld(new THREE.Vector3(.9,1.5,.3));bubS.position.set(q.x-W.position.x,q.y,q.z)}}else bubS.position.set(vic.position.x+.2,vic.position.y+2.05+.05*Math.sin(now/120),vic.position.z)}
 let auto=false;let T=new THREE.Vector3(),Th=new THREE.Vector3(),task=null;const drv={in:0,v:0,ok:true};
 /* Zustand */
 const L={yaw:0,pitch:2,len:8.5,arm:0,ax:0}, V={yaw:0,pitch:0,len:0,arm:0};
-const lights={bl:false,wb:false},LIFT=4,LIM={pitch:[-17,75],len:[8.5,30.5],arm:[-75,0]}, RATE={yaw:11,pitch:7,len:1.5,arm:20};
+const lights={bl:true,wb:false},LIFT=4,LIM={pitch:[-17,75],len:[8.5,30.5],arm:[-75,0]}, RATE={yaw:11,pitch:7,len:1.5,arm:20};
 function apply(){const al=1.5+(AL-1.5)*L.ax;armB.scale.x=al/AL;jt2.position.x=al;cage.position.x=al;tt.rotation.y=L.yaw*D;lp.rotation.z=L.pitch*D;const e=L.len-8.5;secs.forEach((s,i)=>s.position.x=e*i/3);arm.position.set(L.len,0,0);arm.rotation.z=L.arm*D;cage.rotation.z=-(L.pitch+L.arm)*D;}
 const P=new THREE.Vector3(),Q=new THREE.Vector3(),pv=new THREE.Vector3();
 function cageC(o){cage.updateWorldMatrix(true,false);return cage.localToWorld(o.set(CDX/2,-.35,0))}
@@ -200,6 +204,7 @@ const inTruck=p=>Math.abs(p.z)<1.35&&((p.x>-2.9&&p.x<3.2&&p.y<1.9)||(p.x>=3.2&&p
 function hit(){S.updateMatrixWorld(true);cageC(P);
  for(const sx of[0,CDX])for(const sy of[-1,.35])for(const sz of[-1.1,1.1]){Q.set(sx,sy,sz);cage.localToWorld(Q);if(Q.z>zw-.15)return"Wand! Abstand halten.";if(Q.y<.05)return"Boden!";if(inTruck(Q))return"Fahrzeug im Weg!"}
  for(let s=2;s<=L.len+1.5;s+=.5){Q.set(Math.min(s,L.len),-.35,0);lp.localToWorld(Q);if(inTruck(Q))return"Leiterpaket stösst an das Fahrzeug!";if(Q.y<.1)return"Boden!"}
+ {const ar=L.arm*D,ca=Math.cos(ar),sa=Math.sin(ar),al=1.5+(AL-1.5)*L.ax;for(let q=.3;q<=al+.01;q+=.4){Q.set(L.len+q*ca+.2*sa,q*sa-.2*ca,0);lp.localToWorld(Q);if(inTruck(Q))return"Korbarm stösst an das Fahrzeug!";if(Q.y<.05)return"Boden!"}}
  Q.set(L.len,0,0);lp.localToWorld(Q);if(Q.z>zw-.15)return"Wand! Abstand halten.";return null}
 /* Eingabe */
 const ST={l:[0,0],r:[0,0]},K={},fr={on:false};let swap=false;
@@ -240,14 +245,14 @@ function newTask(first){const tx=-W.position.x;let c=wins.filter(k=>k.f>=1&&k.f<
  if(first===true){const st=(Math.random()<.5?-1:1)*(16+Math.random()*10),t0=Math.max(-24,Math.min(26,Math.random()*40-14));W.position.x=-t0;const ok=c.filter(k=>Math.abs(k.x-t0)>13&&Math.abs(k.x-t0)<27);c=ok.length?ok:c}
  else c=c.filter(k=>Math.abs(k.x-tx)<8.5);
  const g=c[Math.floor(Math.random()*c.length)];
- task={w:g,t0:null,done:false,hold:0};Th.set(g.x,g.y-.2+.5,zw-.95);T.copy(Th).add(W.position);tgt.position.set(g.x,g.y,zw-.15);tgt.visible=true;vic.visible=true;vic2.visible=false;vic.position.set(g.x,g.y-.78,zw-.28);bubS.material.map=bubMap;{const cs=wins.filter(q=>q.f===g.f&&Math.abs(q.c-g.c)===2);const fw=cs[Math.floor(Math.random()*cs.length)];fire.position.set(fw.x,fw.y,zw-.12)}$("task").classList.remove("done");taskUI();if(sup.v>=1)peekGoal()}
+ task={w:g,t0:null,done:false,hold:0};Th.set(g.x,g.y-.2+.5,zw-.95);T.copy(Th).add(W.position);tgt.position.set(g.x,g.y,zw-.15);tgt.visible=true;vic.visible=true;vic2Reset();vic.position.set(g.x,g.y-.78,zw-.28);bubS.material.map=bubMap;{const cs=wins.filter(q=>q.f===g.f&&Math.abs(q.c-g.c)===2);const fw=cs[Math.floor(Math.random()*cs.length)];fire.position.set(fw.x,fw.y,zw-.12)}$("task").classList.remove("done");taskUI();if(sup.v>=1)peekGoal()}
 for(const [id,d] of [["dback",-1],["dfwd",1]]){const b=$(id);const on=e=>{e.preventDefault();drv.in=d;b.classList.add("on");try{b.setPointerCapture(e.pointerId)}catch(_){}};const off=()=>{if(drv.in===d)drv.in=0;b.classList.remove("on")};b.addEventListener("pointerdown",on);b.addEventListener("pointerup",off);b.addEventListener("pointercancel",off);b.addEventListener("lostpointercapture",off)}
 $("ke").onclick=()=>{if(auto){auto=false;warn("Korbeinstieg gestoppt");return}if(!fr.on){warn("Zuerst den Freigabetaster antippen!");return}{S.updateMatrixWorld(true);const c=cageC(new THREE.Vector3());if(!(Math.abs(L.yaw)<20&&c.x>4&&c.x<15&&Math.abs(c.z)<4&&c.y>3)){warn("Korbeinstieg nur möglich, wenn der Korb schon oberhalb in der Nähe der Kabine ist.");return}}auto=true;warn("Korb fährt vor die Fahrerkabine …")};
 let tkT=0;function showTask(ms){const e=$("task");e.classList.remove("gone");clearTimeout(tkT);if(ms)tkT=setTimeout(()=>e.classList.add("gone"),ms)}
 function taskUI(){const w=task.w;$("task").innerHTML=task.done?`<b>Geschafft</b><span class="t">Person im ${w.f}. Stock erreicht · ${task.time.toFixed(1).replace(".",",")} s</span><br><button class="chip" id="nt" style="margin-top:6px">Neue Aufgabe</button>`:`<b>Aufgabe</b>Person in Not! Im <strong>${w.f}. Stock</strong> ruft jemand aus dem Fenster um Hilfe, nebenan raucht es. Leiterpaket zuerst etwas anheben, dann den Korb vor das grün markierte Fenster fahren.`;
  if(task.done){$("nt").onclick=()=>newTask();showTask(0)}else showTask(8000);addX()}
-newTask(true);stepUI();
-$("bl").onclick=()=>{lights.bl=!lights.bl;$("bl").classList.toggle("on",lights.bl)};$("wb").onclick=()=>{lights.wb=!lights.wb;$("wb").classList.toggle("on",lights.wb)};
+newTask(true);stepUI();peek={t:-.8};
+$("bl").onclick=()=>{lights.bl=!lights.bl;$("bl").classList.toggle("on",lights.bl)};$("wb").onclick=()=>{lights.wb=!lights.wb;$("wb").classList.toggle("on",lights.wb);if(lights.wb){lights.bl=false;$("bl").classList.remove("on")}};$("bl").classList.add("on");
 $("tk").onclick=()=>{const e=$("task");if(e.classList.contains("gone"))showTask(task&&task.done?0:8000);else{clearTimeout(tkT);e.classList.add("gone")}};$("hv").onclick=()=>{$("hud").classList.toggle("off");$("hv").classList.toggle("on")};
 let mt=0;function warn(t){$("msg").textContent=t;$("msg").classList.add("on");mt=1.6}
 /* Schleife */
@@ -262,12 +267,12 @@ function loop(now){const ph=Math.floor(now/110)%8,onA=lights.bl&&(ph===0||ph===2
  const moving=Object.values(want).some(x=>x!==0);
  sup.v=Math.max(0,Math.min(1,sup.v+(sup.t?1:-1)*dt/4));if(sup.v>0&&sup.v<1||sup.t!==Math.round(sup.v))setSup(sup.v);
  const ok=sup.v>=1;$("sup").textContent=sup.v>0&&sup.v<1?(sup.t?"Fährt aus…":"Fährt ein…"):(sup.t?"Stützen einfahren":"Stützen ausfahren");$("sup").classList.toggle("on",ok);
- if(ok!==last0){last0=ok;if(!ok)stepUI();else{taskUI();peekGoal()}}
+ if(ok!==last0){last0=ok;if(!ok)stepUI();else{taskUI()}}
  if(moving&&!ok){want={yaw:0,pitch:0,arm:0,len:0};warn("Zuerst die Stützen ausfahren!")}else if(moving&&!fr.on){want={yaw:0,pitch:0,arm:0,len:0};warn("Zuerst den Freigabetaster antippen!")}else if(L.pitch<LIFT&&Math.abs(L.yaw)<4&&(want.yaw||want.len||want.arm)){want.yaw=want.len=want.arm=0;warn("Leiterpaket zuerst anheben!")}
  if(moving&&fr.on){if(want.len>0&&L.ax<1){want.len=0;L.ax=Math.min(1,L.ax+dt*.5);warn("Korbarm fährt aus …")}else if(want.len<0&&L.len<8.6&&L.ax>0&&L.arm>-.3){want.len=0;L.ax=Math.max(0,L.ax-dt*.5)}else if(want.arm<0&&L.ax<1&&L.arm>-.3){want.arm=0;L.ax=Math.min(1,L.ax+dt*.5);warn("Korbarm fährt aus …")}else if(want.arm>0&&L.arm>-.3&&L.ax>0){want.arm=0;if(L.arm<0)L.arm=0;L.ax=Math.max(0,L.ax-dt*.5)}}
 if(auto){if(moving||!fr.on||!ok){auto=false;warn("Korbeinstieg abgebrochen")}else{want={yaw:0,pitch:0,arm:0,len:0};const oa={...L};let moved=false;const mv=(k,t,r)=>{const d=t-L[k];if(Math.abs(d)>.05){L[k]+=Math.sign(d)*Math.min(Math.abs(d),r*dt*2);moved=true;return true}return false};
  const ty=Math.round(L.yaw/360)*360;
- const st=[()=>(Math.abs(L.yaw-ty)>.05||L.len>8.55||L.ax<.99)&&L.arm<-.05&&mv("arm",0,RATE.arm),()=>Math.abs(L.yaw-ty)>.05&&L.pitch<10&&mv("pitch",10,RATE.pitch),()=>mv("len",8.5,RATE.len),()=>mv("yaw",ty,RATE.yaw),()=>mv("ax",1,.5),()=>mv("pitch",0,RATE.pitch),()=>mv("arm",-39,RATE.arm)];
+ const st=[()=>(Math.abs(L.yaw-ty)>.05||Math.abs(L.len-10)>.05||L.ax<.99||Math.abs(L.pitch)>.05)&&L.arm<-.05&&mv("arm",0,RATE.arm),()=>Math.abs(L.yaw-ty)>.05&&L.pitch<10&&mv("pitch",10,RATE.pitch),()=>mv("len",10,RATE.len),()=>mv("yaw",ty,RATE.yaw),()=>mv("ax",1,.5),()=>mv("pitch",0,RATE.pitch),()=>mv("arm",-39,RATE.arm)];
  for(const f of st)if(f())break;
  if(!moved){auto=false;warn("Korbeinstieg erreicht")}else{apply();const h2=hit();if(h2){Object.assign(L,oa);apply();auto=false;warn(h2)}}}}
  const old={...L};
@@ -290,8 +295,8 @@ if(auto){if(moving||!fr.on||!ok){auto=false;warn("Korbeinstieg abgebrochen")}els
  else if(view==="free"){}
  else if(view==="st"){const p=new THREE.Vector3(.4,3.1,.6);tt.localToWorld(p);const q=new THREE.Vector3(14,4.6,0);tt.localToWorld(q);cam.position.copy(p);cam.lookAt(q);lk()}
  else{const p=new THREE.Vector3(.5,-.1,0);cage.localToWorld(p);const q=new THREE.Vector3(6,-.9,0);cage.localToWorld(q);cam.position.copy(p);cam.lookAt(q);lk()}
- smokeStep(dt);victimStep(now);
- if(peek){peek.t+=dt;const D=3.6,u=peek.t/D;if(u>=1)peek=null;else{const k=Math.sin(Math.PI*Math.min(1,u)),e=k*k*(3-2*k);const p1=new THREE.Vector3(T.x+9,Math.max(2.5,T.y*.6),T.z-15),o=new THREE.PerspectiveCamera();o.position.copy(p1);o.lookAt(T);const q0=cam.quaternion.clone();cam.position.lerp(p1,e);cam.quaternion.copy(q0).slerp(o.quaternion,e)}}
+ smokeStep(dt);victimStep(now);exitStep(dt,now);
+ if(peek){peek.t+=dt;const D=3.6,u=peek.t/D;if(u>=1)peek=null;else if(u>0){const k=Math.sin(Math.PI*Math.min(1,u)),e=k*k*(3-2*k);const p1=new THREE.Vector3(T.x+9,Math.max(2.5,T.y*.6),T.z-15),o=new THREE.PerspectiveCamera();o.position.copy(p1);o.lookAt(T);const q0=cam.quaternion.clone();cam.position.lerp(p1,e);cam.quaternion.copy(q0).slerp(o.quaternion,e)}}
  R.render(S,cam)}
 apply();requestAnimationFrame(loop);window.__trainer={apply,hit,Th,W,vic,vic2,fire,vic,cam,setView:v=>{view=v},cageW:()=>{S.updateMatrixWorld(true);return cage.localToWorld(new THREE.Vector3(.6,-.4,0))},L,T,cageC,fr:setFr,orb0,sup,get task(){return task},ST};
 })();
