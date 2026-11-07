@@ -142,20 +142,22 @@ const CW=2.2,CD=1.4,H0=-1;
 box(CD,.16,CW,dk,CD/2,H0-.02,0,cage);                                   /* Bodenwanne */
 box(.06,.22,CW,dk,CD,H0+.1,0,cage);box(.06,.22,CW,dk,0,H0+.1,0,cage);   /* Fussleisten vorn/hinten */
 for(const z of[-CW/2,CW/2])box(CD,.22,.06,dk,CD/2,H0+.1,z,cage);
-for(const z of[-CW/2,CW/2])for(const x of[.02,CD-.02])box(.06,1.3,.06,rl,x,H0+.72,z,cage);   /* Eckpfosten */
-for(const z of[-CW/2,CW/2]){box(CD,.05,.05,rl,CD/2,H0+1.3,z,cage);box(CD,.05,.05,rl,CD/2,H0+.6,z,cage)} /* Reling Seiten */
-box(.05,.05,CW,rl,.02,H0+1.3,0,cage);box(.05,.05,CW,rl,.02,H0+.6,0,cage);   /* Reling hinten */
-for(const z of[-.38,.38]){box(.09,1.45,.09,gray,CD-.05,H0+.78,z,cage)}          /* Multifunktionssaeulen */
-box(.06,.06,.8,rl,CD-.05,H0+1.45,0,cage);box(.06,.06,.3,bl,CD-.05,H0+1.45,0,cage);   /* Einstieg-Querholm mit Blaumarkierung */
+const hg=(x,y,z)=>{const g=new THREE.Group();g.position.set(x,y,z);cage.add(g);return g};
+const gL=hg(CD/2,H0,-CW/2),gR=hg(CD/2,H0,CW/2),gB=hg(0,H0,0),gF=hg(CD,H0,0);   /* klappbare Waende, Gelenk am Boden */
+for(const [g,z] of[[gL,-1],[gR,1]]){for(const x of[-CD/2+.02,CD/2-.02])box(.06,1.3,.06,rl,x,.72,0,g);box(CD,.05,.05,rl,0,1.3,0,g);box(CD,.05,.05,rl,0,.6,0,g)}   /* Seiten: Pfosten + Reling */
+box(.05,.05,CW,rl,.02,1.3,0,gB);box(.05,.05,CW,rl,.02,.6,0,gB);box(.06,1.3,.06,rl,.02,.72,-CW/2,gB);box(.06,1.3,.06,rl,.02,.72,CW/2,gB);   /* hinten */
+for(const z of[-.38,.38]){box(.09,1.45,.09,gray,-.05,.78,z,gF)}          /* Multifunktionssaeulen */
+box(.06,.06,.8,rl,-.05,1.45,0,gF);box(.06,.06,.3,bl,-.05,1.45,0,gF);   /* Einstieg-Querholm mit Blaumarkierung */
 for(const s of[-1,1]){const zc=s*.78;                                          /* rote Gittertueren vorn */
- box(.05,.78,.62,rd,CD-.02,H0+.55,zc,cage);box(.06,.62,.46,mesh,CD,H0+.55,zc,cage);
- box(.05,.06,.62,rl,CD-.02,H0+1.15,zc,cage);box(.05,1.15,.05,rl,CD-.02,H0+.6,s*1.1,cage);
- box(.05,.4,.05,rl,CD-.1,H0+.95,s*.52,cage)}                                    /* Buegel */
+ box(.05,.78,.62,rd,-.02,.55,zc,gF);box(.06,.62,.46,mesh,0,.55,zc,gF);
+ box(.05,.06,.62,rl,-.02,1.15,zc,gF);box(.05,1.15,.05,rl,-.02,.6,s*1.1,gF);
+ box(.05,.4,.05,rl,-.1,.95,s*.52,gF)}                                    /* Buegel */
+let foldAmt=1;function setFold(u){foldAmt=u;const a=u*1.52;gL.rotation.x=a;gR.rotation.x=-a;gB.rotation.z=-a;gF.rotation.z=a}setFold(1);
 for(let k=0;k<3;k++)box(.04,.04,.5,rl,.04,H0+.3+k*.3,0,cage);                  /* Einstiegsleiter (hinten) */
 const hc=new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,.16,10),gray);hc.position.set(CD+.02,H0+.8,-1.18);hc.rotation.x=Math.PI/2;cage.add(hc);   /* Druckabgang */
 box(.06,.9,.06,rl,0,.0,0,cage).visible=false;
 box(.1,.1,.1,gray,0,.1,0,cage);box(.12,1.1,.12,M(0x2a2e34),-.1,-.5,0,cage);   /* Aufhaengung am Korbarm */
-const man=new THREE.Group();man.position.set(.65,-.92,0);cage.add(man);
+const man=new THREE.Group();man.position.set(-.9,-.92,0);man.visible=false;cage.add(man);let manT=0;
 const mc=new THREE.Mesh(new THREE.CylinderGeometry(.22,.24,1.1,12),M(0xc8161d));mc.position.y=.62;man.add(mc);const mh=new THREE.Mesh(new THREE.SphereGeometry(.2,14,10),M(0xf2f2f2));mh.position.y=1.5;man.add(mh);
 /* Haus */
 const FL=3,NF=9,ZW=10;let zw=ZW;
@@ -265,7 +267,7 @@ function loop(now){const ph=Math.floor(now/110)%8,onA=lights.bl&&(ph===0||ph===2
  if(swap){const t=a;a=b;b=t}
  const dz=x=>Math.abs(x)<.12?0:x;let want={yaw:-dz(a[0]),pitch:dz(a[1]),arm:dz(b[0]),len:dz(b[1])};
  const moving=Object.values(want).some(x=>x!==0);
- sup.v=Math.max(0,Math.min(1,sup.v+(sup.t?1:-1)*dt/4));if(sup.v>0&&sup.v<1||sup.t!==Math.round(sup.v))setSup(sup.v);
+ sup.v=Math.max(0,Math.min(1,sup.v+(sup.t?1:-1)*dt/4));{const u=Math.max(0,Math.min(1,1-sup.v/.5));if(Math.abs(u-foldAmt)>.002)setFold(u);const tg=sup.v>=.55?1:0;manT+=Math.sign(tg-manT)*Math.min(Math.abs(tg-manT),dt/1.4);man.visible=manT>.01;man.position.x=-.9+1.55*manT;man.position.y=-.92+.3*Math.sin(Math.PI*manT)}if(sup.v>0&&sup.v<1||sup.t!==Math.round(sup.v))setSup(sup.v);
  const ok=sup.v>=1;$("sup").textContent=sup.v>0&&sup.v<1?(sup.t?"Fährt aus…":"Fährt ein…"):(sup.t?"Stützen einfahren":"Stützen ausfahren");$("sup").classList.toggle("on",ok);
  if(ok!==last0){last0=ok;if(!ok)stepUI();else{taskUI()}}
  if(moving&&!ok){want={yaw:0,pitch:0,arm:0,len:0};warn("Zuerst die Stützen ausfahren!")}else if(moving&&!fr.on){want={yaw:0,pitch:0,arm:0,len:0};warn("Zuerst den Freigabetaster antippen!")}else if(L.pitch<LIFT&&Math.abs(L.yaw)<4&&(want.yaw||want.len||want.arm)){want.yaw=want.len=want.arm=0;warn("Leiterpaket zuerst anheben!")}
