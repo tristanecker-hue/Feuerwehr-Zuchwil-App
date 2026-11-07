@@ -24,7 +24,7 @@ button{font:inherit;color:var(--ink);cursor:pointer}
 .lv{display:flex;flex-direction:column;align-items:center;gap:4px}
 .lv small{color:var(--mut);font-size:14px;letter-spacing:.08em;text-transform:uppercase}
 .plate{position:relative;width:min(34vw,150px);aspect-ratio:4/5.8;background:linear-gradient(#ececec,#d3d3d3);border:1px solid #fff5;border-radius:14px;box-shadow:inset 0 0 0 2px #0002}
-.tile{position:absolute;left:14%;width:72%;bottom:6%;aspect-ratio:100/90;border-radius:3px;overflow:hidden;pointer-events:none}.tile svg{display:block;width:100%;height:100%}
+.tile{position:absolute;left:25%;width:50%;bottom:7%;aspect-ratio:100/90;border-radius:3px;overflow:hidden;pointer-events:none}.tile svg{display:block;width:100%;height:100%}
 .knob{position:absolute;left:50%;top:30%;width:40%;aspect-ratio:1;margin:-20% 0 0 -20%;border-radius:50%;background:radial-gradient(circle at 40% 32%,#f4f4f4 0,#b9b9b9 38%,#6b6b6b 72%,#3a3a3a 100%);border:2px solid #0007;box-shadow:0 0 0 3px #c9c9c9,0 0 0 4px #444,0 0 0 7px #dcdcdc,0 0 0 8px #444,0 8px 14px #0007;touch-action:none;cursor:grab}
 .scn{position:fixed;inset:0;z-index:20;background:#0b0e12e8;display:flex;align-items:center;justify-content:center;padding:16px}.scb{display:flex;flex-direction:column;gap:12px;max-width:420px;width:100%}.scb h2{margin:0 0 4px;font-size:22px;letter-spacing:.06em;text-transform:uppercase;text-align:center}
 .sbtn{display:flex;flex-direction:column;gap:4px;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;color:inherit}.sbtn b{font-size:22px;letter-spacing:.04em}.sbtn span{font-size:15px;color:var(--mut);line-height:1.25}.sbtn:active{background:var(--red)}
@@ -199,7 +199,7 @@ const FF=(()=>{const man=new THREE.Group(),bd=new THREE.Group();bd.rotation.y=Ma
  return {man,bd,legs,arms,hd,tor}})();
 const man=FF.man;let manT=0;
 /* Haus */
-const TOL=()=>SCN===2?.8:1.8;const FL=3,NF=9,ZW=10;let zw=ZW;
+const TOL=()=>SCN===2?1.2:1.8;const FL=3,NF=9,ZW=10;let zw=ZW;
 const house=new THREE.Group();W.add(house);
 const hm=M(0xe3dbd0);box(64,FL*NF,7,hm,2,FL*NF/2,zw+3.5,house);
 const wm=M(0x7fa5c2,{roughness:.2,metalness:.3}),fm=M(0xf5f5f5);
@@ -208,7 +208,7 @@ const wins=[];for(let f=0;f<NF;f++)for(let c=-9;c<=9;c++){const x=c*3.2-.4,y=f*F
 
 /* Szenario Basic+: 4-stoeckiges Haus mit weitem Dachvorsprung, Dachfenster nur mit Gelenk erreichbar */
 const CAN=new THREE.Group();CAN.visible=false;W.add(CAN);
-const EO=4.5,TH2=.45,HW=24,HH=12,HD=7,RH2=HH+(3.5+EO)*TH2;
+const EO=5,TH2=.45,HW=24,HH=12,HD=7,RH2=HH+(3.5+EO)*TH2;
 const ROOF=z=>z<zw-EO||z>zw+HD+EO?-9:z<=zw+3.5?HH+(z-(zw-EO))*TH2:HH+(zw+HD+EO-z)*TH2;
 const SLOPE=Math.atan(TH2),ZS=zw+1.5,YS=ROOF(ZS);
 {const wl=M(0xe3dbd0),rm=new THREE.MeshStandardMaterial({color:0xb23a28,roughness:.7,side:THREE.DoubleSide}),gl=M(0x7fa5c2,{roughness:.2,metalness:.3}),fr=M(0xf5f5f5);
@@ -217,8 +217,9 @@ const SLOPE=Math.atan(TH2),ZS=zw+1.5,YS=ROOF(ZS);
  for(let f=1;f<4;f++)box(2*HW,.08,.06,M(0x9a9288),0,f*3,zw-.03,CAN);
  const plane=(z0,y0,z1,y1)=>{const L=Math.hypot(z1-z0,y1-y0),m=new THREE.Mesh(new THREE.BoxGeometry(2*HW+1.2,.18,L),rm);m.position.set(0,(y0+y1)/2+.05,(z0+z1)/2);m.rotation.x=-Math.atan2(y1-y0,z1-z0);m.castShadow=true;CAN.add(m)};
  plane(zw-EO,HH,zw+3.5,RH2);plane(zw+3.5,RH2,zw+HD+EO,HH);box(2*HW+1.3,.22,.22,M(0x7a2418),0,RH2+.07,zw+3.5,CAN);
- const sh=new THREE.Shape();sh.moveTo(zw,HH);sh.lineTo(zw+3.5,RH2);sh.lineTo(zw+HD,HH);sh.lineTo(zw,HH);
- for(const sx of[-HW,HW]){const g=new THREE.Mesh(new THREE.ExtrudeGeometry(sh,{depth:.3,bevelEnabled:false}),wl);g.rotation.y=-Math.PI/2;g.position.set(sx+.15,0,0);CAN.add(g)}
+ const sh=new THREE.Shape();sh.moveTo(zw,HH);sh.lineTo(zw,ROOF(zw)-.1);sh.lineTo(zw+3.5,RH2-.1);sh.lineTo(zw+HD,ROOF(zw+HD)-.1);sh.lineTo(zw+HD,HH);sh.lineTo(zw,HH);
+ {const g=new THREE.Mesh(new THREE.ExtrudeGeometry(sh,{depth:2*HW,bevelEnabled:false}),wl);g.rotation.y=-Math.PI/2;g.position.set(HW,0,0);g.castShadow=true;CAN.add(g)}
+ box(2*HW+1.2,.1,EO+.1,M(0xd9d2c6),0,HH-.02,zw-EO/2+.05,CAN);box(2*HW+1.2,.1,EO+.1,M(0xd9d2c6),0,HH-.02,zw+HD+EO/2-.05,CAN);
  box(.9,2.2,.9,M(0x8a4a3a),-5,RH2+.2,zw+5,CAN);
  const rw=(x,z,yy)=>{const g=new THREE.Group();g.position.set(x,ROOF(z)+.12,z);g.rotation.x=-SLOPE;box(1.5,.1,1.8,fr,0,0,0,g);box(1.2,.06,1.5,gl,0,.05,0,g);box(.06,.07,1.5,fr,0,.06,0,g);CAN.add(g)};
  rw(0,ZS,0);rw(-4.5,ZS,0);rw(4.5,ZS,0);
