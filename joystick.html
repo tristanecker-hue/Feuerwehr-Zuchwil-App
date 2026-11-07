@@ -76,13 +76,13 @@ const trunkM=M(0x6b4a2f),leafM=[M(0x3f7a3a),M(0x4f8f45),M(0x356c33)];
 function tree(x,z,sc,i){const g=new THREE.Group();const t=new THREE.Mesh(new THREE.CylinderGeometry(.18*sc,.26*sc,2.4*sc,8),trunkM);t.position.y=1.2*sc;t.castShadow=true;g.add(t);
  for(let k=0;k<3;k++){const c=new THREE.Mesh(new THREE.IcosahedronGeometry((1.9-k*.35)*sc,1),leafM[(i+k)%3]);c.position.set(0,(3.0+k*1.25)*sc,0);c.castShadow=true;g.add(c)}
  g.position.set(x,0,z);W.add(g)}
-let ti=0;for(const [x,z,sc] of [[-17,9.6,1],[-24,-21.599999999999998,1.1],[-30,7,0.9],[-40,-24.0,1.2],[19,9.8,1],[26,-22.8,1.1],[34,8,0.95],[44,-24.0,1.2],[-52,8,1.1],[56,7,1],[-14,-31.2,1],[14,-33.6,1.15],[-34,-38.4,1.3],[38,-43.199999999999996,1.2],[-60,-33.6,1.3],[66,-36.0,1.2]])tree(x,z,sc,ti++);
+// let ti=0;for(const [x,z,sc] of [[-17,9.6,1],[-24,-21.599999999999998,1.1],[-30,7,0.9],[-40,-24.0,1.2],[19,9.8,1],[26,-22.8,1.1],[34,8,0.95],[44,-24.0,1.2],[-52,8,1.1],[56,7,1],[-14,-31.2,1],[14,-33.6,1.15],[-34,-38.4,1.3],[38,-43.199999999999996,1.2],[-60,-33.6,1.3],[66,-36.0,1.2]])tree(x,z,sc,ti++);
 const roofM=M(0x8a3b2c),wallC=[0xe9e2d3,0xd9cbb4,0xcfd8de,0xe6d3c0,0xdfe3d0];
 function villa(x,z,w,d,h,i){const g=new THREE.Group();const b=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),M(wallC[i%5]));b.position.y=h/2;g.add(b);
  const r=new THREE.Mesh(new THREE.ConeGeometry(Math.max(w,d)*.78,h*.55,4),roofM);r.position.y=h+h*.275;r.rotation.y=Math.PI/4;r.scale.set(w/Math.max(w,d),1,d/Math.max(w,d));g.add(r);
  for(let k=-1;k<=1;k+=2){const wn=new THREE.Mesh(new THREE.PlaneGeometry(1,1.3),M(0x7fa5c2,{roughness:.2}));wn.position.set(k*w*.25,h*.55,d/2+.02);g.add(wn)}
  g.position.set(x,0,z);W.add(g)}
-[[-36,-34,10,8,6],[-12,-38,9,7,5.5],[14,-36,11,8,6.5],[40,-40,9,8,6],[66,-36,10,8,6],[-62,-38,10,8,6],[-90,-44,12,9,7],[92,-44,12,9,7]].forEach((v,i)=>villa(v[0],v[1],v[2],v[3],v[4],i));
+// [[-36,-34,10,8,6],[-12,-38,9,7,5.5],[14,-36,11,8,6.5],[40,-40,9,8,6],[66,-36,10,8,6],[-62,-38,10,8,6],[-90,-44,12,9,7],[92,-44,12,9,7]].forEach((v,i)=>villa(v[0],v[1],v[2],v[3],v[4],i));
 for(const [x,z,r,h,c] of [[-120,-150,70,38,0x6d8f6a],[-30,-170,90,50,0x7a9a78],[70,-160,80,44,0x6a8c68],[150,-140,60,36,0x7f9b80],[-170,-60,50,30,0x7a9a78],[170,-50,55,32,0x6d8f6a],[-40,190,100,40,0x7a9a78],[90,200,90,36,0x6d8f6a]]){const hm2=new THREE.Mesh(new THREE.SphereGeometry(r,24,12,0,Math.PI*2,0,Math.PI/2),M(c,{roughness:1}));hm2.scale.y=h/r;hm2.position.set(x,0,z);W.add(hm2)}
 function lamp(x,z){const g=new THREE.Group();const p=new THREE.Mesh(new THREE.CylinderGeometry(.07,.09,6,8),M(0x3a3d42));p.position.y=3;g.add(p);const a=box(1.2,.08,.08,M(0x3a3d42),-.55,6,0,g);box(.5,.14,.3,M(0xf3eecf,{emissive:0x403a20}),-1.1,5.93,0,g);g.position.set(x,0,z);W.add(g)}
 [-8,12,-28,32].forEach(x=>lamp(x,7.35));
