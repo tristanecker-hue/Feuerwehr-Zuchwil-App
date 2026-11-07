@@ -140,11 +140,14 @@ const cage=new THREE.Group();cage.position.set(AL,0,0);arm.add(cage);
 /* Rettungskorb nach Originalbild: breiter als tief, Bodenwanne, Reling, zwei rote Gittertueren vorn, Mittelsaeulen, Einstiegsleiter hinten */
 const dk=M(0x3b3f45,{roughness:.6}),rl=M(0x4a4e55,{roughness:.5}),bl=M(0x2c4a9a),rd=M(0xd8261d),mesh=M(0x1c1f23);
 const CW=2.2,CD=1.4,H0=-1;
-box(CD,.16,CW,dk,CD/2,H0-.02,0,cage);                                   /* Bodenwanne */
-box(.06,.22,CW,dk,CD,H0+.1,0,cage);box(.06,.22,CW,dk,0,H0+.1,0,cage);   /* Fussleisten vorn/hinten */
-for(const z of[-CW/2,CW/2])box(CD,.22,.06,dk,CD/2,H0+.1,z,cage);
+const gFl=new THREE.Group();gFl.position.set(CD,H0,0);cage.add(gFl);   /* Boden: klappt vorn nach oben */
+box(CD,.16,CW,dk,-CD/2,-.02,0,gFl);                                   /* Bodenwanne */
+box(.06,.22,CW,dk,0,.1,0,gFl);box(.06,.22,CW,dk,-CD,.1,0,gFl);   /* Fussleisten vorn/hinten */
+for(const z of[-CW/2,CW/2])box(CD,.22,.06,dk,-CD/2,.1,z,gFl);
+const stT=(()=>{const c=document.createElement("canvas");c.width=c.height=128;const g=c.getContext("2d");g.fillStyle="#f3f3f0";g.fillRect(0,0,128,128);g.fillStyle="#d8261d";for(let i=-2;i<4;i++){g.beginPath();g.moveTo(i*42,128);g.lineTo(i*42+21,128);g.lineTo(i*42+149,0);g.lineTo(i*42+128,0);g.fill()}const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(1,2);return t})();
+const stripe=new THREE.Mesh(new THREE.PlaneGeometry(CD,CW),new THREE.MeshBasicMaterial({map:stT}));stripe.rotation.x=-Math.PI/2;stripe.position.set(-CD/2,.07,0);gFl.add(stripe);
 const hg=(x,y,z)=>{const g=new THREE.Group();g.position.set(x,y,z);cage.add(g);return g};
-const gL=hg(CD/2,H0,-CW/2),gR=hg(CD/2,H0,CW/2),gB=hg(0,H0,0),gF=hg(CD,H0,0);   /* klappbare Waende, Gelenk am Boden */
+const gL=hg(CD/2,H0,-CW/2),gR=hg(CD/2,H0,CW/2),gB=hg(0,H0,0),gF=new THREE.Group();gFl.add(gF);   /* klappbare Waende, Gelenk am Boden */
 for(const [g,z] of[[gL,-1],[gR,1]]){for(const x of[-CD/2+.02,CD/2-.02])box(.06,1.3,.06,rl,x,.72,0,g);box(CD,.05,.05,rl,0,1.3,0,g);box(CD,.05,.05,rl,0,.6,0,g)}   /* Seiten: Pfosten + Reling */
 box(.05,.05,CW,rl,.02,1.3,0,gB);box(.05,.05,CW,rl,.02,.6,0,gB);box(.06,1.3,.06,rl,.02,.72,-CW/2,gB);box(.06,1.3,.06,rl,.02,.72,CW/2,gB);   /* hinten */
 for(const z of[-.38,.38]){box(.09,1.45,.09,gray,-.05,.78,z,gF)}          /* Multifunktionssaeulen */
@@ -153,7 +156,7 @@ for(const s of[-1,1]){const zc=s*.78;                                          /
  box(.05,.78,.62,rd,-.02,.55,zc,gF);box(.06,.62,.46,mesh,0,.55,zc,gF);
  box(.05,.06,.62,rl,-.02,1.15,zc,gF);box(.05,1.15,.05,rl,-.02,.6,s*1.1,gF);
  box(.05,.4,.05,rl,-.1,.95,s*.52,gF)}                                    /* Buegel */
-let foldAmt=1;function setFold(u){foldAmt=u;const a=u*1.52;gL.rotation.x=a;gR.rotation.x=-a;gB.rotation.z=-a;gF.rotation.z=a}setFold(1);
+let foldAmt=1;function setFold(u){foldAmt=u;gFl.rotation.z=-u*Math.PI/2;gF.rotation.z=u*1.52;stripe.visible=u>.55}setFold(1);
 for(let k=0;k<3;k++)box(.04,.04,.5,rl,.04,H0+.3+k*.3,0,cage);                  /* Einstiegsleiter (hinten) */
 const hc=new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,.16,10),gray);hc.position.set(CD+.02,H0+.8,-1.18);hc.rotation.x=Math.PI/2;cage.add(hc);   /* Druckabgang */
 box(.06,.9,.06,rl,0,.0,0,cage).visible=false;
