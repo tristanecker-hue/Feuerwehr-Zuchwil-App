@@ -1,4 +1,4 @@
-const APP_VERSION = "1.203";
+const APP_VERSION = "1.204";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -404,10 +404,10 @@ const RGDEF = {
   adl: { pages: 265, short: "Autodrehleiter", enc: "reglement-adl.enc", file: "Betriebsanleitung L32A-XS Zuchwil.pdf", c: "© Rosenbauer", tile: "", hero: "Betriebsanleitung Autodrehleiter L32A-XS, Feuerwehr Zuchwil (265 Seiten).", online: "" },
   basis: { pages: 296, short: "Basiswissen", enc: "reglement-basiswissen.enc", file: "Reglement Basiswissen FKS.pdf", tile: "Das ganze Reglement mit allen 296 Seiten (FKS 07/2026), direkt in der App zum Blättern.", hero: "Das ganze Reglement Basiswissen, FKS 07/2026.", online: "https://docs.feukos.ch/Basiswissen/ReglementBasiswissenDE/" },
   sgv: { pages: 10, short: "Kantonale Ergänzungen", enc: "reglement-sgv.enc", file: "Kantonale Ergänzungen SGV 14.10.2026.pdf", c: "© SGV Solothurn", tile: "", hero: "Basiswissen Kantonale Ergänzungen SGV Solothurn, Version 14.10.2026.", online: "" },
-  abc1: { pages: 137, short: "ABC-Handbuch Kap. 1–2 Allgemeines, ABC-Wehr", enc: "reglement-abc1.enc", file: "FKS Handbuch ABC Teil 1.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2039 – Teil 1 von 4 (Kap. 1–2 Allgemeines, ABC-Wehr).", online: "" },
-  abc2: { pages: 76, short: "ABC-Handbuch Kap. 3–4 A-Wehr, B-Wehr", enc: "reglement-abc2.enc", file: "FKS Handbuch ABC Teil 2.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2039 – Teil 2 von 4 (Kap. 3–4 A-Wehr, B-Wehr).", online: "" },
-  abc3: { pages: 158, short: "ABC-Handbuch Kap. 5 C-Wehr", enc: "reglement-abc3.enc", file: "FKS Handbuch ABC Teil 3.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2039 – Teil 3 von 4 (Kap. 5 C-Wehr).", online: "" },
-  abc4: { pages: 137, short: "ABC-Handbuch Kap. 6–9 Tabellen, Spezialeinsatzmittel, Glossar, Register", enc: "reglement-abc4.enc", file: "FKS Handbuch ABC Teil 4.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2039 – Teil 4 von 4 (Kap. 6–9 Tabellen, Spezialeinsatzmittel, Glossar, Register).", online: "" },
+  abc1: { pages: 137, short: "ABC-Handbuch Kap. 1–2 Allgemeines, ABC-Wehr", enc: "reglement-abc1.enc", file: "FKS Handbuch ABC Teil 1.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2049 – Teil 1 von 4 (Kap. 1–2 Allgemeines, ABC-Wehr).", online: "" },
+  abc2: { pages: 76, short: "ABC-Handbuch Kap. 3–4 A-Wehr, B-Wehr", enc: "reglement-abc2.enc", file: "FKS Handbuch ABC Teil 2.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2049 – Teil 2 von 4 (Kap. 3–4 A-Wehr, B-Wehr).", online: "" },
+  abc3: { pages: 158, short: "ABC-Handbuch Kap. 5 C-Wehr", enc: "reglement-abc3.enc", file: "FKS Handbuch ABC Teil 3.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2049 – Teil 3 von 4 (Kap. 5 C-Wehr).", online: "" },
+  abc4: { pages: 137, short: "ABC-Handbuch Kap. 6–9 Tabellen, Spezialeinsatzmittel, Glossar, Register", enc: "reglement-abc4.enc", file: "FKS Handbuch ABC Teil 4.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2049 – Teil 4 von 4 (Kap. 6–9 Tabellen, Spezialeinsatzmittel, Glossar, Register).", online: "" },
   mat: { pages: 208, short: "Materialdienst", enc: "reglement-mat.enc", file: "FKS Handbuch Materialdienst.pdf", tile: "", hero: "Handbuch Materialdienst, FKS CSSP CSP, Version 2.01 / 10.03.2020 (208 Seiten).", online: "" },
   veg: { pages: 120, short: "Vegetationsbrände", enc: "reglement-veg.enc", file: "FKS Handbuch Vegetationsbrände.pdf", tile: "", hero: "Handbuch Spezialwissen «Vegetationsbrände», FKS.", online: "" },
   einsatz: { pages: 84, short: "Einsatzführung", enc: "reglement-einsatzfuehrung.enc", file: "Reglement Einsatzführung FKS.pdf", tile: "Das ganze Reglement mit allen 84 Seiten, direkt in der App zum Blättern.", hero: "Das ganze Reglement Einsatzführung, FKS.", online: "" }
@@ -466,7 +466,7 @@ async function rgView(id, page) {
   size(); pages.forEach(d => RGOBS.observe(d));
   const goto = n => { n = Math.min(N, Math.max(1, n | 0)); cur = n; pages[n - 1].scrollIntoView({ block: "start" }); window.scrollBy(0, -130); };
   const inp = document.getElementById("rgn");
-  if (id === "adl" || id === "adl2") pdfSearchUI(id, RGDOC, host, goto);
+  pdfSearchUI(id, RGDOC, host, goto);
   let tk = 0; rgScroll = () => { if (tk) return; tk = requestAnimationFrame(() => { tk = 0; const mid = window.innerHeight / 3; let lo = 0, hi = N - 1; while (lo < hi) { const m = (lo + hi + 1) >> 1; if (pages[m].getBoundingClientRect().top <= mid) lo = m; else hi = m - 1; } cur = lo + 1; if (document.activeElement !== inp) inp.value = cur; try { localStorage.setItem("fwz-rgp-" + id, cur); } catch (e) {} }); };
   window.addEventListener("scroll", rgScroll, { passive: true });
   inp.addEventListener("change", () => goto(+inp.value));
@@ -821,8 +821,9 @@ async function pdfIndex(id, doc, info) {
   }
   return PDFIDX[id] = pages;
 }
+const PDFEX = { adl: "Stützen, Korb, Notablass", adl2: "Stützen, Korb, Notablass", basis: "Atemschutz, Funk, Sicherheit", sgv: "Alarmierung, Kanton", einsatz: "Führungsrhythmus, Lage", veg: "Waldbrand, Löschwasser", mat: "Leitern, Motorspritze, Atemschutz", abc1: "Gefahrgut, Dekontamination", abc2: "Dekontamination", abc3: "Messgerät", abc4: "Glossar, Tabellen" };
 function pdfSearchUI(id, doc, host, goto) {
-  host.insertAdjacentHTML("beforebegin", '<div class="srch"><input type="search" id="rgq" placeholder="Im PDF suchen (z. B. Stützen, Korb, Notablass)" aria-label="Suche im PDF" autocomplete="off"></div><div id="rgqr"></div>');
+  host.insertAdjacentHTML("beforebegin", '<div class="srch"><input type="search" id="rgq" placeholder="In diesem Reglement suchen (z. B. ' + (PDFEX[id] || 'Atemschutz') + ')" aria-label="Suche in diesem Reglement" autocomplete="off"></div><div id="rgqr"></div>');
   const qi = document.getElementById("rgq"), box = document.getElementById("rgqr"); let tm = 0, cur = "";
   const run = async () => {
     const q = qi.value.trim(); cur = q;
