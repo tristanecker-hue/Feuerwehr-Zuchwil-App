@@ -1,4 +1,4 @@
-const APP_VERSION = "1.204";
+const APP_VERSION = "1.205";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -150,6 +150,15 @@ function fireFx(btn) {
 }
 /* Marin, der Feuerwehrmann, löscht das brennende Logo: jedes Mal andere Position und anderer Auftritt */
 const FF_JOKES = ["Feuer ist wie Montag: am besten sofort löschen.", "Eine Feuerwehr ohne Humor ist wie ein Hydrant ohne Wasser.", "Ich lösche alles, nur nicht den Durst nach Kaffee.", "Warum tragen Feuerwehrleute rote Hosenträger? Damit der Schlauch nicht verrutscht!", "Wer zu spät kommt, den bestraft der Brandmelder.", "Zuchwil brennt nicht an. Dafür sorge ich.", "Keine Panik, ich hab den Schlauch im Griff!", "Schlauch ab, Feierabend!", "Was ist heiss, nass und rot? @ im Einsatz!", "Ich bin nicht aus Zucker, aber bei Feuer schmelz ich trotzdem dahin.", "Grillieren kann jeder. Löschen kann nur ich.", "Brandklasse M: das Mittagessen von @. Wasser marsch!"];
+const FXL = { ready: false, started: false };
+function fxLoad() {
+  if (FXL.started) return; FXL.started = true;
+  const mk = (f, w, h, px, py, len) => { const img = new Image(); img.src = "fx/" + f + ".png"; return { img, w, h, px, py, len }; };
+  FXL.body = mk("leiter-body", 435, 168, 37.4, 16.8); FXL.cage = mk("leiter-korb", 73, 65, 7.4, 21.8);
+  FXL.lad = [mk("leiter-lad0", 343, 40, 1.4, 19.8, 8.5), mk("leiter-lad1", 563, 40, 1.4, 19.8, 14), mk("leiter-lad2", 883, 40, 1.4, 19.8, 22), mk("leiter-lad3", 1223, 40, 1.4, 19.8, 30.5)];
+  Promise.all([FXL.body, FXL.cage, ...FXL.lad].map(o => o.img.decode())).then(() => { FXL.ready = true; }).catch(() => {});
+}
+setTimeout(fxLoad, 2500);
 function extinguishFx(lb, fire) {
   return new Promise(done => {
     if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) { fire.level(0); done(); return; }
@@ -160,10 +169,11 @@ function extinguishFx(lb, fire) {
     const pick = a => a[Math.random() * a.length | 0];
     /* Skills: ein Hauptauftritt, dazu mit 65 % die Siegerpose */
     let nm = window.__fxName; if (!nm) { const NM = ["Marin", "Tristan", "Daniele"]; let k = 0; try { k = (parseInt(localStorage.getItem("fwz-ffn") || "-1", 10) + 1) % 3; localStorage.setItem("fwz-ffn", k); } catch (e) { k = Math.floor(Math.random() * 3); } nm = NM[k]; }
-    const skill = window.__fxSkill || pick(["strahl", "schwenk", "salto", "eimer", "fontaene", "pirouette", "pulver", "kette", "leiter"]), pose = skill === "leiter" ? false : window.__fxJoke ? true : window.__fxPose !== undefined ? window.__fxPose : Math.random() < .65, joke = skill === "kette" || skill === "leiter" ? false : window.__fxJoke !== undefined ? window.__fxJoke : Math.random() < .5, say = (joke ? pick(FF_JOKES) : pick(["Gelöscht!", "Alles im Griff!", "@ ist da!", "Wasser marsch!", "Feuer aus!"])).replace("@", nm);
+    let skill = window.__fxSkill || pick(["strahl", "schwenk", "salto", "eimer", "fontaene", "pirouette", "pulver", "kette", "leiter"]); if (skill === "leiter" && !FXL.ready) skill = "strahl"; const pose = skill === "leiter" ? false : window.__fxJoke ? true : window.__fxPose !== undefined ? window.__fxPose : Math.random() < .65, joke = skill === "kette" || skill === "leiter" ? false : window.__fxJoke !== undefined ? window.__fxJoke : Math.random() < .5, say = (joke ? pick(FF_JOKES) : pick(["Gelöscht!", "Alles im Griff!", "@ ist da!", "Wasser marsch!", "Feuer aus!"])).replace("@", nm);
     const zones = [[-25, 25], [155, 205], [55, 125], [-60, -30], [210, 240]], z = pick(zones), th = (z[0] + Math.random() * (z[1] - z[0])) * Math.PI / 180;
     const R = Math.min(r.width / 2 + 70, 210), sc = Math.min(1.5, Math.max(1.05, VW / 390 * 1.26));
     let fx = Math.min(VW - 45 * sc, Math.max(45 * sc, cx + Math.cos(th) * R * 1.15)), fy = Math.min(VH - 70 * sc, Math.max(95 * sc, cy + Math.sin(th) * R * .95));
+    if (skill === "leiter") { const hw = 435 * 11 * (sc * .9) / 40 / 2 + 6; fx = Math.min(VW - hw, Math.max(hw, fx)); fy = Math.min(VH - 90 * sc, Math.max(cy + 90 * sc, fy)); }
     const dir = cx >= fx ? 1 : -1, slideFrom = dir === 1 ? -120 * sc : VW + 120 * sc, ps = [], t0 = performance.now();
     const IN = 650, SPRAY = skill === "eimer" ? 1700 : skill === "kette" || skill === "leiter" ? 2400 : 1900, POSE = joke ? 4300 : pose ? 900 : 0, OUT = 500, TOT = IN + SPRAY + POSE + OUT;
     let last = t0, sprayT = 0, out = false, thrown = false, bucket = null;
@@ -226,20 +236,17 @@ function extinguishFx(lb, fire) {
         const others = ["Marin", "Tristan", "Daniele"].filter(n => n !== nm), nms = [nm, others[0], others[1]];
         for (let i = 2; i >= 0; i--) { const xi = slideFrom + ((cx + dir * 64 * sc * (1 - i)) - slideFrom) * k; H[i] = man(xi, Math.min(VH - 70 * sc, r.bottom + 80 * sc), now + i * 90, 0, { walk: o.walk, noNozzle: true, nm: nms[i], thumb: o.thumb, smile: o.smile, say: i === 0 ? o.say : undefined }); }
         [nx, ny] = H[0];
-      } else if (skill === "leiter") {    /* Drehleiter fährt ein und spritzt */
-        const s = sc * .9, gy = fy + 30 * sc, q = el > tOut ? 1 - ease((el - tOut) / OUT) : Math.max(0, Math.min(1, (el - 250) / (IN + 250)));
-        g.save(); g.translate(x, gy); g.scale(dir * s, s);
-        g.fillStyle = "#c8161d"; g.fillRect(-72, -42, 104, 30); g.fillRect(32, -50, 36, 38);
-        g.fillStyle = "#eee"; g.fillRect(-72, -27, 104, 4); g.fillStyle = "#9fd0ee"; g.fillRect(52, -44, 14, 14);
-        g.fillStyle = "#555"; g.fillRect(-72, -14, 140, 4); g.fillStyle = "#8a93a1"; g.fillRect(-34, -50, 24, 8);
-        g.fillStyle = Math.floor(now / 180) % 2 ? "#3b82f6" : "#bcd7ff"; g.fillRect(44, -57, 12, 7);
-        [[-46, -6], [44, -6]].forEach(([wx, wy]) => { g.fillStyle = "#222"; g.beginPath(); g.arc(wx, wy, 11, 0, 6.3); g.fill(); g.fillStyle = "#aaa"; g.beginPath(); g.arc(wx, wy, 4, 0, 6.3); g.fill(); });
-        g.restore();
-        const pvx = x + dir * s * -22, pvy = gy - 48 * s, ta = Math.max(.25, Math.min(1.25, Math.atan2(pvy - cy, Math.abs(cx - pvx)))), a = ta * ease(q), len = (70 + 120 * ease(q)) * s, tipx = pvx + dir * Math.cos(a) * len, tipy = pvy - Math.sin(a) * len;
-        g.lineCap = "round"; g.strokeStyle = "#3a3f4a"; g.lineWidth = 8 * s; g.beginPath(); g.moveTo(pvx, pvy); g.lineTo(tipx, tipy); g.stroke();
-        g.strokeStyle = "#c9ccd1"; g.lineWidth = 3 * s; g.setLineDash([5 * s, 5 * s]); g.beginPath(); g.moveTo(pvx, pvy); g.lineTo(tipx, tipy); g.stroke(); g.setLineDash([]);
-        g.fillStyle = "#fff"; g.strokeStyle = "#23262b"; g.lineWidth = 2; g.beginPath(); g.roundRect(tipx - 9 * s, tipy - 7 * s, 18 * s, 12 * s, 2); g.fill(); g.stroke();
-        nx = tipx; ny = tipy;
+      } else if (skill === "leiter") {    /* Drehleiter aus dem Simulator (3D-Modell, vorgerendert) fährt ein und spritzt */
+        const F = FXL, s = sc * .9, ppm = 11 * s, k = ppm / 40, gy = fy + 30 * sc, q = el > tOut ? 1 - ease((el - tOut) / OUT) : Math.max(0, Math.min(1, (el - 250) / (IN + 250))), e = ease(q), B = F.body, C = F.cage;
+        const pvx = x + dir * k * (B.px - B.w / 2), pvy = gy + k * (B.py - B.h), dxl = Math.abs(cx - pvx), dyl = pvy - cy;
+        const ta = Math.max(.25, Math.min(1.25, Math.atan2(dyl, dxl))), lneed = Math.max(8.5, Math.min(30.5, Math.hypot(dxl, dyl) / ppm - 1.5)), lenNow = 8.5 + (lneed - 8.5) * e, a = ta * e;
+        g.save(); g.translate(x, gy); g.scale(dir * k, k); g.drawImage(B.img, -B.w / 2, -B.h); g.restore();
+        let li = 0; F.lad.forEach((l, i) => { if (l.len <= lenNow + .01) li = i; }); const Ld = F.lad[li];
+        g.save(); g.translate(pvx, pvy); g.scale(dir, 1); g.rotate(-a); g.scale(k * lenNow / Ld.len, k); g.drawImage(Ld.img, -Ld.px, -Ld.py); g.restore();
+        const dl = lenNow * ppm, dc = dl + 1.5 * ppm, tipx = pvx + dir * Math.cos(a) * dl, tipy = pvy - Math.sin(a) * dl, cox = pvx + dir * Math.cos(a) * dc, coy = pvy - Math.sin(a) * dc;
+        g.lineCap = "butt"; g.strokeStyle = "#3a3f4a"; g.lineWidth = .4 * ppm; g.beginPath(); g.moveTo(tipx, tipy); g.lineTo(cox, coy); g.stroke();
+        g.save(); g.translate(cox, coy); g.scale(dir * k, k); g.drawImage(C.img, -C.px, -C.py); g.restore();
+        nx = cox; ny = coy - .5 * ppm;
       } else [nx, ny] = man(x, fy + jump, now, aim, o);
       if (o.dirFlip !== undefined) g.restore();
       /* Schlauch vom Bildrand zum Strahlrohr (nicht beim Eimer) */
@@ -274,6 +281,7 @@ function extinguishFx(lb, fire) {
   });
 }
 async function appUpdate() {
+  fxLoad();
   const v = document.getElementById("verf"); if (!v) return;
   const lb = document.getElementById("logoup"); if (lb.classList.contains("busy")) return;
   const fx = c => { lb.classList.remove("busy", "ok", "upd"); void lb.offsetWidth; if (c) lb.classList.add(c); };
@@ -404,10 +412,10 @@ const RGDEF = {
   adl: { pages: 265, short: "Autodrehleiter", enc: "reglement-adl.enc", file: "Betriebsanleitung L32A-XS Zuchwil.pdf", c: "© Rosenbauer", tile: "", hero: "Betriebsanleitung Autodrehleiter L32A-XS, Feuerwehr Zuchwil (265 Seiten).", online: "" },
   basis: { pages: 296, short: "Basiswissen", enc: "reglement-basiswissen.enc", file: "Reglement Basiswissen FKS.pdf", tile: "Das ganze Reglement mit allen 296 Seiten (FKS 07/2026), direkt in der App zum Blättern.", hero: "Das ganze Reglement Basiswissen, FKS 07/2026.", online: "https://docs.feukos.ch/Basiswissen/ReglementBasiswissenDE/" },
   sgv: { pages: 10, short: "Kantonale Ergänzungen", enc: "reglement-sgv.enc", file: "Kantonale Ergänzungen SGV 14.10.2026.pdf", c: "© SGV Solothurn", tile: "", hero: "Basiswissen Kantonale Ergänzungen SGV Solothurn, Version 14.10.2026.", online: "" },
-  abc1: { pages: 137, short: "ABC-Handbuch Kap. 1–2 Allgemeines, ABC-Wehr", enc: "reglement-abc1.enc", file: "FKS Handbuch ABC Teil 1.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2049 – Teil 1 von 4 (Kap. 1–2 Allgemeines, ABC-Wehr).", online: "" },
-  abc2: { pages: 76, short: "ABC-Handbuch Kap. 3–4 A-Wehr, B-Wehr", enc: "reglement-abc2.enc", file: "FKS Handbuch ABC Teil 2.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2049 – Teil 2 von 4 (Kap. 3–4 A-Wehr, B-Wehr).", online: "" },
-  abc3: { pages: 158, short: "ABC-Handbuch Kap. 5 C-Wehr", enc: "reglement-abc3.enc", file: "FKS Handbuch ABC Teil 3.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2049 – Teil 3 von 4 (Kap. 5 C-Wehr).", online: "" },
-  abc4: { pages: 137, short: "ABC-Handbuch Kap. 6–9 Tabellen, Spezialeinsatzmittel, Glossar, Register", enc: "reglement-abc4.enc", file: "FKS Handbuch ABC Teil 4.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2049 – Teil 4 von 4 (Kap. 6–9 Tabellen, Spezialeinsatzmittel, Glossar, Register).", online: "" },
+  abc1: { pages: 137, short: "ABC-Handbuch Kap. 1–2 Allgemeines, ABC-Wehr", enc: "reglement-abc1.enc", file: "FKS Handbuch ABC Teil 1.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2059 – Teil 1 von 4 (Kap. 1–2 Allgemeines, ABC-Wehr).", online: "" },
+  abc2: { pages: 76, short: "ABC-Handbuch Kap. 3–4 A-Wehr, B-Wehr", enc: "reglement-abc2.enc", file: "FKS Handbuch ABC Teil 2.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2059 – Teil 2 von 4 (Kap. 3–4 A-Wehr, B-Wehr).", online: "" },
+  abc3: { pages: 158, short: "ABC-Handbuch Kap. 5 C-Wehr", enc: "reglement-abc3.enc", file: "FKS Handbuch ABC Teil 3.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2059 – Teil 3 von 4 (Kap. 5 C-Wehr).", online: "" },
+  abc4: { pages: 137, short: "ABC-Handbuch Kap. 6–9 Tabellen, Spezialeinsatzmittel, Glossar, Register", enc: "reglement-abc4.enc", file: "FKS Handbuch ABC Teil 4.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2059 – Teil 4 von 4 (Kap. 6–9 Tabellen, Spezialeinsatzmittel, Glossar, Register).", online: "" },
   mat: { pages: 208, short: "Materialdienst", enc: "reglement-mat.enc", file: "FKS Handbuch Materialdienst.pdf", tile: "", hero: "Handbuch Materialdienst, FKS CSSP CSP, Version 2.01 / 10.03.2020 (208 Seiten).", online: "" },
   veg: { pages: 120, short: "Vegetationsbrände", enc: "reglement-veg.enc", file: "FKS Handbuch Vegetationsbrände.pdf", tile: "", hero: "Handbuch Spezialwissen «Vegetationsbrände», FKS.", online: "" },
   einsatz: { pages: 84, short: "Einsatzführung", enc: "reglement-einsatzfuehrung.enc", file: "Reglement Einsatzführung FKS.pdf", tile: "Das ganze Reglement mit allen 84 Seiten, direkt in der App zum Blättern.", hero: "Das ganze Reglement Einsatzführung, FKS.", online: "" }
