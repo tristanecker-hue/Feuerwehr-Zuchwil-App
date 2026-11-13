@@ -45,7 +45,7 @@ button{font:inherit;color:var(--ink);cursor:pointer}
 <div class="msg" id="msg"></div>
 <div class="help">Zuerst den Freigabetaster antippen (bleibt aktiv), danach den Hebel bewegen. Tastatur: Leertaste = Freigabe · W A S D = linker Hebel · Pfeiltasten = rechter Hebel. Ansicht ziehen = drehen, Mausrad = zoomen.</div>
 <div class="drive" id="drive"><button id="dfwd">◀ Vor</button><button id="dback">Zurück ▶</button></div>
-<div class="scn" id="scn"><div class="scb"><h2>Szenario wählen</h2><button class="sbtn" id="sc1"><b>Basic</b><span>Person am Fenster: Drehleiter ans Haus fahren, abstützen und den Korb vor das Fenster bringen.</span></button><button class="sbtn" id="sc2"><b>Basic+</b><span>4-stöckiges Haus mit weitem Dachvorsprung: Das Dachfenster erreichst du nur, wenn du die Leiter steil über die Traufe führst und den Korb mit dem Gelenk absenkst.</span></button><button class="sbtn" id="sc3"><b>Basic++</b><span>Haus nach Vorbild des Modells: Dachfenster, Balkon und zurückversetzter Stock. Der Patient wechselt nach jeder Rettung, zuerst ganz oben im Dachfenster.</span></button></div></div>
+<div class="scn" id="scn"><div class="scb"><h2>Szenario wählen</h2><button class="sbtn" id="sc1"><b>Basic</b><span>Person am Fenster: Drehleiter ans Haus fahren, abstützen und den Korb vor das Fenster bringen.</span></button><button class="sbtn" id="sc2"><b>Basic+</b><span>4-stöckiges Haus mit weitem Dachvorsprung: Das Dachfenster erreichst du nur, wenn du die Leiter steil über die Traufe führst und den Korb mit dem Gelenk absenkst.</span></button><button class="sbtn" id="sc3"><b>Basic++</b><span>Haus nach Vorbild des Modells: Dachfenster, Balkon und zurückversetzter Stock. Der Patient wechselt nach jeder Rettung, zuerst im Dachfenster. Bei den Gauben braucht es das Gelenk.</span></button></div></div>
 <div class="dock off" id="dock">
 <div class="lv"><div class="plate" id="pl"><div class="knob" id="kl"></div><div class="tile" id="tl"></div></div></div>
 <div class="frei"><button id="fr">Freigabe<br>aus</button><small id="fs">Antippen zum Aktivieren</small></div>
@@ -226,32 +226,41 @@ const SLOPE=Math.atan(TH2),ZS=zw+1.5,YS=ROOF(ZS);
  window.RW={x:0,y:YS,z:ZS};}
 /* Szenario Basic++: Haus nach Foto (Pultdach mit Dachfenstern, Balkon, zurueckversetzter Stock) */
 const H3=new THREE.Group();H3.visible=false;W.add(H3);
-const TH3=.9,FH=6,yS3=z=>FH+(z-zw)*TH3,RB=z=>9+Math.max(0,1.75-Math.abs(z-zw-5.25))*1.4;
-const DOR=[{x:-9,zf:zw+4.2},{x:-5.5,zf:zw+2.8},{x:-2,zf:zw+1.5}];
-const TG3=[{x:-9,y:yS3(zw+4.2)+1.1,zf:zw+4.2,lab:"Dachgeschoss, oberstes Dachfenster"},{x:-5.5,y:yS3(zw+2.8)+1.1,zf:zw+2.8,lab:"Dachgeschoss, mittleres Dachfenster"},{x:-2,y:yS3(zw+1.5)+1.1,zf:zw+1.5,lab:"Dachgeschoss, unteres Dachfenster"},{x:8,y:4.2,zf:zw-1.2,vz:zw-.6,lab:"Balkon im 1. Stock"},{x:-7,y:4.9,zf:zw,lab:"1. Stock, linker Hausteil"},{x:11.5,y:4.9,zf:zw,lab:"1. Stock, rechter Hausteil"},{x:8,y:6.95,zf:zw+3.5,lab:"Terrasse im 2. Stock (hinter dem Geländer)"}];
+const EO3=3.5,F0=10.3,SL3=.4,RX=z=>F0-SL3*(Math.min(z,zw+7.2)-zw),FH=6,RB=z=>9+Math.max(0,1.75-Math.abs(z-zw-5.25))*1.4;
+const DOR=[{x:-8.5,zf:zw+.6},{x:-6,zf:zw+1},{x:-3.5,zf:zw+1.4}];
+const TG3=[{x:DOR[0].x,y:RX(DOR[0].zf)+1.6,zf:DOR[0].zf,roof:1,lab:"Dachfenster links (Gaube)"},{x:DOR[1].x,y:RX(DOR[1].zf)+1.6,zf:DOR[1].zf,roof:1,lab:"Dachfenster Mitte (Gaube)"},{x:DOR[2].x,y:RX(DOR[2].zf)+1.6,zf:DOR[2].zf,roof:1,lab:"Dachfenster rechts (Gaube)"},{x:8,y:4.2,zf:zw-1.2,vz:zw-.6,lab:"Balkon im 1. Stock"},{x:-7,y:4.9,zf:zw,lab:"1. Stock, linker Hausteil"},{x:11.5,y:4.9,zf:zw,lab:"1. Stock, rechter Hausteil"},{x:8,y:6.95,zf:zw+3.5,lab:"Terrasse im 2. Stock (hinter dem Gelaender)"}];
 window.TG3=TG3;
 {const or=M(0xe8731d),bl=M(0x2b4a7a,{roughness:.6}),gl=M(0x7fa5c2,{roughness:.2,metalness:.3}),fr=M(0xf5f5f5),dk=M(0x1f2a44);
  const prism=(pts,x0,x1,m)=>{const sh=new THREE.Shape();pts.forEach((p,k)=>k?sh.lineTo(p[0],p[1]):sh.moveTo(p[0],p[1]));sh.lineTo(pts[0][0],pts[0][1]);const g=new THREE.Mesh(new THREE.ExtrudeGeometry(sh,{depth:x1-x0,bevelEnabled:false}),m);g.rotation.y=-Math.PI/2;g.position.set(x1,0,0);g.castShadow=g.receiveShadow=true;H3.add(g)};
+ const prismX=(pts,z0,z1,m)=>{const sh=new THREE.Shape();pts.forEach((p,k)=>k?sh.lineTo(p[0],p[1]):sh.moveTo(p[0],p[1]));sh.lineTo(pts[0][0],pts[0][1]);const g=new THREE.Mesh(new THREE.ExtrudeGeometry(sh,{depth:z1-z0,bevelEnabled:false}),m);g.position.set(0,0,z0);g.castShadow=g.receiveShadow=true;H3.add(g)};
  const slab=(x,wd,z0,y0,z1,y1,m)=>{const L=Math.hypot(z1-z0,y1-y0),q=new THREE.Mesh(new THREE.BoxGeometry(wd,.18,L),m);q.position.set(x,(y0+y1)/2+.07,(z0+z1)/2);q.rotation.x=-Math.atan2(y1-y0,z1-z0);q.castShadow=true;H3.add(q)};
- prism([[zw,0],[zw+7,0],[zw+7,yS3(zw+7)-.05],[zw,FH-.05]],-12,2,or);
- slab(-5,14.8,zw-.4,FH-.36,zw+7.2,yS3(zw+7.2),bl);
+ /* linker Hausteil: schraeges Pultdach (links hoch, rechts tief) mit weitem Dachvorsprung ueber der Fassade */
+ prism([[zw,0],[zw+7,0],[zw+7,RX(zw+7)-.06],[zw,RX(zw)-.06]],-12,2,or);
+ slab(-5,14.6,zw-EO3,RX(zw-EO3),zw+7.2,RX(zw+7.2),bl);
+ box(14.6,.5,.22,bl,-5,RX(zw-EO3)-.18,zw-EO3,H3);
  box(12,FH,7,or,8,FH/2,zw+3.5,H3);box(12.2,.14,3.6,bl,8,FH+.06,zw+1.7,H3);
  prism([[zw+3.5,FH],[zw+3.5,9],[zw+5.25,11.45],[zw+7,9],[zw+7,FH]],2,14,or);
  slab(8,12.8,zw+3.35,9,zw+5.25,11.5,bl);slab(8,12.8,zw+5.25,11.5,zw+7.1,9,bl);
  box(.8,2.4,.8,or,11.5,11.2,zw+6.2,H3);
  box(4,1.1,1.2,dk,8,2.85,zw-.6,H3);
- for(const f of[0,1])for(const x of[-10.5,-7,-3.5,0]){box(1.3,1.5,.1,gl,x,f*3+1.9,zw-.03,H3);box(1.5,.1,.2,fr,x,f*3+1.1,zw-.07,H3)}
+ for(const f of[0,1,2])for(const x of[-10.5,-7,-3.5,0]){if(f===0&&x===0){box(1.6,2.3,.12,M(0x5a3b22),x,1.15,zw-.04,H3);continue}box(1.3,1.5,.1,gl,x,f*3+1.9,zw-.03,H3);box(1.5,.1,.2,fr,x,f*3+1.1,zw-.07,H3)}
  for(const f of[0,1])for(const x of[4.5,8,11.5]){if(f===1&&x===8){box(1.3,2.3,.1,gl,x,4.15,zw-.03,H3);continue}box(1.3,1.5,.1,gl,x,f*3+1.9,zw-.03,H3);box(1.5,.1,.2,fr,x,f*3+1.1,zw-.07,H3)}
  for(const x of[5,11]){box(1.3,1.5,.1,gl,x,7.9,zw+3.47,H3);box(1.5,.1,.2,fr,x,7.1,zw+3.43,H3)}
  box(1.4,2.3,.1,gl,8,7.28,zw+3.47,H3);
  {const rl=M(0xaab2bb,{metalness:.5,roughness:.4}),rail=(x0,z0,x1,z1)=>{const L=Math.hypot(x1-x0,z1-z0),a=Math.atan2(x1-x0,z1-z0),n=Math.max(2,Math.round(L/1.1));for(const y of[7.58,6.9]){const b=box(.07,.07,L,rl,(x0+x1)/2,y,(z0+z1)/2,H3);b.rotation.y=a}for(let k=0;k<=n;k++)box(.07,1.5,.07,rl,x0+(x1-x0)*k/n,6.88,z0+(z1-z0)*k/n,H3)};
   rail(2.1,zw+.1,13.9,zw+.1);rail(13.9,zw+.1,13.9,zw+3.4)}
- for(const z of[zw+2,zw+5])for(const y of[1.9,4.9]){box(.1,1.4,1.3,gl,-12.03,y,z,H3)}
- for(const d of DOR){const ys=yS3(d.zf);box(2.4,2,2.2,or,d.x,ys+1,d.zf+1.1,H3);box(1.3,1.1,.08,gl,d.x,ys+1.1,d.zf-.02,H3);box(1.5,.1,.2,fr,d.x,ys+.5,d.zf-.07,H3);box(2.8,.15,2.6,bl,d.x,ys+2.08,d.zf+1.1,H3)}}
-const solid3=p=>{const x=p.x-W.position.x,y=p.y,z=p.z;if(z<zw-1.3||z>zw+7.3)return false;
- if(x>5.9&&x<10.1&&z>zw-1.25&&y>2.25&&y<3.45)return true;if(z<zw-.15)return false;
- if(x>-12.1&&x<2.05){if(y<yS3(Math.min(z,zw+7))+.1)return true;for(const d of DOR)if(Math.abs(x-d.x)<1.35&&z>d.zf-.05&&z<d.zf+2.2&&y<yS3(d.zf)+2.15)return true;return false}
- if(x>=2.05&&x<14.1){if(z<zw+3.5)return y<FH+.1||(y<7.7&&(z<zw+.25||x>13.8));return y<RB(z)+.1}return false};
+ for(const z of[zw+2,zw+5])for(const y of[1.9,4.9,7.9]){box(.1,1.4,1.3,gl,-12.03,y,z,H3)}
+ for(const d of DOR){const ys=RX(d.zf);box(2.6,2.8,2.2,or,d.x,ys+1.4,d.zf+1.1,H3);box(1.5,1.4,.08,gl,d.x,ys+1.6,d.zf-.02,H3);box(1.7,.1,.22,fr,d.x,ys+.85,d.zf-.08,H3);box(3.1,.16,2.7,bl,d.x,ys+2.88,d.zf+1.1,H3)}}
+const solid3=p=>{const x=p.x-W.position.x,y=p.y,z=p.z;if(z>zw+7.3)return false;
+ if(x>-12.1&&x<2.05){if(z<zw-EO3-.25)return false;const r=RX(z);
+  if(z<zw-.15)return y<r+.2&&y>r-.55;
+  if(y<r+.06)return true;
+  for(const d of DOR)if(Math.abs(x-d.x)<1.4&&z>d.zf-.08&&z<d.zf+2.35&&y<RX(d.zf)+3)return true;
+  return false}
+ if(x>5.9&&x<10.1&&z>zw-1.25&&y>2.25&&y<3.45)return true;
+ if(z<zw-.15)return false;
+ if(x>=2.05&&x<14.1){if(z<zw+3.5)return y<FH+.1||(y<7.7&&(z<zw+.25||x>13.8));return y<RB(z)+.1}
+ return false};
 const inCan=p=>{if(SCN===3)return solid3(p);if(SCN!==2)return false;const x=p.x-W.position.x;if(Math.abs(x)>HW+.6||p.z<zw-EO-.1||p.z>zw+HD+EO)return false;const R=ROOF(p.z);return p.y<R+.12&&(p.z>=zw-.15||p.y>R-.3)};
 const wallHit=p=>SCN===3?solid3(p):p.z>zw-.15&&(SCN!==2||(Math.abs(p.x-W.position.x)<HW+.3&&p.y<HH));
 function setRoofTask(){const nz=-Math.sin(SLOPE),ny=Math.cos(SLOPE),d=1.4;Th.set(0,YS+ny*d,ZS+nz*d);T.copy(Th).add(W.position);tgt.position.set(0,YS+.1,ZS-.12);tgt.rotation.x=-(Math.PI/2+SLOPE);vic.position.set(0,YS-.1,ZS+.05);fire.position.set(-4.5,YS+.25,ZS+.4)}
@@ -356,20 +365,21 @@ cv.onwheel=e=>{zoomBy(1+e.deltaY*.001);e.preventDefault()};
 /* Aufgabe */
 function addX(){const x=document.createElement('button');x.className='tx';x.textContent='✕';x.setAttribute('aria-label','Aufgabe ausblenden');x.onclick=()=>$('task').classList.add('gone');$('task').appendChild(x)}
 let peek=null;function peekGoal(){if(task&&!task.done)peek={t:0}}
-function newTask3(first){let i=0;if(first!==true&&task){do{i=Math.floor(Math.random()*TG3.length)}while(i===task.i3||i===0&&false)}const g=TG3[i];
- if(first===true)W.position.x=-(g.x-(15+Math.random()*9));
- task={w:g,i3:i,t0:null,done:false,hold:0};Th.set(g.x,g.y+.3,g.zf-.95);T.copy(Th).add(W.position);tgt.position.set(g.x,g.y,g.zf-.15);tgt.rotation.x=0;tgt.visible=true;vic.visible=true;vic2Reset();vic.position.set(g.x,g.y-.78,g.vz||g.zf-.28);bubS.material.map=bubMap;
+function resetRig(){Object.assign(L,{yaw:0,pitch:2,len:8.5,arm:0,ax:0});for(const k in V)V[k]=0;sup.t=0;sup.v=0;auto=false;setFr(false);apply()}
+function newTask3(first){let i=0;if(first!==true&&task){do{i=Math.floor(Math.random()*TG3.length)}while(i===task.i3)}const g=TG3[i];
+ resetRig();W.position.x=-(g.x-(9+Math.random()*5));
+ task={w:g,i3:i,t0:null,done:false,hold:0};Th.set(g.x,g.y+.3,g.zf-(g.roof?1.45:.95));T.copy(Th).add(W.position);tgt.position.set(g.x,g.y,g.zf-.15);tgt.rotation.x=0;tgt.visible=true;vic.visible=true;vic2Reset();vic.position.set(g.x,g.y-.78,g.vz||g.zf-.28);bubS.material.map=bubMap;
  const o=TG3[(i+1)%3===i?(i+2)%3:(i+1)%3];fire.position.set(o.x+(o===TG3[i]?3:0),o.y,o.zf-.12);$("task").classList.remove("done");taskUI();if(sup.v>=1)peekGoal()}
-function newTask(first){if(SCN===3){newTask3(first);return}const tx=-W.position.x;let c=wins.filter(k=>k.f>=1&&k.f<=7&&Math.abs(k.c)<=8&&!TREES.some(t=>Math.abs(t[0]-k.x)<2.6));if(SCN===2)c=[{f:4,c:0,x:0,y:YS,roof:true}];
- if(SCN===2){const g0=c[Math.floor(Math.random()*c.length)];if(first===true)W.position.x=-(g0.x-(15+Math.random()*9));c=[g0]}else if(first===true){const st=(Math.random()<.5?-1:1)*(16+Math.random()*10),t0=-24+Math.random()*30;W.position.x=-t0;const ok=c.filter(k=>k.x-t0>13&&k.x-t0<27);c=ok.length?ok:c}
- else if(SCN!==2)c=c.filter(k=>Math.abs(k.x-tx)<8.5);
+function newTask(first){if(SCN===3){newTask3(first);return}let c=wins.filter(k=>k.f>=1&&k.f<=7&&Math.abs(k.c)<=8&&!TREES.some(t=>Math.abs(t[0]-k.x)<2.6));if(SCN===2)c=[{f:4,c:0,x:0,y:YS,roof:true}];
+ resetRig();
+ if(SCN===2){const g0=c[Math.floor(Math.random()*c.length)];W.position.x=-(g0.x-(15+Math.random()*9));c=[g0]}else{const t0=-24+Math.random()*30;W.position.x=-t0;const ok=c.filter(k=>k.x-t0>13&&k.x-t0<27);c=ok.length?ok:c}
  const g=c[Math.floor(Math.random()*c.length)];
  task={w:g,t0:null,done:false,hold:0};Th.set(g.x,g.y-.2+.5,zw-.95);T.copy(Th).add(W.position);tgt.position.set(g.x,g.y,zw-.15);tgt.visible=true;vic.visible=true;vic2Reset();vic.position.set(g.x,g.y-.78,zw-.28);bubS.material.map=bubMap;if(SCN===2){setRoofTask()}else{tgt.rotation.x=0;const cs=wins.filter(q=>q.f===g.f&&Math.abs(q.c-g.c)===2);const fw=cs[Math.floor(Math.random()*cs.length)];fire.position.set(fw.x,fw.y,zw-.12)}$("task").classList.remove("done");taskUI();if(sup.v>=1)peekGoal()}
 for(const [id,d] of [["dback",-1],["dfwd",1]]){const b=$(id);const on=e=>{e.preventDefault();drv.in=d;b.classList.add("on");try{b.setPointerCapture(e.pointerId)}catch(_){}};const off=()=>{if(drv.in===d)drv.in=0;b.classList.remove("on")};b.addEventListener("pointerdown",on);b.addEventListener("pointerup",off);b.addEventListener("pointercancel",off);b.addEventListener("lostpointercapture",off)}
 $("ke").onclick=()=>{if(auto){auto=false;warn("Korbeinstieg gestoppt");return}if(!fr.on){warn("Zuerst den Freigabetaster antippen!");return}{S.updateMatrixWorld(true);const c=cageC(new THREE.Vector3());if(!(Math.abs(L.yaw)<20&&c.x>4&&c.x<15&&Math.abs(c.z)<4&&c.y>3)){warn("Korbeinstieg nur möglich, wenn der Korb schon oberhalb in der Nähe der Kabine ist.");return}}auto=true;warn("Korb fährt vor die Fahrerkabine …")};
 let tkT=0;function showTask(ms){const e=$("task");e.classList.remove("gone");clearTimeout(tkT);if(ms)tkT=setTimeout(()=>e.classList.add("gone"),ms)}
-function taskUI(){const w=task.w;if(SCN===3){$("task").innerHTML=task.done?`<b>Geschafft</b><span class="t">Person gerettet: ${w.lab} · ${task.time.toFixed(1).replace(".",",")} s</span><br><button class="chip" id="nt" style="margin-top:6px">Neue Aufgabe</button>`:`<b>Aufgabe</b>Person in Not! <strong>${w.lab}</strong>: Dort ruft jemand um Hilfe, nebenan raucht es. Nach jeder Rettung wechselt der Patient (Dachfenster, Balkon, Fenster). Dachfenster und Balkon sind Hindernisse für Leiter und Korb.`;if(task.done){$("nt").onclick=()=>newTask();showTask(0)}else showTask(8000);addX();return}$("task").innerHTML=task.done?`<b>Geschafft</b><span class="t">Person im ${SCN===2?"Dachgeschoss":w.f+". Stock"} erreicht · ${task.time.toFixed(1).replace(".",",")} s</span><br><button class="chip" id="nt" style="margin-top:6px">Neue Aufgabe</button>`:`<b>Aufgabe</b>Person in Not! ${SCN===2?"Im <strong>Dachgeschoss</strong> ruft jemand aus dem Dachfenster um Hilfe, nebenan raucht es.":"Im <strong>"+w.f+". Stock</strong> ruft jemand aus dem Fenster um Hilfe, nebenan raucht es."} ${SCN===2?"Das Dachfenster liegt hinter dem weiten Dachvorsprung: Leiter steil über die Traufe führen und den Korb mit dem <strong>Gelenk</strong> (Korbarm) vor das grün markierte Dachfenster absenken.":"Leiterpaket zuerst etwas anheben, dann den Korb vor das grün markierte Fenster fahren."}`;
- if(task.done){$("nt").onclick=()=>newTask();showTask(0)}else showTask(8000);addX()}
+function taskUI(){const w=task.w;if(SCN===3){$("task").innerHTML=task.done?`<b>Geschafft</b><span class="t">Person gerettet: ${w.lab} · ${task.time.toFixed(1).replace(".",",")} s</span><br><button class="chip" id="nt" style="margin-top:6px">Neue Aufgabe</button>`:`<b>Aufgabe</b>Person in Not! <strong>${w.lab}</strong>: Dort ruft jemand um Hilfe, nebenan raucht es. ${w.roof?"Die Gaube liegt hinter dem Dachvorsprung: Leiter darüber führen und den Korb mit dem <strong>Gelenk</strong> vor das Dachfenster absenken.":"Leiterpaket anheben und den Korb vor das grün markierte Ziel fahren."} Nach jeder Rettung wechselt der Patient und die Drehleiter startet neu: wieder hinfahren, abstützen, retten.`;if(task.done){$("nt").onclick=()=>{newTask();stepUI();peek={t:-.8}};showTask(0)}else showTask(8000);addX();return}$("task").innerHTML=task.done?`<b>Geschafft</b><span class="t">Person im ${SCN===2?"Dachgeschoss":w.f+". Stock"} erreicht · ${task.time.toFixed(1).replace(".",",")} s</span><br><button class="chip" id="nt" style="margin-top:6px">Neue Aufgabe</button>`:`<b>Aufgabe</b>Person in Not! ${SCN===2?"Im <strong>Dachgeschoss</strong> ruft jemand aus dem Dachfenster um Hilfe, nebenan raucht es.":"Im <strong>"+w.f+". Stock</strong> ruft jemand aus dem Fenster um Hilfe, nebenan raucht es."} ${SCN===2?"Das Dachfenster liegt hinter dem weiten Dachvorsprung: Leiter steil über die Traufe führen und den Korb mit dem <strong>Gelenk</strong> (Korbarm) vor das grün markierte Dachfenster absenken.":"Leiterpaket zuerst etwas anheben, dann den Korb vor das grün markierte Fenster fahren."}`;
+ if(task.done){$("nt").onclick=()=>{newTask();stepUI();peek={t:-.8}};showTask(0)}else showTask(8000);addX()}
 newTask(true);stepUI();
 function startSc(n){SCN=n;CAN.visible=n===2;H3.visible=n===3;house.visible=n===1;(window.TREEG||[]).forEach(([g,x])=>{g.visible=!((n===2&&Math.abs(x)<26)||(n===3&&Math.abs(x)<20))});orb.scale.setScalar(TOL()/1.8);$("scn").style.display="none";newTask(true);stepUI();peek={t:-.8}}
 $("sc1").onclick=()=>startSc(1);$("sc2").onclick=()=>startSc(2);$("sc3").onclick=()=>startSc(3);$("scc").onclick=()=>location.reload();
@@ -419,7 +429,7 @@ bypass=false;if(auto){if(moving||!fr.on||!ok){auto=false;warn("Korbeinstieg abge
  smokeStep(dt);victimStep(now);exitStep(dt,now);
  if(peek){peek.t+=dt;const D=3.6,u=peek.t/D;if(u>=1)peek=null;else if(u>0){const k=Math.sin(Math.PI*Math.min(1,u)),e=k*k*(3-2*k);const p1=new THREE.Vector3(T.x+9,Math.max(2.5,T.y*.6),T.z-15),o=new THREE.PerspectiveCamera();o.position.copy(p1);o.lookAt(T);const q0=cam.quaternion.clone();cam.position.lerp(p1,e);cam.quaternion.copy(q0).slerp(o.quaternion,e)}}
  R.render(S,cam)}
-apply();requestAnimationFrame(loop);window.__trainer={killPeek:()=>{peek=null},apply,hit,Th,W,vic,vic2,fire,vic,cam,setView:v=>{view=v},cageW:()=>{S.updateMatrixWorld(true);return cage.localToWorld(new THREE.Vector3(.6,-.4,0))},L,T,cageC,fr:setFr,orb0,sup,get task(){return task},ST};
+apply();requestAnimationFrame(loop);window.__trainer={newTask,stepUI,resetRig,killPeek:()=>{peek=null},apply,hit,Th,W,vic,vic2,fire,vic,cam,setView:v=>{view=v},cageW:()=>{S.updateMatrixWorld(true);return cage.localToWorld(new THREE.Vector3(.6,-.4,0))},L,T,cageC,fr:setFr,orb0,sup,get task(){return task},ST};
 })();
 </script>
 
