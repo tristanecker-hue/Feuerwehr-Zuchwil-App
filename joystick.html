@@ -201,10 +201,23 @@ const man=FF.man;let manT=0;
 /* Haus */
 const TOL=()=>SCN===2?1.0:SCN===3?1.1:1.8;const FL=3,NF=9,ZW=10;let zw=ZW;
 const house=new THREE.Group();W.add(house);
+/* Fenster: eine Textur mit Rahmen, Sprossen, Glas und Spiegelung */
+const WTX=(()=>{const c=document.createElement("canvas");c.width=128;c.height=140;const g=c.getContext("2d");
+ g.fillStyle="#eceae4";g.fillRect(0,0,128,140);
+ const gr=g.createLinearGradient(0,8,0,128);gr.addColorStop(0,"#9ec0d8");gr.addColorStop(.42,"#6f96b6");gr.addColorStop(.44,"#5c8099");gr.addColorStop(1,"#86aec9");
+ g.fillStyle=gr;g.fillRect(8,8,112,120);
+ g.fillStyle="rgba(255,255,255,.22)";g.beginPath();g.moveTo(16,126);g.lineTo(74,10);g.lineTo(98,10);g.lineTo(40,126);g.closePath();g.fill();
+ g.fillStyle="rgba(10,20,30,.25)";g.fillRect(8,8,112,6);
+ g.fillStyle="#eceae4";g.fillRect(60,8,8,120);g.fillRect(8,58,112,7);
+ g.fillStyle="rgba(0,0,0,.12)";g.fillRect(8,128,112,4);
+ const t=new THREE.CanvasTexture(c);t.anisotropy=4;return t})();
+const WMAT=new THREE.MeshStandardMaterial({map:WTX,roughness:.5,metalness:.05,side:THREE.DoubleSide});
+const winP=(x,y,z,w,h,p,ry)=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),WMAT);m.position.set(x,y,z);if(ry)m.rotation.y=ry;(p||S).add(m);return m};
 const hm=M(0xe3dbd0);box(64,FL*NF,7,hm,2,FL*NF/2,zw+3.5,house);
 const wm=M(0x7fa5c2,{roughness:.2,metalness:.3}),fm=M(0xf5f5f5);
 const wins=[];for(let f=0;f<NF;f++)for(let c=-9;c<=9;c++){const x=c*3.2-.4,y=f*FL+1.9;
- box(1.4,1.5,.12,wm,x,y,zw-.02,house);box(1.6,.1,.2,fm,x,y-.8,zw-.07,house);wins.push({f,c,x,y})}
+ if(f===0&&c===0){box(2.8,2.6,.16,M(0x3a3f45),x,1.3,zw-.07,house);box(3.4,.2,1.3,M(0x2b2f35),x,2.75,zw-.6,house)}else{winP(x,y,zw-.05,1.4,1.6,house);box(1.64,.12,.26,fm,x,y-.86,zw-.12,house)}wins.push({f,c,x,y})}
+ box(64.4,1.2,7.2,M(0xbdb5a7),2,.6,zw+3.45,house);box(64.8,.45,7.5,M(0xd6cfc2),2,FL*NF-.22,zw+3.4,house);
 
 /* Szenario Basic+: 4-stoeckiges Haus mit weitem Dachvorsprung, Dachfenster nur mit Gelenk erreichbar */
 const CAN=new THREE.Group();CAN.visible=false;W.add(CAN);
@@ -213,7 +226,8 @@ const ROOF=z=>z<zw-EO||z>zw+HD+EO?-9:z<=zw+3.5?HH+(z-(zw-EO))*TH2:HH+(zw+HD+EO-z
 const SLOPE=Math.atan(TH2),ZS=zw+1.5,YS=ROOF(ZS);
 {const wl=M(0xe3dbd0),rm=new THREE.MeshStandardMaterial({color:0xb23a28,roughness:.7,side:THREE.DoubleSide}),gl=M(0x7fa5c2,{roughness:.2,metalness:.3}),fr=M(0xf5f5f5);
  box(2*HW,HH,HD,wl,0,HH/2,zw+HD/2,CAN);
- for(let f=0;f<4;f++)for(const x of Array.from({length:12},(_,k)=>-22+4*k)){if(f===0&&(x===2||x===-2)){if(x===-2)box(1.6,2.3,.12,M(0x5a3b22),0,1.15,zw-.04,CAN);continue}box(1.4,1.5,.12,gl,x,f*3+1.9,zw-.02,CAN);box(1.6,.1,.2,fr,x,f*3+1.1,zw-.07,CAN)}
+ for(let f=0;f<4;f++)for(const x of Array.from({length:12},(_,k)=>-22+4*k)){if(f===0&&(x===2||x===-2)){if(x===-2){box(2.6,2.5,.16,M(0x3a3f45),0,1.25,zw-.07,CAN);box(3.2,.2,1.2,M(0x2b2f35),0,2.65,zw-.6,CAN)}continue}winP(x,f*3+1.9,zw-.05,1.4,1.6,CAN);box(1.64,.12,.26,fr,x,f*3+1.04,zw-.12,CAN)}
+ box(2*HW+.4,1.2,HD+.2,M(0xc9c0b2),0,.6,zw+HD/2,CAN);
  for(let f=1;f<4;f++)box(2*HW,.08,.06,M(0x9a9288),0,f*3,zw-.03,CAN);
  const plane=(z0,y0,z1,y1)=>{const L=Math.hypot(z1-z0,y1-y0),m=new THREE.Mesh(new THREE.BoxGeometry(2*HW+1.2,.18,L),rm);m.position.set(0,(y0+y1)/2+.05,(z0+z1)/2);m.rotation.x=-Math.atan2(y1-y0,z1-z0);m.castShadow=true;CAN.add(m)};
  plane(zw-EO,HH,zw+3.5,RH2);plane(zw+3.5,RH2,zw+HD+EO,HH);box(2*HW+1.3,.22,.22,M(0x7a2418),0,RH2+.07,zw+3.5,CAN);
@@ -243,14 +257,20 @@ window.TG3=TG3;
  slab(8,12.8,zw+3.35,9,zw+5.25,11.5,bl);slab(8,12.8,zw+5.25,11.5,zw+7.1,9,bl);
  box(.8,2.4,.8,or,11.5,11.2,zw+6.2,H3);
  box(4,1.1,1.2,dk,8,2.85,zw-.6,H3);
- for(const f of[0,1,2])for(const x of[-10.5,-7,-3.5,0]){if(f===0&&x===0){box(1.6,2.3,.12,M(0x5a3b22),x,1.15,zw-.04,H3);continue}box(1.3,1.5,.1,gl,x,f*3+1.9,zw-.03,H3);box(1.5,.1,.2,fr,x,f*3+1.1,zw-.07,H3)}
- for(const f of[0,1])for(const x of[4.5,8,11.5]){if(f===1&&x===8){box(1.3,2.3,.1,gl,x,4.15,zw-.03,H3);continue}box(1.3,1.5,.1,gl,x,f*3+1.9,zw-.03,H3);box(1.5,.1,.2,fr,x,f*3+1.1,zw-.07,H3)}
- for(const x of[5,11]){box(1.3,1.5,.1,gl,x,7.9,zw+3.47,H3);box(1.5,.1,.2,fr,x,7.1,zw+3.43,H3)}
- box(1.4,2.3,.1,gl,8,7.28,zw+3.47,H3);
+ for(const f of[0,1,2])for(const x of[-10.5,-7,-3.5,0]){if(f===0&&x===0){box(2.4,2.5,.16,M(0x3a3f45),x,1.25,zw-.07,H3);box(3,.2,1.2,M(0x2b2f35),x,2.65,zw-.6,H3);continue}winP(x,f*3+1.9,zw-.06,1.35,1.6,H3);box(1.6,.12,.26,fr,x,f*3+1.04,zw-.13,H3)}
+ for(const f of[0,1])for(const x of[4.5,8,11.5]){if(f===1&&x===8){winP(x,4.15,zw-.06,1.4,2.3,H3);continue}winP(x,f*3+1.9,zw-.06,1.35,1.6,H3);box(1.6,.12,.26,fr,x,f*3+1.04,zw-.13,H3)}
+ for(const x of[5,11]){winP(x,7.9,zw+3.44,1.35,1.6,H3);box(1.6,.12,.26,fr,x,7.04,zw+3.37,H3)}
+ winP(8,7.28,zw+3.44,1.4,2.3,H3);
+ box(26.3,1.1,7.2,M(0x9a9183),1,.55,zw+3.4,H3);
  {const rl=M(0xaab2bb,{metalness:.5,roughness:.4}),rail=(x0,z0,x1,z1)=>{const L=Math.hypot(x1-x0,z1-z0),a=Math.atan2(x1-x0,z1-z0),n=Math.max(2,Math.round(L/1.1));for(const y of[7.58,6.9]){const b=box(.07,.07,L,rl,(x0+x1)/2,y,(z0+z1)/2,H3);b.rotation.y=a}for(let k=0;k<=n;k++)box(.07,1.5,.07,rl,x0+(x1-x0)*k/n,6.88,z0+(z1-z0)*k/n,H3)};
   rail(2.1,zw+.1,13.9,zw+.1);rail(13.9,zw+.1,13.9,zw+3.4)}
- for(const z of[zw+2,zw+5])for(const y of[1.9,4.9,7.9]){box(.1,1.4,1.3,gl,-12.03,y,z,H3)}
- for(const d of DOR){const ys=RX(d.zf);box(2.6,2.8,2.2,or,d.x,ys+1.4,d.zf+1.1,H3);box(1.5,1.4,.08,gl,d.x,ys+1.6,d.zf-.02,H3);box(1.7,.1,.22,fr,d.x,ys+.85,d.zf-.08,H3);box(3.1,.16,2.7,bl,d.x,ys+2.88,d.zf+1.1,H3)}}
+ for(const z of[zw+2,zw+5])for(const y of[1.9,4.9,7.9]){if(y<RX(z)-.9)winP(-12.06,y,z,1.3,1.5,H3,Math.PI/2)}
+ for(const d of DOR){const ys=RX(d.zf),dx=d.x,zf=d.zf;
+  box(2.5,3.6,2.2,or,dx,ys+.6,zf+1.12,H3);
+  prismX([[dx-1.3,ys+2.4],[dx+1.3,ys+2.4],[dx,ys+3.02]],zf-.1,zf+.12,or);
+  box(1.75,1.8,.1,fr,dx,ys+1.6,zf-.07,H3);winP(dx,ys+1.6,zf-.13,1.45,1.5,H3);box(1.7,.12,.3,fr,dx,ys+.8,zf-.2,H3);
+  for(const sg of[-1,1]){const w=1.42,h=.62,L=Math.hypot(w,h),m=new THREE.Mesh(new THREE.BoxGeometry(L,.14,2.6),bl);m.position.set(dx+sg*w/2,ys+2.4+h/2+.05,zf+1.0);m.rotation.z=-sg*Math.atan2(h,w);m.castShadow=true;H3.add(m)}
+  box(.18,.18,2.6,bl,dx,ys+3.06,zf+1.0,H3)}}
 const solid3=p=>{const x=p.x-W.position.x,y=p.y,z=p.z;if(z>zw+7.3)return false;
  if(x>-12.1&&x<2.05){if(z<zw-EO3-.25)return false;const r=RX(z);
   if(z<zw-.15)return y<r+.2&&y>r-.55;
@@ -298,7 +318,7 @@ function manPose(now,dt){const w=manT>.01&&manT<.99&&(sup.v>=.55?manT<.99:true);
  FF.tor.scale.y=1+br*idle;FF.hd.rotation.y=w?0:Math.sin(now/1900)*.5;FF.hd.rotation.x=w?.05:Math.sin(now/2300)*.08;FF.bd.rotation.y=Math.PI/2+(w?0:Math.sin(now/3100)*.12)}
 function exitStep(dt,now){if(!task||!task.done)return;
  if(!task.out){cage.updateWorldMatrix(true,false);const fl=cage.localToWorld(new THREE.Vector3(CDX/2,-1,0));if(fl.y>1.0)return;const wp=new THREE.Vector3();vic2.getWorldPosition(wp);const side=wp.z<-2?-1:1;cage.remove(vic2);W.add(vic2);vic2.rotation.set(0,0,0);vic2.position.set(wp.x-W.position.x,Math.max(.64,wp.y+.64-1.0),wp.z);task.out={t:0,x0:vic2.position.x,z0:vic2.position.z,side}}
- const o=task.out;o.t+=dt;const u=Math.min(1,o.t/5),z1=o.side<0?-8.2:7.9,x1=o.x0+(o.side<0?-2:3);vic2.position.x=o.x0+(x1-o.x0)*u;vic2.position.z=o.z0+(z1-o.z0)*u;const sw=u<1?Math.sin(o.t*9)*.6:0;vic2.children[3].rotation.x=sw;vic2.children[4].rotation.x=-sw;vic2.position.y=.64+(u<1?Math.abs(Math.sin(o.t*9))*.04:0);vic2.children[5].rotation.z=2.9-(u<1?.3*sw:0);vic2.children[6].rotation.z=-2.9+(u<1?.3*sw:0)}
+ const o=task.out;o.t+=dt;const u=Math.min(1,o.t/5),z1=o.side<0?-8.2:7.9,x1=o.x0+(o.side<0?-2:3);vic2.position.x=o.x0+(x1-o.x0)*u;vic2.position.z=o.z0+(z1-o.z0)*u;const sw=u<1?Math.sin(o.t*9)*.6:0;vic2.children[3].rotation.x=sw;vic2.children[4].rotation.x=-sw;vic2.position.y=.64+(u<1?Math.abs(Math.sin(o.t*9))*.04:0);vic2.children[5].rotation.z=2.9-(u<1?.3*sw:0);vic2.children[6].rotation.z=-2.9+(u<1?.3*sw:0);if(o.t>6.5&&!o.nx){o.nx=true;restartRun()}}
 function victimStep(now){const done=task&&task.done,w=Math.sin(now/170);vic.arms.forEach((p,i)=>{p.rotation.z=(i?-1:1)*(done?2.9:.55+.4*w*(i?-1:1))});if(!(done&&task.out))bubS.visible=true;bubS.material.map=done?bubOk:bubMap;if(done){if(task.out){bubS.position.set(vic2.position.x,vic2.position.y+1.5,vic2.position.z);bubS.visible=task.out.t<7}else{cage.updateWorldMatrix(true,false);const q=cage.localToWorld(new THREE.Vector3(.9,1.5,.3));bubS.position.set(q.x-W.position.x,q.y,q.z)}}else bubS.position.set(vic.position.x+.2,vic.position.y+2.05+.05*Math.sin(now/120),vic.position.z)}
 let bypass=false,auto=false,dm=1.75;let T=new THREE.Vector3(),Th=new THREE.Vector3(),task=null;const drv={in:0,v:0,ok:true};
 /* Zustand */
@@ -366,6 +386,7 @@ cv.onwheel=e=>{zoomBy(1+e.deltaY*.001);e.preventDefault()};
 function addX(){const x=document.createElement('button');x.className='tx';x.textContent='✕';x.setAttribute('aria-label','Aufgabe ausblenden');x.onclick=()=>$('task').classList.add('gone');$('task').appendChild(x)}
 let peek=null;function peekGoal(){if(task&&!task.done)peek={t:0}}
 function resetRig(){Object.assign(L,{yaw:0,pitch:2,len:8.5,arm:0,ax:0});for(const k in V)V[k]=0;sup.t=0;sup.v=0;auto=false;setFr(false);apply()}
+function restartRun(){view="ov";look.y=look.p=0;look.z=1;orb0.a=-2.55;orb0.e=.28;orb0.d=30;document.querySelectorAll("#views .chip").forEach(x=>x.classList.toggle("on",x.dataset.v==="ov"));lights.bl=true;lights.wb=false;$("bl").classList.toggle("on",true);$("wb").classList.toggle("on",false);newTask();stepUI();peek={t:-.8};warn("Patient in Sicherheit – neue Aufgabe")}
 function newTask3(first){let i=0;if(first!==true&&task){do{i=Math.floor(Math.random()*TG3.length)}while(i===task.i3)}const g=TG3[i];
  resetRig();W.position.x=-(g.x-(9+Math.random()*5));
  task={w:g,i3:i,t0:null,done:false,hold:0};Th.set(g.x,g.y+.3,g.zf-(g.roof?1.45:.95));T.copy(Th).add(W.position);tgt.position.set(g.x,g.y,g.zf-.15);tgt.rotation.x=0;tgt.visible=true;vic.visible=true;vic2Reset();vic.position.set(g.x,g.y-.78,g.vz||g.zf-.28);bubS.material.map=bubMap;
@@ -378,8 +399,8 @@ function newTask(first){if(SCN===3){newTask3(first);return}let c=wins.filter(k=>
 for(const [id,d] of [["dback",-1],["dfwd",1]]){const b=$(id);const on=e=>{e.preventDefault();drv.in=d;b.classList.add("on");try{b.setPointerCapture(e.pointerId)}catch(_){}};const off=()=>{if(drv.in===d)drv.in=0;b.classList.remove("on")};b.addEventListener("pointerdown",on);b.addEventListener("pointerup",off);b.addEventListener("pointercancel",off);b.addEventListener("lostpointercapture",off)}
 $("ke").onclick=()=>{if(auto){auto=false;warn("Korbeinstieg gestoppt");return}if(!fr.on){warn("Zuerst den Freigabetaster antippen!");return}{S.updateMatrixWorld(true);const c=cageC(new THREE.Vector3());if(!(Math.abs(L.yaw)<20&&c.x>4&&c.x<15&&Math.abs(c.z)<4&&c.y>3)){warn("Korbeinstieg nur möglich, wenn der Korb schon oberhalb in der Nähe der Kabine ist.");return}}auto=true;warn("Korb fährt vor die Fahrerkabine …")};
 let tkT=0;function showTask(ms){const e=$("task");e.classList.remove("gone");clearTimeout(tkT);if(ms)tkT=setTimeout(()=>e.classList.add("gone"),ms)}
-function taskUI(){const w=task.w;if(SCN===3){$("task").innerHTML=task.done?`<b>Geschafft</b><span class="t">Person gerettet: ${w.lab} · ${task.time.toFixed(1).replace(".",",")} s</span><br><button class="chip" id="nt" style="margin-top:6px">Neue Aufgabe</button>`:`<b>Aufgabe</b>Person in Not! <strong>${w.lab}</strong>: Dort ruft jemand um Hilfe, nebenan raucht es. ${w.roof?"Die Gaube liegt hinter dem Dachvorsprung: Leiter darüber führen und den Korb mit dem <strong>Gelenk</strong> vor das Dachfenster absenken.":"Leiterpaket anheben und den Korb vor das grün markierte Ziel fahren."} Nach jeder Rettung wechselt der Patient und die Drehleiter startet neu: wieder hinfahren, abstützen, retten.`;if(task.done){$("nt").onclick=()=>{newTask();stepUI();peek={t:-.8}};showTask(0)}else showTask(8000);addX();return}$("task").innerHTML=task.done?`<b>Geschafft</b><span class="t">Person im ${SCN===2?"Dachgeschoss":w.f+". Stock"} erreicht · ${task.time.toFixed(1).replace(".",",")} s</span><br><button class="chip" id="nt" style="margin-top:6px">Neue Aufgabe</button>`:`<b>Aufgabe</b>Person in Not! ${SCN===2?"Im <strong>Dachgeschoss</strong> ruft jemand aus dem Dachfenster um Hilfe, nebenan raucht es.":"Im <strong>"+w.f+". Stock</strong> ruft jemand aus dem Fenster um Hilfe, nebenan raucht es."} ${SCN===2?"Das Dachfenster liegt hinter dem weiten Dachvorsprung: Leiter steil über die Traufe führen und den Korb mit dem <strong>Gelenk</strong> (Korbarm) vor das grün markierte Dachfenster absenken.":"Leiterpaket zuerst etwas anheben, dann den Korb vor das grün markierte Fenster fahren."}`;
- if(task.done){$("nt").onclick=()=>{newTask();stepUI();peek={t:-.8}};showTask(0)}else showTask(8000);addX()}
+function taskUI(){const w=task.w;if(SCN===3){$("task").innerHTML=task.done?`<b>Person im Korb</b><span class="t">${w.lab} · ${task.time.toFixed(1).replace(".",",")} s</span><br>Jetzt den Korb zum Fahrzeug zurückbringen und absenken, damit der Patient aussteigen kann. Danach startet die nächste Aufgabe von vorne.`:`<b>Aufgabe</b>Person in Not! <strong>${w.lab}</strong>: Dort ruft jemand um Hilfe, nebenan raucht es. ${w.roof?"Die Gaube liegt hinter dem Dachvorsprung: Leiter darüber führen und den Korb mit dem <strong>Gelenk</strong> vor das Dachfenster absenken.":"Leiterpaket anheben und den Korb vor das grün markierte Ziel fahren."} Nach jeder Rettung wechselt der Patient und die Drehleiter startet neu: wieder hinfahren, abstützen, retten.`;if(task.done)showTask(0);else showTask(8000);addX();return}$("task").innerHTML=task.done?`<b>Person im Korb</b><span class="t">${SCN===2?"Dachgeschoss":w.f+". Stock"} · ${task.time.toFixed(1).replace(".",",")} s</span><br>Jetzt den Korb zum Fahrzeug zurückbringen und absenken, damit der Patient aussteigen kann. Danach startet die nächste Aufgabe von vorne.`:`<b>Aufgabe</b>Person in Not! ${SCN===2?"Im <strong>Dachgeschoss</strong> ruft jemand aus dem Dachfenster um Hilfe, nebenan raucht es.":"Im <strong>"+w.f+". Stock</strong> ruft jemand aus dem Fenster um Hilfe, nebenan raucht es."} ${SCN===2?"Das Dachfenster liegt hinter dem weiten Dachvorsprung: Leiter steil über die Traufe führen und den Korb mit dem <strong>Gelenk</strong> (Korbarm) vor das grün markierte Dachfenster absenken.":"Leiterpaket zuerst etwas anheben, dann den Korb vor das grün markierte Fenster fahren."}`;
+ if(task.done)showTask(0);else showTask(8000);addX()}
 newTask(true);stepUI();
 function startSc(n){SCN=n;CAN.visible=n===2;H3.visible=n===3;house.visible=n===1;(window.TREEG||[]).forEach(([g,x])=>{g.visible=!((n===2&&Math.abs(x)<26)||(n===3&&Math.abs(x)<20))});orb.scale.setScalar(TOL()/1.8);$("scn").style.display="none";newTask(true);stepUI();peek={t:-.8}}
 $("sc1").onclick=()=>startSc(1);$("sc2").onclick=()=>startSc(2);$("sc3").onclick=()=>startSc(3);$("scc").onclick=()=>location.reload();
