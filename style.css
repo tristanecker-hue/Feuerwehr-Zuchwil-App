@@ -634,3 +634,18 @@ html.dv .adlf{align-content:start}html.dv .adlf+.foot{max-width:none}
 .haus .hlead { font-weight: 600; margin: 12px 0 6px; }
 .haus .hli { margin: 0; padding-left: 1.2em; }
 .haus .hli li { margin: 3px 0; }
+
+/* Logistik: Wartungsarbeiten */
+.wyr { display: flex; gap: 8px; overflow-x: auto; padding: 2px 0 10px; }
+.wyr button { flex: none; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 8px 15px; font: inherit; font-weight: 600; min-height: 42px; font-variant-numeric: tabular-nums; }
+.wyr button.on { background: var(--red); border-color: var(--red); color: var(--red-ink); }
+.wgrp { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; margin: 10px 0 16px; overflow: hidden; }
+.wgrp h3 { margin: 0; padding: 10px 14px; font-family: var(--font-display); font-size: 1rem; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--line); }
+.wrow { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-top: 1px solid var(--line); cursor: pointer; }
+.wgrp h3 + .wrow { border-top: 0; }
+.wrow input { width: 24px; height: 24px; margin: 2px 0 0; accent-color: var(--red); flex: none; }
+.wrow > span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.wrow b { font-weight: 600; overflow-wrap: anywhere; }
+.wrow em { font-style: normal; font-size: .9rem; color: var(--muted); overflow-wrap: anywhere; }
+.wrow i { font-style: normal; font-size: .85rem; color: var(--bad); font-weight: 600; }
+.wrow.done b { text-decoration: line-through; color: var(--muted); }

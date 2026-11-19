@@ -1,4 +1,4 @@
-const APP_VERSION = "1.207";
+const APP_VERSION = "1.208";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -98,6 +98,7 @@ function start() {
         ${typeof fwzHidden === "function" && fwzHidden("home:les") ? "" : '<button class="mbtn main" id="t-les">Lektionen</button>'}
         ${typeof fwzHidden === "function" && fwzHidden("home:ao") ? "" : '<button class="mbtn main" id="t-ao">Ausbildungsoffizier</button>'}
         ${typeof fwzHidden === "function" && fwzHidden("home:vor") ? "" : '<button class="mbtn main" id="t-vor">Vorlagen</button>'}
+        ${typeof fwzHidden === "function" && fwzHidden("home:log") ? "" : '<button class="mbtn main" id="t-log">Logistik</button>'}
         ${typeof fwzHidden === "function" && fwzHidden("home:games") ? "" : '<button class="mbtn main" id="t-gm">Feuerwehr Spiele</button>'}
       </div>
       <div class="bottom">
@@ -109,7 +110,8 @@ function start() {
   clearInterval(window.clk); tick(); window.clk = setInterval(tick, 1000); var clk = window.clk;
   document.getElementById("logoup").onclick = appUpdate;
   document.getElementById("wxs").onclick = wxView; wxStrip();
-  const tr = document.getElementById("t-reg"), tl = document.getElementById("t-les"), ta = document.getElementById("t-ao"), tv = document.getElementById("t-vor"), tg = document.getElementById("t-gm");
+  const tr = document.getElementById("t-reg"), tl = document.getElementById("t-les"), ta = document.getElementById("t-ao"), tv = document.getElementById("t-vor"), tg = document.getElementById("t-gm"), tlo = document.getElementById("t-log");
+  if (tlo) tlo.onclick = () => { state.wy = 0; wartView(); };
   if (tg) tg.onclick = gamesView;
   if (tv) tv.onclick = () => { state.vorHome = true; state.lc = "v"; lesView(); };
   if (tr) tr.onclick = home; if (tl) tl.onclick = () => { state.vorHome = false; state.lc = null; lesView(); }; if (ta) ta.onclick = aoView;
@@ -412,10 +414,10 @@ const RGDEF = {
   adl: { pages: 265, short: "Autodrehleiter", enc: "reglement-adl.enc", file: "Betriebsanleitung L32A-XS Zuchwil.pdf", c: "© Rosenbauer", tile: "", hero: "Betriebsanleitung Autodrehleiter L32A-XS, Feuerwehr Zuchwil (265 Seiten).", online: "" },
   basis: { pages: 296, short: "Basiswissen", enc: "reglement-basiswissen.enc", file: "Reglement Basiswissen FKS.pdf", tile: "Das ganze Reglement mit allen 296 Seiten (FKS 07/2026), direkt in der App zum Blättern.", hero: "Das ganze Reglement Basiswissen, FKS 07/2026.", online: "https://docs.feukos.ch/Basiswissen/ReglementBasiswissenDE/" },
   sgv: { pages: 10, short: "Kantonale Ergänzungen", enc: "reglement-sgv.enc", file: "Kantonale Ergänzungen SGV 14.10.2026.pdf", c: "© SGV Solothurn", tile: "", hero: "Basiswissen Kantonale Ergänzungen SGV Solothurn, Version 14.10.2026.", online: "" },
-  abc1: { pages: 137, short: "ABC-Handbuch Kap. 1–2 Allgemeines, ABC-Wehr", enc: "reglement-abc1.enc", file: "FKS Handbuch ABC Teil 1.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2079 – Teil 1 von 4 (Kap. 1–2 Allgemeines, ABC-Wehr).", online: "" },
-  abc2: { pages: 76, short: "ABC-Handbuch Kap. 3–4 A-Wehr, B-Wehr", enc: "reglement-abc2.enc", file: "FKS Handbuch ABC Teil 2.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2079 – Teil 2 von 4 (Kap. 3–4 A-Wehr, B-Wehr).", online: "" },
-  abc3: { pages: 158, short: "ABC-Handbuch Kap. 5 C-Wehr", enc: "reglement-abc3.enc", file: "FKS Handbuch ABC Teil 3.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2079 – Teil 3 von 4 (Kap. 5 C-Wehr).", online: "" },
-  abc4: { pages: 137, short: "ABC-Handbuch Kap. 6–9 Tabellen, Spezialeinsatzmittel, Glossar, Register", enc: "reglement-abc4.enc", file: "FKS Handbuch ABC Teil 4.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2079 – Teil 4 von 4 (Kap. 6–9 Tabellen, Spezialeinsatzmittel, Glossar, Register).", online: "" },
+  abc1: { pages: 137, short: "ABC-Handbuch Kap. 1–2 Allgemeines, ABC-Wehr", enc: "reglement-abc1.enc", file: "FKS Handbuch ABC Teil 1.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2089 – Teil 1 von 4 (Kap. 1–2 Allgemeines, ABC-Wehr).", online: "" },
+  abc2: { pages: 76, short: "ABC-Handbuch Kap. 3–4 A-Wehr, B-Wehr", enc: "reglement-abc2.enc", file: "FKS Handbuch ABC Teil 2.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2089 – Teil 2 von 4 (Kap. 3–4 A-Wehr, B-Wehr).", online: "" },
+  abc3: { pages: 158, short: "ABC-Handbuch Kap. 5 C-Wehr", enc: "reglement-abc3.enc", file: "FKS Handbuch ABC Teil 3.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2089 – Teil 3 von 4 (Kap. 5 C-Wehr).", online: "" },
+  abc4: { pages: 137, short: "ABC-Handbuch Kap. 6–9 Tabellen, Spezialeinsatzmittel, Glossar, Register", enc: "reglement-abc4.enc", file: "FKS Handbuch ABC Teil 4.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2089 – Teil 4 von 4 (Kap. 6–9 Tabellen, Spezialeinsatzmittel, Glossar, Register).", online: "" },
   mat: { pages: 208, short: "Materialdienst", enc: "reglement-mat.enc", file: "FKS Handbuch Materialdienst.pdf", tile: "", hero: "Handbuch Materialdienst, FKS CSSP CSP, Version 2.01 / 10.03.2020 (208 Seiten).", online: "" },
   veg: { pages: 120, short: "Vegetationsbrände", enc: "reglement-veg.enc", file: "FKS Handbuch Vegetationsbrände.pdf", tile: "", hero: "Handbuch Spezialwissen «Vegetationsbrände», FKS.", online: "" },
   einsatz: { pages: 84, short: "Einsatzführung", enc: "reglement-einsatzfuehrung.enc", file: "Reglement Einsatzführung FKS.pdf", tile: "Das ganze Reglement mit allen 84 Seiten, direkt in der App zum Blättern.", hero: "Das ganze Reglement Einsatzführung, FKS.", online: "" }
@@ -1188,6 +1190,110 @@ function lesView() {
   lektionen(getMod("basis"), document.getElementById("body"));
 }
 
+/* ---------- Logistik: Wartungsarbeiten (Prüfintervalle Fahrzeuge und Material) ---------- */
+const WART_D = [
+  ["kdo-fahrzeug-service-fahrzeug", "Fahrzeuge", "KDO Fahrzeug", "Service Fahrzeug", [2023, 2024, 2025, 2026, 2027, 2028], 1, null, "VW Nutzfahrzeuge Zuchwil"],
+  ["kdo-fahrzeug-sina-pr-fung", "Fahrzeuge", "KDO Fahrzeug", "SiNa Prüfung", [2023, 2028, 2033, 2038], 5, 193.86, "Offerte Mollet + Co. AG 2022"],
+  ["kdo-fahrzeug-rag-pr-fung", "Fahrzeuge", "KDO Fahrzeug", "RAG Prüfung", [2023, 2025, 2027, 2029, 2031, 2033], 2, null, ""],
+  ["kdo-fahrzeug-motorfahrzeugkontrolle", "Fahrzeuge", "KDO Fahrzeug", "Motorfahrzeugkontrolle", [2024], null, null, ""],
+  ["atemschutzfahrzeug-service-fahrzeug", "Fahrzeuge", "Atemschutzfahrzeug", "Service Fahrzeug", [2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030], 1, null, "Tel. 031 340 80 00", "Auto AG Truck, Gewerbestrasse 12, 3322 Urtenen-Schönbühl"],
+  ["atemschutzfahrzeug-sina-pr-fung", "Fahrzeuge", "Atemschutzfahrzeug", "SiNa Prüfung", [2023, 2028, 2033, 2038], 5, 193.86, ""],
+  ["atemschutzfahrzeug-rag-pr-fung", "Fahrzeuge", "Atemschutzfahrzeug", "RAG Prüfung", [2022, 2024, 2026, 2028, 2030, 2032], 2, null, ""],
+  ["tankl-schfahrzeug-service-fahrzeug", "Fahrzeuge", "Tanklöschfahrzeug", "Service Fahrzeug", [2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030], 1, null, ""],
+  ["tankl-schfahrzeug-service-aufbau", "Fahrzeuge", "Tanklöschfahrzeug", "Service Aufbau", [2022, 2024, 2026, 2028, 2030, 2032, 2034, 2036, 2038, 2040], 2, null, "Pumpenservice + Aufbauservice wird immer zusammen gemacht!"],
+  ["tankl-schfahrzeug-pumpenservice", "Fahrzeuge", "Tanklöschfahrzeug", "Pumpenservice", [2022, 2024, 2026, 2028, 2030, 2032, 2034, 2036, 2038, 2040], 2, null, "Pumpenservice + Aufbauservice wird immer zusammen gemacht!"],
+  ["tankl-schfahrzeug-sina-pr-fung", "Fahrzeuge", "Tanklöschfahrzeug", "SiNa Prüfung", [2023, 2028, 2033, 2038], 5, 193.86, ""],
+  ["tankl-schfahrzeug-rag-pr-fung", "Fahrzeuge", "Tanklöschfahrzeug", "RAG Prüfung", [2023, 2025, 2027, 2029, 2031, 2033, 2035, 2037, 2039], 2, null, ""],
+  ["tankl-schfahrzeug-motorfahrzeugkontrolle", "Fahrzeuge", "Tanklöschfahrzeug", "Motorfahrzeugkontrolle", [2023], null, null, ""],
+  ["tanklöschfahrzeug-service-pumpe", "Fahrzeuge", "Tanklöschfahrzeug", "Service Pumpe", [2022, 2024, 2026, 2028], 2, null, "Feumotech"],
+  ["tankl-schfahrzeug-pneuwechsel", "Fahrzeuge", "Tanklöschfahrzeug", "Pneuwechsel", [2024, 2034], null, null, "ca. Fr. 4500.- Offerte Pneu Bögli 2023"],
+  ["autodrehleiter-service-fahrzeug", "Fahrzeuge", "Autodrehleiter", "Service Fahrzeug", [2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030], 1, null, "Moser Gerlafingen", "Ernst Moser GmbH, Derendingenstrasse 25, 4563 Gerlafingen"],
+  ["autodrehleiter-sina-pr-fung", "Fahrzeuge", "Autodrehleiter", "SiNa Prüfung", [2023, 2028, 2033, 2038], 5, 193.86, ""],
+  ["autodrehleiter-rag-pr-fung", "Fahrzeuge", "Autodrehleiter", "RAG Prüfung", [2023, 2025, 2027, 2029, 2031, 2033, 2035, 2037], 2, null, ""],
+  ["ptf-1-service-fahrzeug", "Fahrzeuge", "PTF 1", "Service Fahrzeug", [2023, 2024, 2025, 2026, 2027, 2028, 2029], 1, null, "Tel. 032 617 41 41", "Merbag Bellach, Römerstrasse 18, 4512 Bellach"],
+  ["ptf-1-sina-pr-fung", "Fahrzeuge", "PTF 1", "SiNa Prüfung", [2023, 2028, 2033, 2038], 5, 193.86, ""],
+  ["ptf-1-rag-pr-fung", "Fahrzeuge", "PTF 1", "RAG Prüfung", [2023, 2025, 2027, 2029, 2031, 2033, 2035, 2037], 2, null, ""],
+  ["ptf-1-motorfahrzeugkontrolle", "Fahrzeuge", "PTF 1", "Motorfahrzeugkontrolle", [2022], null, null, ""],
+  ["ptf-2-service-fahrzeug", "Fahrzeuge", "PTF 2", "Service Fahrzeug", [2023, 2024, 2025, 2026, 2027, 2028, 2029], 1, null, "Tel. 032 617 41 41", "Merbag Bellach, Römerstrasse 18, 4512 Bellach"],
+  ["ptf-2-sina-pr-fung", "Fahrzeuge", "PTF 2", "SiNa Prüfung", [2023, 2028, 2033, 2038], 5, 193.86, ""],
+  ["ptf-2-rag-pr-fung", "Fahrzeuge", "PTF 2", "RAG Prüfung", [2023, 2025, 2027, 2029, 2031, 2033, 2035, 2037], 2, null, ""],
+  ["r-stfahrzeug-service-fahrzeug", "Fahrzeuge", "Rüstfahrzeug", "Service Fahrzeug", [2023, 2024, 2025, 2026, 2027], 1, null, "Moser Gerlafingen", "Ernst Moser GmbH, Derendingenstrasse 25, 4563 Gerlafingen"],
+  ["r-stfahrzeug-kranservice-klein", "Fahrzeuge", "Rüstfahrzeug", "Kranservice \"klein\"", [2022, 2024, 2026, 2028, 2030, 2032, 2034, 2036, 2038, 2040], 2, 1140, "Calag Carrosserie Langenthal AG; Preise gemäss Hanspeter Michel Leiter Reparatur & Service, Elektrik"],
+  ["r-stfahrzeug-kranservice-gross", "Fahrzeuge", "Rüstfahrzeug", "Kranservice \"gross\"", [2023, 2025, 2027, 2029, 2031, 2033, 2035, 2037, 2039], 2, 2000, ""],
+  ["r-stfahrzeug-sina-pr-fung", "Fahrzeuge", "Rüstfahrzeug", "SiNa Prüfung", [2023, 2028, 2033, 2038], 5, 193.86, ""],
+  ["r-stfahrzeug-rag-pr-fung", "Fahrzeuge", "Rüstfahrzeug", "RAG Prüfung", [2022, 2024, 2026, 2028, 2030, 2032, 2034, 2036, 2038], 2, null, "Weber oder Moser bei Service"],
+  ["modulfahrzeug-service-fahrzeug", "Fahrzeuge", "Modulfahrzeug", "Service Fahrzeug", [2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034], 1, null, "Tel. 031 340 80 00", "Auto AG Truck, Gewerbestrasse 12, 3322 Urtenen-Schönbühl"],
+  ["modulfahrzeug-sina-pr-fung", "Fahrzeuge", "Modulfahrzeug", "SiNa Prüfung", [2023, 2028, 2033, 2038], 5, 193.86, ""],
+  ["modulfahrzeug-rag-pr-fung", "Fahrzeuge", "Modulfahrzeug", "RAG Prüfung", [2023, 2025, 2027, 2029, 2031, 2033, 2035, 2037], 2, null, "Weber"],
+  ["vorausfahrzeug-service-fahrzeug", "Fahrzeuge", "Vorausfahrzeug", "Service Fahrzeug", [2022, 2023], 1, null, "Wird von und organisiert, Rechnung an SGV / Merbag Neuendorf"],
+  ["vorausfahrzeug-sina-pr-fung", "Fahrzeuge", "Vorausfahrzeug", "SiNa Prüfung", [2026, 2031, 2036], 5, 0, "Kosten trägt SGV Solothurn"],
+  ["vorausfahrzeug-rag-pr-fung", "Fahrzeuge", "Vorausfahrzeug", "RAG Prüfung", [2023, 2025, 2027, 2029, 2031, 2033, 2035, 2037], 2, null, "Kosten trägt SGV Solothurn"],
+  ["vorausfahrzeug-motorfahrzeugkontrolle", "Fahrzeuge", "Vorausfahrzeug", "Motorfahrzeugkontrolle", [2023], null, null, ""],
+  ["puch-abgastest", "Fahrzeuge", "Puch", "Abgastest", [2023, 2025, 2027, 2029, 2031, 2033, 2035, 2037, 2039], 2, null, ""],
+  ["puch-service-fahrzeug", "Fahrzeuge", "Puch", "Service Fahrzeug", [2023, 2025, 2027, 2029, 2031, 2033, 2035, 2037, 2039], 2, null, "Tel. 032 617 41 41", "Merbag Bellach, Römerstrasse 18, 4512 Bellach"],
+  ["puch-sina-pr-fung", "Fahrzeuge", "Puch", "SiNa Prüfung", [2023, 2028, 2033, 2038], 5, 193.86, ""],
+  ["puch-rag-pr-fung", "Fahrzeuge", "Puch", "RAG Prüfung", [2023, 2025, 2027, 2029, 2031, 2033, 2035, 2037], 2, null, "Weber"],
+  ["puch-motorfahrzeugkontrolle", "Fahrzeuge", "Puch", "Motorfahrzeugkontrolle", [2022], null, null, ""],
+  ["stapler-sicherheits-check", "Fahrzeuge", "Stapler", "Sicherheits check", [2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035, 2036, 2037, 2038, 2039, 2040], 1, null, ""],
+  ["stapler-service", "Fahrzeuge", "Stapler", "Service", [2022, 2024, 2026, 2028, 2030, 2032, 2034, 2036, 2038, 2040], 2, null, ""],
+  ["leiternpr-fung-sichtpr-fung-durch-materialwart", "Material", "Leiternprüfung", "Sichtprüfung durch Materialwart", [2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035, 2036, 2037, 2038, 2039, 2040], 1, null, ""],
+  ["leiternpr-fung-pr-fung-durch-experten", "Material", "Leiternprüfung", "Prüfung durch Experten", [2024, 2027, 2030, 2033, 2036, 2039], 3, 1100, "leiterntechnik.ch; Daniel Grab GmbH; 8832 Willen"],
+  ["spannsetpr-fung-spannsetpr-fung", "Material", "Spannsetprüfung", "Spannsetprüfung", [2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035, 2036, 2037, 2038, 2039, 2040], 1, null, "Spannset AG"],
+  ["elektroger-te-pr-fung-durch-gemeinde-zuchwil", "Material", "Elektrogeräte", "Prüfung durch Gemeinde Zuchwil", [2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035, 2036, 2037, 2038, 2039, 2040], 1, 0, "1 ADF muss vor Ort sein (Sold)"],
+  ["alro-maskenwaschanlage-alro-maskenwaschanlage", "Material", "Alro Maskenwaschanlage", "Alro Maskenwaschanlage", [2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035, 2036, 2037, 2038, 2039, 2040], 1, 890, "Rechnung 2026"],
+  ["entkalkungsanlage-entkalkungsanlage", "Material", "Entkalkungsanlage", "Entkalkungsanlage", [2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035, 2036, 2037, 2038, 2039, 2040], 1, null, ""]
+];
+const WART = WART_D.map(r => ({ id: r[0], kind: r[1], grp: r[2], task: r[3], years: r[4] || [], iv: r[5], cost: r[6], note: r[7] || "", loc: r[8] || "" }));
+let WSTATE = (() => { try { const o = JSON.parse(localStorage.getItem("fwz-wart") || "null"); if (o && o.done) return o; } catch (e) {} return { done: {}, t: 0 }; })();
+let wartT = 0;
+function wartSave() {
+  WSTATE.t = Date.now();
+  try { localStorage.setItem("fwz-wart", JSON.stringify(WSTATE)); } catch (e) {}
+  if (!FWZ.user || !FWZ.setDoc) return;
+  clearTimeout(wartT); wartT = setTimeout(() => { FWZ.setDoc("wartung", WSTATE).catch(() => {}); }, 900);
+}
+async function wartPull() {
+  if (!FWZ.user || !FWZ.getDoc) return false;
+  try { const o = await FWZ.getDoc("wartung"); if (o && o.done && (o.t || 0) > (WSTATE.t || 0)) { WSTATE = o; try { localStorage.setItem("fwz-wart", JSON.stringify(o)); } catch (e) {} return true; } } catch (e) {}
+  return false;
+}
+const wartDone = (w, y) => { const v = WSTATE.done[w.id + "|" + y]; return v === undefined ? y < new Date().getFullYear() : !!v; };
+const chf = n => "CHF " + Math.round(n).toLocaleString("de-CH");
+function wartRow(w, y) {
+  const d = wartDone(w, y), late = !d && y < new Date().getFullYear();
+  const meta = [w.iv ? "alle " + w.iv + (w.iv === 1 ? " Jahr" : " Jahre") : "", w.cost ? chf(w.cost) : "", w.loc, w.note].filter(Boolean).join(" · ");
+  return `<label class="wrow${d ? " done" : ""}"><input type="checkbox" data-w="${esc(w.id)}"${d ? " checked" : ""}><span><b>${esc(w.task)}</b>${meta ? `<em>${esc(meta)}</em>` : ""}${late ? '<i>überfällig</i>' : ""}</span></label>`;
+}
+function wartView(year) {
+  state.mod = null; state.sub = null; state.view = "wart"; backBtn.hidden = false;
+  document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
+  const now = new Date().getFullYear();
+  const ys = [...new Set(WART.flatMap(w => w.years))].sort((a, b) => a - b).filter(v => v >= now - 2 && v <= now + 6);
+  const y = year || state.wy || (ys.includes(now) ? now : ys[0]); state.wy = y;
+  const list = WART.filter(w => w.years.includes(y)), open = list.filter(w => !wartDone(w, y));
+  const sumAll = list.reduce((a, w) => a + (w.cost || 0), 0), sumOpen = open.reduce((a, w) => a + (w.cost || 0), 0);
+  let h = `<section class="hero"><h1>Wartungsarbeiten</h1><p>Prüfintervalle Fahrzeuge und Material. Abhaken, was erledigt ist. Jahre vor ${now} gelten als erledigt.</p></section>
+    <div class="wyr">${ys.map(v => `<button data-y="${v}" class="${v === y ? "on" : ""}">${v}</button>`).join("")}</div>
+    <div class="sinfo" id="wsum">${list.length - open.length} von ${list.length} erledigt${sumOpen ? " · offene Kosten " + chf(sumOpen) : ""}${sumAll ? " · Kosten total " + chf(sumAll) : ""}</div>`;
+  ["Fahrzeuge", "Material"].forEach(k => {
+    const inK = list.filter(w => w.kind === k); if (!inK.length) return;
+    h += `<h2 class="zh">${k}</h2>`;
+    [...new Set(inK.map(w => w.grp))].forEach(g => {
+      h += `<section class="wgrp"><h3>${esc(g)}</h3>` + inK.filter(w => w.grp === g).map(w => wartRow(w, y)).join("") + "</section>";
+    });
+  });
+  h += `<p class="foot">Grundlage: Wartungsplan «Prüfintervalle Feuerwehr Zuchwil». ${FWZ.user ? "Erledigt-Haken werden mit allen Angemeldeten geteilt." : "Ohne Anmeldung bleiben die Haken nur auf diesem Gerät."}</p>`;
+  app.innerHTML = h; window.scrollTo(0, 0);
+  app.querySelectorAll(".wyr button").forEach(b => b.onclick = () => wartView(+b.dataset.y));
+  app.querySelectorAll(".wrow input").forEach(i => i.onchange = () => {
+    WSTATE.done[i.dataset.w + "|" + y] = i.checked ? 1 : 0; wartSave();
+    i.closest(".wrow").classList.toggle("done", i.checked);
+    const l2 = WART.filter(w => w.years.includes(y)), o2 = l2.filter(w => !wartDone(w, y)), s2 = o2.reduce((a, w) => a + (w.cost || 0), 0);
+    const sm = document.getElementById("wsum"); if (sm) sm.textContent = `${l2.length - o2.length} von ${l2.length} erledigt${s2 ? " · offene Kosten " + chf(s2) : ""}${sumAll ? " · Kosten total " + chf(sumAll) : ""}`;
+  });
+  wartPull().then(ok => { if (ok && state.view === "wart") wartView(state.wy); });
+}
+
 /* ---------- Anmeldung ---------- */
 function loginErr(err) {
   const c = String((err && err.code) || "").replace("auth/", ""), msg = (err && err.message) || "";
@@ -1410,7 +1516,7 @@ function gateView() {
 
 /* ---------- Einstellungen: Sichtbarkeit und Benutzerverwaltung ---------- */
 const CFG_ITEMS = [
-  ["Startseite", [["home:reg", "Reglemente"], ["home:les", "Lektionen"], ["home:ao", "Ausbildungsoffizier"], ["home:vor", "Vorlagen"], ["home:games", "Feuerwehr Spiele"]]],
+  ["Startseite", [["home:reg", "Reglemente"], ["home:les", "Lektionen"], ["home:ao", "Ausbildungsoffizier"], ["home:vor", "Vorlagen"], ["home:log", "Logistik"], ["home:games", "Feuerwehr Spiele"]]],
   ["Reglemente", [["reg:basis", "Basiswissen"], ["reg:einsatz", "Einsatzführung"], ["reg:sgv", "Kantonale Ergänzungen (SGV)"], ["reg:abc", "ABC-Handbuch"], ["reg:veg", "Vegetationsbrände"], ["reg:mat", "Materialdienst"], ["reg:adl", "Autodrehleiter"]]],
   ["Ausbildungsoffizier", [["ao:check", "Checkliste"], ["ao:keil", "KEIL"], ["ao:lek", "Lektionen"], ["ao:kq", "Kurs-Quiz"], ["ao:fach", "Fachlektionen"], ["ao:meth", "Lektion halten"], ["ao:zahl", "Zahlen-Trainer"], ["ao:bil", "Erfolgsauswertung / Bilanz"], ["ao:prog", "Kursprogramm"], ["ao:regl", "Reglement Basiswissen"]]]
 ];
