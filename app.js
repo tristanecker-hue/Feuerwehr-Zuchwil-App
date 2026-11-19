@@ -1,4 +1,4 @@
-const APP_VERSION = "1.222";
+const APP_VERSION = "1.223";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -1335,7 +1335,7 @@ function fzEdit(name) {
   app.innerHTML = `<section class="hero"><h1>${name ? esc(name) : "Neues Fahrzeug"}</h1><p>Stammdaten des Fahrzeugs.</p></section>
     <div class="wform">
       ${name ? "" : '<label class="wf"><span>Bezeichnung</span><input id="fz-name" placeholder="z. B. Tanklöschfahrzeug"></label>'}
-      ${FZ_F.map(f => `<label class="wf"><span>${f[1]}</span><input id="fz-${f[0]}" value="${esc(d[f[0]] || "")}"></label>`).join("")}
+      ${FZ_F.map(f => `<label class="wf"><span>${f[1]}</span><input id="fz-${f[0]}" value="${esc(d[f[0]] || "")}"${f[0] === "kz" ? ' placeholder="SO 12345" inputmode="numeric"' : ""}></label>`).join("")}
       <div class="wf"><span>Foto</span><div class="nthumbs" id="fz-th"></div>
         <label class="btn lesup">Foto wählen<input type="file" accept="image/*" id="fz-img" hidden></label></div>
     </div>
@@ -1364,7 +1364,7 @@ function fzEdit(name) {
     const nm = name || (document.getElementById("fz-name").value || "").trim();
     if (!nm) { document.getElementById("fz-m").textContent = "Bezeichnung ausfüllen."; return; }
     const o = {};
-    FZ_F.forEach(f => { const v = (document.getElementById("fz-" + f[0]).value || "").trim(); if (v) o[f[0]] = v; });
+    FZ_F.forEach(f => { let v = (document.getElementById("fz-" + f[0]).value || "").trim(); if (f[0] === "kz" && v) v = "SO " + v.replace(/^so[\s-]*/i, "").trim(); if (v) o[f[0]] = v; });
     if (foto) o.img = foto;
     FSTATE.fz = FSTATE.fz || {}; FSTATE.fz[nm] = o;
     if (!name && !fzList().includes(nm)) { FSTATE.add = FSTATE.add || []; FSTATE.add.push(nm); }
