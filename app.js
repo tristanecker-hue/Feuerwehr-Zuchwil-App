@@ -1,4 +1,4 @@
-const APP_VERSION = "1.212";
+const APP_VERSION = "1.213";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -413,10 +413,10 @@ const RGDEF = {
   adl: { pages: 265, short: "Autodrehleiter", enc: "reglement-adl.enc", file: "Betriebsanleitung L32A-XS Zuchwil.pdf", c: "© Rosenbauer", tile: "", hero: "Betriebsanleitung Autodrehleiter L32A-XS, Feuerwehr Zuchwil (265 Seiten).", online: "" },
   basis: { pages: 296, short: "Basiswissen", enc: "reglement-basiswissen.enc", file: "Reglement Basiswissen FKS.pdf", tile: "Das ganze Reglement mit allen 296 Seiten (FKS 07/2026), direkt in der App zum Blättern.", hero: "Das ganze Reglement Basiswissen, FKS 07/2026.", online: "https://docs.feukos.ch/Basiswissen/ReglementBasiswissenDE/" },
   sgv: { pages: 10, short: "Kantonale Ergänzungen", enc: "reglement-sgv.enc", file: "Kantonale Ergänzungen SGV 14.10.2026.pdf", c: "© SGV Solothurn", tile: "", hero: "Basiswissen Kantonale Ergänzungen SGV Solothurn, Version 14.10.2026.", online: "" },
-  abc1: { pages: 137, short: "ABC-Handbuch Kap. 1–2 Allgemeines, ABC-Wehr", enc: "reglement-abc1.enc", file: "FKS Handbuch ABC Teil 1.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2129 – Teil 1 von 4 (Kap. 1–2 Allgemeines, ABC-Wehr).", online: "" },
-  abc2: { pages: 76, short: "ABC-Handbuch Kap. 3–4 A-Wehr, B-Wehr", enc: "reglement-abc2.enc", file: "FKS Handbuch ABC Teil 2.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2129 – Teil 2 von 4 (Kap. 3–4 A-Wehr, B-Wehr).", online: "" },
-  abc3: { pages: 158, short: "ABC-Handbuch Kap. 5 C-Wehr", enc: "reglement-abc3.enc", file: "FKS Handbuch ABC Teil 3.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2129 – Teil 3 von 4 (Kap. 5 C-Wehr).", online: "" },
-  abc4: { pages: 137, short: "ABC-Handbuch Kap. 6–9 Tabellen, Spezialeinsatzmittel, Glossar, Register", enc: "reglement-abc4.enc", file: "FKS Handbuch ABC Teil 4.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2129 – Teil 4 von 4 (Kap. 6–9 Tabellen, Spezialeinsatzmittel, Glossar, Register).", online: "" },
+  abc1: { pages: 137, short: "ABC-Handbuch Kap. 1–2 Allgemeines, ABC-Wehr", enc: "reglement-abc1.enc", file: "FKS Handbuch ABC Teil 1.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2139 – Teil 1 von 4 (Kap. 1–2 Allgemeines, ABC-Wehr).", online: "" },
+  abc2: { pages: 76, short: "ABC-Handbuch Kap. 3–4 A-Wehr, B-Wehr", enc: "reglement-abc2.enc", file: "FKS Handbuch ABC Teil 2.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2139 – Teil 2 von 4 (Kap. 3–4 A-Wehr, B-Wehr).", online: "" },
+  abc3: { pages: 158, short: "ABC-Handbuch Kap. 5 C-Wehr", enc: "reglement-abc3.enc", file: "FKS Handbuch ABC Teil 3.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2139 – Teil 3 von 4 (Kap. 5 C-Wehr).", online: "" },
+  abc4: { pages: 137, short: "ABC-Handbuch Kap. 6–9 Tabellen, Spezialeinsatzmittel, Glossar, Register", enc: "reglement-abc4.enc", file: "FKS Handbuch ABC Teil 4.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2139 – Teil 4 von 4 (Kap. 6–9 Tabellen, Spezialeinsatzmittel, Glossar, Register).", online: "" },
   mat: { pages: 208, short: "Materialdienst", enc: "reglement-mat.enc", file: "FKS Handbuch Materialdienst.pdf", tile: "", hero: "Handbuch Materialdienst, FKS CSSP CSP, Version 2.01 / 10.03.2020 (208 Seiten).", online: "" },
   veg: { pages: 120, short: "Vegetationsbrände", enc: "reglement-veg.enc", file: "FKS Handbuch Vegetationsbrände.pdf", tile: "", hero: "Handbuch Spezialwissen «Vegetationsbrände», FKS.", online: "" },
   einsatz: { pages: 84, short: "Einsatzführung", enc: "reglement-einsatzfuehrung.enc", file: "Reglement Einsatzführung FKS.pdf", tile: "Das ganze Reglement mit allen 84 Seiten, direkt in der App zum Blättern.", hero: "Das ganze Reglement Einsatzführung, FKS.", online: "" }
@@ -1207,10 +1207,100 @@ function logView() {
   state.mod = null; state.sub = null; state.view = "log"; backBtn.hidden = false;
   document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
   app.innerHTML = `<section class="hero"><h1>Logistik</h1><p>Wartungsplan und Notizen der Logistik.</p></section>
-    <div class="menu"><button class="mbtn main" id="l-wart">Wartungsarbeiten</button><button class="mbtn main" id="l-not">Notizen</button></div>`;
+    <div class="menu"><button class="mbtn main" id="l-fz">Fahrzeuge</button><button class="mbtn main" id="l-wart">Wartungsarbeiten</button><button class="mbtn main" id="l-not">Notizen</button></div>`;
+  document.getElementById("l-fz").onclick = () => fzView();
   document.getElementById("l-wart").onclick = () => { state.wy = 0; wartView(); };
   document.getElementById("l-not").onclick = () => notesView();
   window.scrollTo(0, 0);
+}
+
+/* ---------- Logistik: Fahrzeuge (Stammdaten und Wartungen je Fahrzeug) ---------- */
+const FZ_F = [["typ", "Typ / Marke"], ["kz", "Kontrollschild"], ["jahr", "Jahrgang"], ["standort", "Standort"], ["l", "Länge (m)"], ["br", "Breite (m)"], ["h", "Höhe (m)"], ["kg", "Gewicht (kg)"], ["bem", "Bemerkung"]];
+let FSTATE = (() => { try { const o = JSON.parse(localStorage.getItem("fwz-fz") || "null"); if (o && o.fz) return o; } catch (e) {} return { fz: {}, add: [], t: 0 }; })();
+let fzT = 0;
+function fzSave() {
+  FSTATE.t = Date.now();
+  try { localStorage.setItem("fwz-fz", JSON.stringify(FSTATE)); } catch (e) {}
+  if (!FWZ.user || !FWZ.setDoc) return;
+  clearTimeout(fzT); fzT = setTimeout(() => { FWZ.setDoc("fahrzeuge", FSTATE).catch(() => {}); }, 900);
+}
+async function fzPull() {
+  if (!FWZ.user || !FWZ.getDoc) return false;
+  try { const o = await FWZ.getDoc("fahrzeuge"); if (o && o.fz && (o.t || 0) > (FSTATE.t || 0)) { FSTATE = o; try { localStorage.setItem("fwz-fz", JSON.stringify(o)); } catch (e) {} return true; } } catch (e) {}
+  return false;
+}
+function fzList() {
+  const out = [...new Set(wartItems().filter(w => w.kind === "Fahrzeuge").map(w => w.grp))];
+  (FSTATE.add || []).forEach(n => { if (!out.includes(n)) out.push(n); });
+  return out.sort((a, b) => a.localeCompare(b, "de"));
+}
+function fzView() {
+  state.mod = null; state.sub = null; state.view = "fz"; backBtn.hidden = false;
+  document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
+  const now = new Date().getFullYear(), items = wartItems();
+  const rows = fzList().map(n => {
+    const w = items.filter(x => x.grp === n), ys = [...new Set(w.flatMap(x => x.years))].filter(v => v >= now).sort((a, b) => a - b);
+    const offen = w.filter(x => x.years.includes(now) && !wartDone(x, now)).length;
+    const d = (FSTATE.fz || {})[n] || {};
+    const meta = [d.typ, d.kz, w.length ? w.length + (w.length === 1 ? " Wartung" : " Wartungen") : "keine Wartung", ys.length ? "nächste " + ys[0] : ""].filter(Boolean).join(" · ");
+    return `<button class="mbtn note" data-f="${esc(n)}"><span>${esc(n)}${offen ? ` <i class="fzo">${offen} offen</i>` : ""}</span><small>${esc(meta)}</small></button>`;
+  }).join("");
+  app.innerHTML = `<section class="hero"><h1>Fahrzeuge</h1><p>Stammdaten und Wartungen je Fahrzeug.</p></section>
+    <div class="row spick"><button class="btn primary" id="fzadd">Neues Fahrzeug</button></div>
+    <div class="menu nlist">${rows}</div>`;
+  window.scrollTo(0, 0);
+  app.querySelectorAll("[data-f]").forEach(b => b.onclick = () => fzDetail(b.dataset.f));
+  document.getElementById("fzadd").onclick = () => fzEdit(null);
+  fzPull().then(ok => { if (ok && state.view === "fz") fzView(); });
+}
+function fzDetail(name) {
+  state.view = "fzd"; state.fzn = name; backBtn.hidden = false;
+  const now = new Date().getFullYear(), d = (FSTATE.fz || {})[name] || {};
+  const w = wartItems().filter(x => x.grp === name);
+  const ys = [...new Set(w.flatMap(x => x.years))].filter(v => v >= now - 1).sort((a, b) => a - b).slice(0, 5);
+  const stamm = FZ_F.filter(f => d[f[0]]).map(f => `<div class="fzr"><span>${f[1]}</span><b>${esc(d[f[0]])}</b></div>`).join("");
+  let h = `<section class="hero"><h1>${esc(name)}</h1><p>${esc([d.typ, d.kz].filter(Boolean).join(" · ") || "Noch keine Stammdaten erfasst.")}</p></section>
+    ${stamm ? `<section class="wgrp"><h3>Stammdaten</h3><div class="fzbox">${stamm}</div></section>` : ""}
+    <div class="row spick"><button class="btn primary" id="fze">Stammdaten bearbeiten</button>${name === "Autodrehleiter" ? '<button class="btn" id="fzadl">Masse Drehleiter</button>' : ""}<button class="btn" id="fzw">Wartung erfassen</button></div>`;
+  ys.forEach(y => {
+    const rows = w.filter(x => x.years.includes(y)); if (!rows.length) return;
+    h += `<section class="wgrp"><h3>${y}${y < now ? " · Vorjahr" : y === now ? " · laufendes Jahr" : ""}</h3>` + rows.map(x => wartRow(x, y)).join("") + "</section>";
+  });
+  if (!w.length) h += '<div class="note">Für dieses Fahrzeug ist noch keine Wartung erfasst.</div>';
+  app.innerHTML = h; window.scrollTo(0, 0);
+  document.getElementById("fze").onclick = () => fzEdit(name);
+  const adl = document.getElementById("fzadl"); if (adl) adl.onclick = () => { state.fzBack = 1; masseView(); };
+  document.getElementById("fzw").onclick = () => { state.wy = now; wartForm(null, { kind: "Fahrzeuge", grp: name }); };
+  app.querySelectorAll(".wrow input").forEach(i => i.onchange = () => {
+    const y = +i.closest(".wgrp").querySelector("h3").textContent.slice(0, 4);
+    WSTATE.done[i.dataset.w + "|" + y] = i.checked ? 1 : 0; wartSave();
+    i.closest(".wrow").classList.toggle("done", i.checked);
+  });
+  app.querySelectorAll(".wedit").forEach(b => b.onclick = () => { state.wy = now; wartForm(b.dataset.e); });
+}
+function fzEdit(name) {
+  state.view = "fze"; state.fzn = name; backBtn.hidden = false;
+  const d = name ? ((FSTATE.fz || {})[name] || {}) : {};
+  app.innerHTML = `<section class="hero"><h1>${name ? esc(name) : "Neues Fahrzeug"}</h1><p>Stammdaten des Fahrzeugs.</p></section>
+    <div class="wform">
+      ${name ? "" : '<label class="wf"><span>Bezeichnung</span><input id="fz-name" placeholder="z. B. Tanklöschfahrzeug"></label>'}
+      ${FZ_F.map(f => `<label class="wf"><span>${f[1]}</span><input id="fz-${f[0]}" value="${esc(d[f[0]] || "")}"></label>`).join("")}
+    </div>
+    <div class="row spick"><button class="btn primary" id="fz-s">Speichern</button><button class="btn" id="fz-c">Abbrechen</button>${name && (FSTATE.add || []).includes(name) ? '<button class="btn wdel" id="fz-d">Fahrzeug löschen</button>' : ""}</div>
+    <div class="sinfo" id="fz-m" role="status"></div>`;
+  window.scrollTo(0, 0);
+  document.getElementById("fz-c").onclick = () => name ? fzDetail(name) : fzView();
+  const del = document.getElementById("fz-d");
+  if (del) del.onclick = () => { if (!confirm("Fahrzeug wirklich löschen?")) return; FSTATE.add = (FSTATE.add || []).filter(x => x !== name); delete FSTATE.fz[name]; fzSave(); fzView(); };
+  document.getElementById("fz-s").onclick = () => {
+    const nm = name || (document.getElementById("fz-name").value || "").trim();
+    if (!nm) { document.getElementById("fz-m").textContent = "Bezeichnung ausfüllen."; return; }
+    const o = {};
+    FZ_F.forEach(f => { const v = (document.getElementById("fz-" + f[0]).value || "").trim(); if (v) o[f[0]] = v; });
+    FSTATE.fz = FSTATE.fz || {}; FSTATE.fz[nm] = o;
+    if (!name && !fzList().includes(nm)) { FSTATE.add = FSTATE.add || []; FSTATE.add.push(nm); }
+    fzSave(); fzDetail(nm);
+  };
 }
 
 /* ---------- Logistik: Notizen (aus OneNote übernommen, in der App bearbeitbar) ---------- */
@@ -1743,7 +1833,7 @@ async function lektionen(m, el) {
   });
 }
 
-backBtn.addEventListener("click", () => { if (state.view === "wartf") { wartView(state.wy); return; } if (state.view === "notee") { state.nid ? noteView(state.nid) : notesView(); return; } if (state.view === "note") { notesView(); return; } if (state.view === "notes" || state.view === "wart") { logView(); return; } if (state.view === "games") { if (state.gm) gamesView(); else { gmStop(); start(); } return; } if (state.view === "les" && state.lc === "v" && state.vorHome) { state.vorHome = false; state.lc = null; ausbView(); return; } if (state.view === "les" && (state.lc === "vl" || state.lc === "vn")) { state.lc = "v"; lesView(); window.scrollTo(0, 0); return; } if (state.view === "sub" && !state.mod) { home(); return; } if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "sim") { adlView(); return; } if (["masse", "joystick", "haus"].includes(state.view)) { adlView(); return; } if (state.view === "adl" || state.view === "gq" || state.view === "sgv" || state.view === "spick") { (state.sub ? subView(state.sub) : home()); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else (state.sub ? subView(state.sub) : home()); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.view === "les") { ausbView(); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) (state.sub ? subView(state.sub) : home()); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
+backBtn.addEventListener("click", () => { if (state.view === "wartf") { wartView(state.wy); return; } if (state.view === "notee") { state.nid ? noteView(state.nid) : notesView(); return; } if (state.view === "note") { notesView(); return; } if (state.view === "notes" || state.view === "wart" || state.view === "fz") { logView(); return; } if (state.view === "fzd") { fzView(); return; } if (state.view === "fze") { state.fzn ? fzDetail(state.fzn) : fzView(); return; } if (state.view === "games") { if (state.gm) gamesView(); else { gmStop(); start(); } return; } if (state.view === "les" && state.lc === "v" && state.vorHome) { state.vorHome = false; state.lc = null; ausbView(); return; } if (state.view === "les" && (state.lc === "vl" || state.lc === "vn")) { state.lc = "v"; lesView(); window.scrollTo(0, 0); return; } if (state.view === "sub" && !state.mod) { home(); return; } if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "sim") { adlView(); return; } if (state.view === "masse" && state.fzBack) { state.fzBack = 0; fzDetail("Autodrehleiter"); return; } if (["masse", "joystick", "haus"].includes(state.view)) { adlView(); return; } if (state.view === "adl" || state.view === "gq" || state.view === "sgv" || state.view === "spick") { (state.sub ? subView(state.sub) : home()); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else (state.sub ? subView(state.sub) : home()); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.view === "les") { ausbView(); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) (state.sub ? subView(state.sub) : home()); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
 /* ---------- Anmeldepflicht ---------- */
 let gateOffline = false;
 function gateNeeded() { return !!FWZ.enabled && !FWZ.user && !gateOffline; }

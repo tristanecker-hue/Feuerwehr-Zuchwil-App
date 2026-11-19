@@ -653,7 +653,7 @@ html.dv .adlf{align-content:start}html.dv .adlf+.foot{max-width:none}
 .btn.wdel { color: var(--bad); }
 .wgrp h3 + .wrow { border-top: 0; }
 .wrow input { width: 24px; height: 24px; margin: 2px 0 0; accent-color: var(--red); flex: none; }
-.wrow > span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.wrow label > span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .wrow b { font-weight: 600; overflow-wrap: anywhere; }
 .wrow em { font-style: normal; font-size: .9rem; color: var(--muted); overflow-wrap: anywhere; }
 .wrow i { font-style: normal; font-size: .85rem; color: var(--bad); font-weight: 600; }
@@ -665,3 +665,11 @@ html.dv .adlf{align-content:start}html.dv .adlf+.foot{max-width:none}
 .ntxt { white-space: pre-wrap; overflow-wrap: anywhere; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin: 10px 0; }
 .nimg { display: block; width: 100%; height: auto; border-radius: 14px; border: 1px solid var(--line); margin: 10px 0; background: var(--surface); }
 .wform textarea { background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; font: inherit; width: 100%; resize: vertical; }
+
+/* Logistik: Fahrzeuge */
+.fzbox { display: flex; flex-direction: column; }
+.fzr { display: flex; justify-content: space-between; gap: 12px; padding: 10px 14px; border-top: 1px solid var(--line); }
+.fzbox .fzr:first-child { border-top: 0; }
+.fzr span { color: var(--muted); font-size: .9rem; }
+.fzr b { font-weight: 600; text-align: right; overflow-wrap: anywhere; }
+.fzo { font-style: normal; font-size: .8rem; color: var(--bad); font-weight: 600; }
