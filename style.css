@@ -680,3 +680,10 @@ html.dv .adlf{align-content:start}html.dv .adlf+.foot{max-width:none}
 
 .natt { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; margin: 10px 0; display: flex; flex-direction: column; gap: 10px; }
 .natt > span { font-weight: 600; overflow-wrap: anywhere; }
+
+.wyear > summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 11px 14px; font-family: var(--font-display); font-size: 1rem; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--line); }
+.wyear > summary::-webkit-details-marker { display: none; }
+.wyear > summary::after { content: "▾"; font-family: var(--font-body); font-size: .9rem; color: var(--muted); transform: rotate(-90deg); transition: transform .15s; }
+.wyear[open] > summary::after { transform: none; }
+.wyear > summary b { font-family: var(--font-body); font-weight: 600; font-size: .85rem; text-transform: none; letter-spacing: 0; color: var(--muted); margin-left: auto; }
+.wyear:not([open]) > summary { border-bottom: 0; }

@@ -1,4 +1,4 @@
-const APP_VERSION = "1.217";
+const APP_VERSION = "1.218";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -413,10 +413,10 @@ const RGDEF = {
   adl: { pages: 265, short: "Autodrehleiter", enc: "reglement-adl.enc", file: "Betriebsanleitung L32A-XS Zuchwil.pdf", c: "© Rosenbauer", tile: "", hero: "Betriebsanleitung Autodrehleiter L32A-XS, Feuerwehr Zuchwil (265 Seiten).", online: "" },
   basis: { pages: 296, short: "Basiswissen", enc: "reglement-basiswissen.enc", file: "Reglement Basiswissen FKS.pdf", tile: "Das ganze Reglement mit allen 296 Seiten (FKS 07/2026), direkt in der App zum Blättern.", hero: "Das ganze Reglement Basiswissen, FKS 07/2026.", online: "https://docs.feukos.ch/Basiswissen/ReglementBasiswissenDE/" },
   sgv: { pages: 10, short: "Kantonale Ergänzungen", enc: "reglement-sgv.enc", file: "Kantonale Ergänzungen SGV 14.10.2026.pdf", c: "© SGV Solothurn", tile: "", hero: "Basiswissen Kantonale Ergänzungen SGV Solothurn, Version 14.10.2026.", online: "" },
-  abc1: { pages: 137, short: "ABC-Handbuch Kap. 1–2 Allgemeines, ABC-Wehr", enc: "reglement-abc1.enc", file: "FKS Handbuch ABC Teil 1.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2179 – Teil 1 von 4 (Kap. 1–2 Allgemeines, ABC-Wehr).", online: "" },
-  abc2: { pages: 76, short: "ABC-Handbuch Kap. 3–4 A-Wehr, B-Wehr", enc: "reglement-abc2.enc", file: "FKS Handbuch ABC Teil 2.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2179 – Teil 2 von 4 (Kap. 3–4 A-Wehr, B-Wehr).", online: "" },
-  abc3: { pages: 158, short: "ABC-Handbuch Kap. 5 C-Wehr", enc: "reglement-abc3.enc", file: "FKS Handbuch ABC Teil 3.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2179 – Teil 3 von 4 (Kap. 5 C-Wehr).", online: "" },
-  abc4: { pages: 137, short: "ABC-Handbuch Kap. 6–9 Tabellen, Spezialeinsatzmittel, Glossar, Register", enc: "reglement-abc4.enc", file: "FKS Handbuch ABC Teil 4.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2179 – Teil 4 von 4 (Kap. 6–9 Tabellen, Spezialeinsatzmittel, Glossar, Register).", online: "" },
+  abc1: { pages: 137, short: "ABC-Handbuch Kap. 1–2 Allgemeines, ABC-Wehr", enc: "reglement-abc1.enc", file: "FKS Handbuch ABC Teil 1.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2189 – Teil 1 von 4 (Kap. 1–2 Allgemeines, ABC-Wehr).", online: "" },
+  abc2: { pages: 76, short: "ABC-Handbuch Kap. 3–4 A-Wehr, B-Wehr", enc: "reglement-abc2.enc", file: "FKS Handbuch ABC Teil 2.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2189 – Teil 2 von 4 (Kap. 3–4 A-Wehr, B-Wehr).", online: "" },
+  abc3: { pages: 158, short: "ABC-Handbuch Kap. 5 C-Wehr", enc: "reglement-abc3.enc", file: "FKS Handbuch ABC Teil 3.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2189 – Teil 3 von 4 (Kap. 5 C-Wehr).", online: "" },
+  abc4: { pages: 137, short: "ABC-Handbuch Kap. 6–9 Tabellen, Spezialeinsatzmittel, Glossar, Register", enc: "reglement-abc4.enc", file: "FKS Handbuch ABC Teil 4.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2189 – Teil 4 von 4 (Kap. 6–9 Tabellen, Spezialeinsatzmittel, Glossar, Register).", online: "" },
   mat: { pages: 208, short: "Materialdienst", enc: "reglement-mat.enc", file: "FKS Handbuch Materialdienst.pdf", tile: "", hero: "Handbuch Materialdienst, FKS CSSP CSP, Version 2.01 / 10.03.2020 (208 Seiten).", online: "" },
   veg: { pages: 120, short: "Vegetationsbrände", enc: "reglement-veg.enc", file: "FKS Handbuch Vegetationsbrände.pdf", tile: "", hero: "Handbuch Spezialwissen «Vegetationsbrände», FKS.", online: "" },
   einsatz: { pages: 84, short: "Einsatzführung", enc: "reglement-einsatzfuehrung.enc", file: "Reglement Einsatzführung FKS.pdf", tile: "Das ganze Reglement mit allen 84 Seiten, direkt in der App zum Blättern.", hero: "Das ganze Reglement Einsatzführung, FKS.", online: "" }
@@ -1274,15 +1274,16 @@ function fzDetail(name) {
   let h = `<section class="hero"><h1>${esc(name)}</h1><p>${esc([d.typ, d.kz].filter(Boolean).join(" · ") || "Noch keine Stammdaten erfasst.")}</p></section>
     ${stamm ? `<section class="wgrp"><h3>Stammdaten</h3><div class="fzbox">${stamm}</div></section>` : ""}
     <div class="row spick"><button class="btn primary" id="fze">Stammdaten bearbeiten</button>${name === "Autodrehleiter" ? '<button class="btn" id="fzadl">Masse Drehleiter</button>' : ""}<button class="btn" id="fzw">Wartung erfassen</button></div>`;
-  ys.forEach(y => {
-    const rows = w.filter(x => x.years.includes(y)); if (!rows.length) return;
-    h += `<section class="wgrp"><h3>${y}${y < now ? " · Vorjahr" : y === now ? " · laufendes Jahr" : ""}</h3>` + rows.map(x => wartRow(x, y)).join("") + "</section>";
-  });
-  if (!w.length) h += '<div class="note">Für dieses Fahrzeug ist noch keine Wartung erfasst.</div>';
+  const yearHtml = ys.map(y => {
+    const rows = w.filter(x => x.years.includes(y)); if (!rows.length) return "";
+    const offen = rows.filter(x => !wartDone(x, y)).length;
+    return `<details class="wgrp wyear" data-y="${y}"${y <= now ? " open" : ""}><summary><span>${y}${y < now ? " · Vorjahr" : y === now ? " · laufendes Jahr" : ""}</span><b>${offen ? offen + " offen" : "erledigt"}</b></summary>` + rows.map(x => wartRow(x, y)).join("") + "</details>";
+  }).join("");
   const logs = fzLogs(name);
   h += `<section class="wgrp"><h3>Logbuch<button class="wadd2" id="fzlog" aria-label="Logbuch-Eintrag erfassen">+</button></h3>` +
     (logs.length ? logs.map(e => `<div class="wrow log"><span class="fzd">${esc(fzDate(e.d) || "ohne Datum")}</span><span class="fzt">${esc(e.t)}</span><button class="wedit" data-ld="${esc(e.id)}" aria-label="Eintrag löschen">Löschen</button></div>`).join("")
       : '<div class="wrow log"><span class="fzt">Noch kein Eintrag.</span></div>') + "</section>";
+  h += yearHtml || (w.length ? "" : '<div class="note">Für dieses Fahrzeug ist noch keine Wartung erfasst.</div>');
   app.innerHTML = h; window.scrollTo(0, 0);
   document.getElementById("fzlog").onclick = () => fzLogAdd(name);
   app.querySelectorAll("[data-ld]").forEach(b => b.onclick = () => {
@@ -1296,7 +1297,7 @@ function fzDetail(name) {
   const adl = document.getElementById("fzadl"); if (adl) adl.onclick = () => { state.fzBack = 1; masseView(); };
   document.getElementById("fzw").onclick = () => { state.wy = now; wartForm(null, { kind: "Fahrzeuge", grp: name }); };
   app.querySelectorAll(".wrow input").forEach(i => i.onchange = () => {
-    const y = +i.closest(".wgrp").querySelector("h3").textContent.slice(0, 4);
+    const y = +i.closest("[data-y]").dataset.y;
     WSTATE.done[i.dataset.w + "|" + y] = i.checked ? 1 : 0; wartSave();
     i.closest(".wrow").classList.toggle("done", i.checked);
   });
