@@ -706,3 +706,8 @@ html.dv .adlf{align-content:start}html.dv .adlf+.foot{max-width:none}
 .fzname { font-family: var(--font-display); font-size: .88rem; line-height: 1.18; text-align: center; letter-spacing: .01em; overflow-wrap: break-word; hyphens: auto; -webkit-hyphens: auto; }
 .fztile:focus-visible .fzpic { outline: 2px solid var(--red); outline-offset: 2px; }
 .fzfoto { display: block; width: 100%; height: auto; border-radius: 16px; border: 1px solid var(--line); margin: 10px 0 14px; }
+
+.fzarch { margin-top: 18px; }
+.fzarch .fzgrid { margin: 12px 0 4px; }
+.fzarch .fzpic { opacity: .62; filter: grayscale(.5); }
+.fzarch .fzname { color: var(--muted, #6b6b6b); }

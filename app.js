@@ -1,4 +1,4 @@
-const APP_VERSION = "1.221";
+const APP_VERSION = "1.222";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -1241,16 +1241,19 @@ function fzLogs(name) {
   return seed.concat(own).sort((a, b) => (b.d || "0").localeCompare(a.d || "0"));
 }
 const fzDate = d => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d || ""); return m ? m[3] + "." + m[2] + "." + m[1] : (d || ""); };
-function fzList() {
-  const out = [...new Set(wartItems().filter(w => w.kind === "Fahrzeuge").map(w => w.grp))];
-  (FSTATE.add || []).forEach(n => { if (!out.includes(n)) out.push(n); });
+const FZ_ARCH = ["Puch"], FZ_EXTRA = ["Logistikfahrzeug"];
+const wartAct = () => wartItems().filter(w => !FZ_ARCH.includes(w.grp));
+function fzList(arch) {
+  if (arch) return FZ_ARCH.slice();
+  const out = [...new Set(wartItems().filter(w => w.kind === "Fahrzeuge" && !FZ_ARCH.includes(w.grp)).map(w => w.grp))];
+  FZ_EXTRA.concat(FSTATE.add || []).forEach(n => { if (!out.includes(n) && !FZ_ARCH.includes(n)) out.push(n); });
   return out.sort((a, b) => a.localeCompare(b, "de"));
 }
 function fzView() {
   state.mod = null; state.sub = null; state.view = "fz"; backBtn.hidden = false;
   document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
   const now = new Date().getFullYear(), items = wartItems();
-  const rows = fzList().map(n => {
+  const tiles = ls => ls.map(n => {
     const w = items.filter(x => x.grp === n), ys = [...new Set(w.flatMap(x => x.years))].filter(v => v >= now).sort((a, b) => a - b);
     const offen = w.filter(x => x.years.includes(now) && !wartDone(x, now)).length;
     const d = (FSTATE.fz || {})[n] || {};
@@ -1258,9 +1261,11 @@ function fzView() {
     const pic = d.img ? (d.img.slice(0, 4) === "ref:" ? `<img data-ref="${esc(d.img)}" alt="">` : `<img src="${d.img}" alt="">`) : `<span class="fzini">${esc(n.trim().charAt(0).toUpperCase())}</span>`;
     return `<button class="fztile" data-f="${esc(n)}" title="${esc(meta)}"><span class="fzpic">${pic}${offen ? `<i class="fzbadge">${offen}</i>` : ""}</span><span class="fzname">${esc(n)}</span></button>`;
   }).join("");
+  const arch = fzList(true);
   app.innerHTML = `<section class="hero"><h1>Fahrzeuge</h1><p>Stammdaten, Logbuch und Wartungen je Fahrzeug.</p></section>
     <div class="row spick"><button class="btn primary" id="fzadd">Neues Fahrzeug</button></div>
-    <div class="fzgrid">${rows}</div>`;
+    <div class="fzgrid">${tiles(fzList())}</div>
+    ${arch.length ? `<details class="wgrp wyear fzarch"><summary><span>ARCHIV</span><b>${arch.length} ausser Dienst</b></summary><div class="fzgrid">${tiles(arch)}</div></details>` : ""}`;
   window.scrollTo(0, 0); nimgFill(app);
   app.querySelectorAll("[data-f]").forEach(b => b.onclick = () => fzDetail(b.dataset.f));
   document.getElementById("fzadd").onclick = () => fzEdit(null);
@@ -1272,7 +1277,7 @@ function fzDetail(name) {
   const w = wartItems().filter(x => x.grp === name);
   const ys = [...new Set(w.flatMap(x => x.years))].filter(v => v >= now - 1).sort((a, b) => a - b).slice(0, 5);
   const stamm = FZ_F.filter(f => d[f[0]]).map(f => `<div class="fzr"><span>${f[1]}</span><b>${esc(d[f[0]])}</b></div>`).join("");
-  let h = `<section class="hero"><h1>${esc(name)}</h1><p>${esc([d.typ, d.kz].filter(Boolean).join(" · ") || "Noch keine Stammdaten erfasst.")}</p></section>
+  let h = `<section class="hero"><h1>${esc(name)}</h1><p>${FZ_ARCH.includes(name) ? "Archiviert · ausser Dienst. " : ""}${esc([d.typ, d.kz].filter(Boolean).join(" · ") || "Noch keine Stammdaten erfasst.")}</p></section>
     ${d.img ? (d.img.slice(0, 4) === "ref:" ? `<img class="fzfoto" data-ref="${esc(d.img)}" alt="Foto">` : `<img class="fzfoto" src="${d.img}" alt="Foto">`) : ""}
     ${stamm ? `<section class="wgrp"><h3>Stammdaten</h3><div class="fzbox">${stamm}</div></section>` : ""}
     <div class="row spick"><button class="btn primary" id="fze">Stammdaten bearbeiten</button>${name === "Autodrehleiter" ? '<button class="btn" id="fzadl">Masse Drehleiter</button>' : ""}<button class="btn" id="fzw">Wartung erfassen</button></div>`;
@@ -1587,8 +1592,8 @@ const WART_D = [
   ["puch-sina-pr-fung", "Fahrzeuge", "Puch", "SiNa Prüfung", [2023, 2028, 2033, 2038], 5, 193.86, ""],
   ["puch-rag-pr-fung", "Fahrzeuge", "Puch", "RAG Prüfung", [2023, 2025, 2027, 2029, 2031, 2033, 2035, 2037], 2, null, "Weber"],
   ["puch-motorfahrzeugkontrolle", "Fahrzeuge", "Puch", "Motorfahrzeugkontrolle", [2022], null, null, ""],
-  ["stapler-sicherheits-check", "Fahrzeuge", "Stapler", "Sicherheits check", [2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035, 2036, 2037, 2038, 2039, 2040], 1, null, ""],
-  ["stapler-service", "Fahrzeuge", "Stapler", "Service", [2022, 2024, 2026, 2028, 2030, 2032, 2034, 2036, 2038, 2040], 2, null, ""],
+  ["stapler-sicherheits-check", "Material", "Stapler", "Sicherheits check", [2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035, 2036, 2037, 2038, 2039, 2040], 1, null, ""],
+  ["stapler-service", "Material", "Stapler", "Service", [2022, 2024, 2026, 2028, 2030, 2032, 2034, 2036, 2038, 2040], 2, null, ""],
   ["leiternpr-fung-sichtpr-fung-durch-materialwart", "Material", "Leiternprüfung", "Sichtprüfung durch Materialwart", [2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035, 2036, 2037, 2038, 2039, 2040], 1, null, ""],
   ["leiternpr-fung-pr-fung-durch-experten", "Material", "Leiternprüfung", "Prüfung durch Experten", [2024, 2027, 2030, 2033, 2036, 2039], 3, 1100, "leiterntechnik.ch; Daniel Grab GmbH; 8832 Willen"],
   ["spannsetpr-fung-spannsetpr-fung", "Material", "Spannset Prüfung", "Spannsetprüfung", [2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035, 2036, 2037, 2038, 2039, 2040], 1, null, "Spannset AG", "Feuerwehr Zuchwil"],
@@ -1657,7 +1662,7 @@ function wartPdf(y) {
     yy = H - 62;
   };
   newPage();
-  const list = wartItems().filter(w => w.years.includes(y)), open = list.filter(w => !wartDone(w, y));
+  const list = wartAct().filter(w => w.years.includes(y)), open = list.filter(w => !wartDone(w, y));
   const sum = open.reduce((a, w) => a + (w.cost || 0), 0);
   txt("Wartungsarbeiten " + y, M, yy - 16, 21, true, DARK); yy -= 24;
   txt(list.length - open.length + " von " + list.length + " erledigt" + (sum ? "   ·   offene Kosten " + chf(sum) : ""), M, yy - 10, 10, false, GREY); yy -= 22;
@@ -1717,7 +1722,7 @@ function wartPdf(y) {
 function wartView(year) {
   state.mod = null; state.sub = null; state.view = "wart"; backBtn.hidden = false;
   document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
-  const now = new Date().getFullYear(), items = wartItems();
+  const now = new Date().getFullYear(), items = wartAct();
   const ys = [...new Set(items.flatMap(w => w.years))].sort((a, b) => a - b).filter(v => v >= now - 2 && v <= now + 8);
   const y = year || state.wy || (ys.includes(now) ? now : ys[0] || now); state.wy = y;
   const list = items.filter(w => w.years.includes(y)), open = list.filter(w => !wartDone(w, y));
@@ -1739,7 +1744,7 @@ function wartView(year) {
   app.innerHTML = h; window.scrollTo(0, 0);
   app.querySelectorAll(".wyr button").forEach(b => b.onclick = () => wartView(+b.dataset.y));
   app.querySelectorAll(".wrow input").forEach(i => i.onchange = () => wartToggle(i, y, () => {
-    const l2 = wartItems().filter(w => w.years.includes(y)), o2 = l2.filter(w => !wartDone(w, y));
+    const l2 = wartAct().filter(w => w.years.includes(y)), o2 = l2.filter(w => !wartDone(w, y));
     const sm = document.getElementById("wsum"); if (sm) sm.textContent = stat(l2, o2);
   }));
   app.querySelectorAll(".wedit").forEach(b => b.onclick = () => wartForm(b.dataset.e));
