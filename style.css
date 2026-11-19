@@ -673,3 +673,10 @@ html.dv .adlf{align-content:start}html.dv .adlf+.foot{max-width:none}
 .fzr span { color: var(--muted); font-size: .9rem; }
 .fzr b { font-weight: 600; text-align: right; overflow-wrap: anywhere; }
 .fzo { font-style: normal; font-size: .8rem; color: var(--bad); font-weight: 600; }
+
+.wrow.log { align-items: baseline; }
+.wrow.log .fzd { flex: none; color: var(--muted); font-size: .9rem; font-variant-numeric: tabular-nums; min-width: 88px; }
+.wrow.log .fzt { flex: 1; min-width: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+
+.natt { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; margin: 10px 0; display: flex; flex-direction: column; gap: 10px; }
+.natt > span { font-weight: 600; overflow-wrap: anywhere; }

@@ -1,4 +1,4 @@
-const APP_VERSION = "1.214";
+const APP_VERSION = "1.215";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -413,10 +413,10 @@ const RGDEF = {
   adl: { pages: 265, short: "Autodrehleiter", enc: "reglement-adl.enc", file: "Betriebsanleitung L32A-XS Zuchwil.pdf", c: "© Rosenbauer", tile: "", hero: "Betriebsanleitung Autodrehleiter L32A-XS, Feuerwehr Zuchwil (265 Seiten).", online: "" },
   basis: { pages: 296, short: "Basiswissen", enc: "reglement-basiswissen.enc", file: "Reglement Basiswissen FKS.pdf", tile: "Das ganze Reglement mit allen 296 Seiten (FKS 07/2026), direkt in der App zum Blättern.", hero: "Das ganze Reglement Basiswissen, FKS 07/2026.", online: "https://docs.feukos.ch/Basiswissen/ReglementBasiswissenDE/" },
   sgv: { pages: 10, short: "Kantonale Ergänzungen", enc: "reglement-sgv.enc", file: "Kantonale Ergänzungen SGV 14.10.2026.pdf", c: "© SGV Solothurn", tile: "", hero: "Basiswissen Kantonale Ergänzungen SGV Solothurn, Version 14.10.2026.", online: "" },
-  abc1: { pages: 137, short: "ABC-Handbuch Kap. 1–2 Allgemeines, ABC-Wehr", enc: "reglement-abc1.enc", file: "FKS Handbuch ABC Teil 1.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2149 – Teil 1 von 4 (Kap. 1–2 Allgemeines, ABC-Wehr).", online: "" },
-  abc2: { pages: 76, short: "ABC-Handbuch Kap. 3–4 A-Wehr, B-Wehr", enc: "reglement-abc2.enc", file: "FKS Handbuch ABC Teil 2.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2149 – Teil 2 von 4 (Kap. 3–4 A-Wehr, B-Wehr).", online: "" },
-  abc3: { pages: 158, short: "ABC-Handbuch Kap. 5 C-Wehr", enc: "reglement-abc3.enc", file: "FKS Handbuch ABC Teil 3.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2149 – Teil 3 von 4 (Kap. 5 C-Wehr).", online: "" },
-  abc4: { pages: 137, short: "ABC-Handbuch Kap. 6–9 Tabellen, Spezialeinsatzmittel, Glossar, Register", enc: "reglement-abc4.enc", file: "FKS Handbuch ABC Teil 4.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2149 – Teil 4 von 4 (Kap. 6–9 Tabellen, Spezialeinsatzmittel, Glossar, Register).", online: "" },
+  abc1: { pages: 137, short: "ABC-Handbuch Kap. 1–2 Allgemeines, ABC-Wehr", enc: "reglement-abc1.enc", file: "FKS Handbuch ABC Teil 1.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2159 – Teil 1 von 4 (Kap. 1–2 Allgemeines, ABC-Wehr).", online: "" },
+  abc2: { pages: 76, short: "ABC-Handbuch Kap. 3–4 A-Wehr, B-Wehr", enc: "reglement-abc2.enc", file: "FKS Handbuch ABC Teil 2.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2159 – Teil 2 von 4 (Kap. 3–4 A-Wehr, B-Wehr).", online: "" },
+  abc3: { pages: 158, short: "ABC-Handbuch Kap. 5 C-Wehr", enc: "reglement-abc3.enc", file: "FKS Handbuch ABC Teil 3.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2159 – Teil 3 von 4 (Kap. 5 C-Wehr).", online: "" },
+  abc4: { pages: 137, short: "ABC-Handbuch Kap. 6–9 Tabellen, Spezialeinsatzmittel, Glossar, Register", enc: "reglement-abc4.enc", file: "FKS Handbuch ABC Teil 4.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2159 – Teil 4 von 4 (Kap. 6–9 Tabellen, Spezialeinsatzmittel, Glossar, Register).", online: "" },
   mat: { pages: 208, short: "Materialdienst", enc: "reglement-mat.enc", file: "FKS Handbuch Materialdienst.pdf", tile: "", hero: "Handbuch Materialdienst, FKS CSSP CSP, Version 2.01 / 10.03.2020 (208 Seiten).", online: "" },
   veg: { pages: 120, short: "Vegetationsbrände", enc: "reglement-veg.enc", file: "FKS Handbuch Vegetationsbrände.pdf", tile: "", hero: "Handbuch Spezialwissen «Vegetationsbrände», FKS.", online: "" },
   einsatz: { pages: 84, short: "Einsatzführung", enc: "reglement-einsatzfuehrung.enc", file: "Reglement Einsatzführung FKS.pdf", tile: "Das ganze Reglement mit allen 84 Seiten, direkt in der App zum Blättern.", hero: "Das ganze Reglement Einsatzführung, FKS.", online: "" }
@@ -1210,7 +1210,7 @@ function logView() {
     <div class="menu"><button class="mbtn main" id="l-fz">Fahrzeuge</button><button class="mbtn main" id="l-wart">Wartungsarbeiten</button><button class="mbtn main" id="l-not">Notizen</button></div>`;
   document.getElementById("l-fz").onclick = () => fzView();
   document.getElementById("l-wart").onclick = () => { state.wy = 0; wartView(); };
-  document.getElementById("l-not").onclick = () => notesView();
+  document.getElementById("l-not").onclick = () => { state.nf = null; state.nq = ""; notesView(""); };
   window.scrollTo(0, 0);
 }
 
@@ -1229,6 +1229,13 @@ async function fzPull() {
   try { const o = await FWZ.getDoc("fahrzeuge"); if (o && o.fz && (o.t || 0) > (FSTATE.t || 0)) { FSTATE = o; try { localStorage.setItem("fwz-fz", JSON.stringify(o)); } catch (e) {} return true; } } catch (e) {}
   return false;
 }
+const FZ_LOG_SEED = { "KDO Fahrzeug": [{ id: "s1", d: "2024-04-16", t: "Service + Batterie ersetzt" }] };
+function fzLogs(name) {
+  const del = FSTATE.logdel || {}, own = (FSTATE.log || {})[name] || [];
+  const seed = (FZ_LOG_SEED[name] || []).filter(e => !del[name + "|" + e.id]);
+  return seed.concat(own).sort((a, b) => (b.d || "").localeCompare(a.d || ""));
+}
+const fzDate = d => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d || ""); return m ? m[3] + "." + m[2] + "." + m[1] : (d || ""); };
 function fzList() {
   const out = [...new Set(wartItems().filter(w => w.kind === "Fahrzeuge").map(w => w.grp))];
   (FSTATE.add || []).forEach(n => { if (!out.includes(n)) out.push(n); });
@@ -1267,7 +1274,19 @@ function fzDetail(name) {
     h += `<section class="wgrp"><h3>${y}${y < now ? " · Vorjahr" : y === now ? " · laufendes Jahr" : ""}</h3>` + rows.map(x => wartRow(x, y)).join("") + "</section>";
   });
   if (!w.length) h += '<div class="note">Für dieses Fahrzeug ist noch keine Wartung erfasst.</div>';
+  const logs = fzLogs(name);
+  h += `<section class="wgrp"><h3>Logbuch<button class="wadd2" id="fzlog" aria-label="Logbuch-Eintrag erfassen">+</button></h3>` +
+    (logs.length ? logs.map(e => `<div class="wrow log"><span class="fzd">${esc(fzDate(e.d))}</span><span class="fzt">${esc(e.t)}</span><button class="wedit" data-ld="${esc(e.id)}" aria-label="Eintrag löschen">Löschen</button></div>`).join("")
+      : '<div class="wrow log"><span class="fzt">Noch kein Eintrag.</span></div>') + "</section>";
   app.innerHTML = h; window.scrollTo(0, 0);
+  document.getElementById("fzlog").onclick = () => fzLogAdd(name);
+  app.querySelectorAll("[data-ld]").forEach(b => b.onclick = () => {
+    if (!confirm("Diesen Logbuch-Eintrag löschen?")) return;
+    const id = b.dataset.ld;
+    if ((FZ_LOG_SEED[name] || []).some(e => e.id === id)) { FSTATE.logdel = FSTATE.logdel || {}; FSTATE.logdel[name + "|" + id] = 1; }
+    else { FSTATE.log = FSTATE.log || {}; FSTATE.log[name] = (FSTATE.log[name] || []).filter(e => e.id !== id); }
+    fzSave(); fzDetail(name);
+  });
   document.getElementById("fze").onclick = () => fzEdit(name);
   const adl = document.getElementById("fzadl"); if (adl) adl.onclick = () => { state.fzBack = 1; masseView(); };
   document.getElementById("fzw").onclick = () => { state.wy = now; wartForm(null, { kind: "Fahrzeuge", grp: name }); };
@@ -1277,6 +1296,26 @@ function fzDetail(name) {
     i.closest(".wrow").classList.toggle("done", i.checked);
   });
   app.querySelectorAll(".wedit").forEach(b => b.onclick = () => { state.wy = now; wartForm(b.dataset.e); });
+}
+function fzLogAdd(name) {
+  state.view = "fzl"; state.fzn = name; backBtn.hidden = false;
+  const today = new Date().toISOString().slice(0, 10);
+  app.innerHTML = `<section class="hero"><h1>Logbuch</h1><p>${esc(name)}: Eintrag erfassen.</p></section>
+    <div class="wform">
+      <label class="wf"><span>Datum</span><input id="fl-d" type="date" value="${today}"></label>
+      <label class="wf"><span>Eintrag</span><textarea id="fl-t" rows="4" placeholder="z. B. Service + Batterie ersetzt"></textarea></label>
+    </div>
+    <div class="row spick"><button class="btn primary" id="fl-s">Speichern</button><button class="btn" id="fl-c">Abbrechen</button></div>
+    <div class="sinfo" id="fl-m" role="status"></div>`;
+  window.scrollTo(0, 0);
+  document.getElementById("fl-c").onclick = () => fzDetail(name);
+  document.getElementById("fl-s").onclick = () => {
+    const t = document.getElementById("fl-t").value.trim(), d = document.getElementById("fl-d").value;
+    if (!t) { document.getElementById("fl-m").textContent = "Eintrag ausfüllen."; return; }
+    FSTATE.log = FSTATE.log || {}; FSTATE.log[name] = FSTATE.log[name] || [];
+    FSTATE.log[name].push({ id: "l" + Date.now().toString(36), d, t });
+    fzSave(); fzDetail(name);
+  };
 }
 function fzEdit(name) {
   state.view = "fze"; state.fzn = name; backBtn.hidden = false;
@@ -1330,10 +1369,12 @@ async function notesLoad() {
 }
 function notesAll() {
   const ed = NSTATE.ed || {}, out = [];
-  (NSEED || []).forEach(n => { const e = ed[n.id]; if (e && e.del) return; out.push(e ? Object.assign({}, n, { t: e.t != null ? e.t : n.t, txt: e.txt != null ? e.txt : n.txt, img: e.img || n.img }) : n); });
-  Object.keys(ed).forEach(k => { const e = ed[k]; if (e.del || (NSEED || []).some(n => n.id === k)) return; if (e.t != null || e.txt != null) out.push({ id: k, t: e.t || "Ohne Titel", txt: e.txt || "", img: e.img || [] }); });
+  (NSEED || []).forEach(n => { const e = ed[n.id]; if (e && e.del) return; out.push(e ? Object.assign({}, n, { t: e.t != null ? e.t : n.t, txt: e.txt != null ? e.txt : n.txt, img: e.img || n.img, f: e.f || n.f }) : n); });
+  Object.keys(ed).forEach(k => { const e = ed[k]; if (e.del || (NSEED || []).some(n => n.id === k)) return; if (e.t != null || e.txt != null) out.push({ id: k, t: e.t || "Ohne Titel", txt: e.txt || "", img: e.img || [], f: e.f }); });
   return out;
 }
+const NF_DEF = "Notizen Logistik";
+const noteFolder = n => (n.f || NF_DEF);
 const noteSnip = n => (n.txt || "").replace(/\s+/g, " ").slice(0, 90) + ((n.txt || "").length > 90 ? " …" : "");
 async function notesView(q) {
   state.mod = null; state.sub = null; state.view = "notes"; backBtn.hidden = false;
@@ -1344,27 +1385,44 @@ async function notesView(q) {
   if (state.view !== "notes") return;
   if (!NSEED) { const m = document.getElementById("nmsg"); if (m) m.textContent = "Notizen nicht verfügbar (App neu laden und PIN eingeben)."; return; }
   const all = notesAll(), s = (q || state.nq || "").trim().toLowerCase();
-  const list = s ? all.filter(n => (n.t + " " + n.txt).toLowerCase().includes(s)) : all;
   state.nq = q || state.nq || "";
-  app.innerHTML = `<section class="hero"><h1>Notizen</h1><p>Notizen der Logistik, aus OneNote übernommen. Antippen zum Lesen.</p></section>
-    <div class="srch"><input type="search" id="nq" placeholder="Notizen durchsuchen" aria-label="Notizen durchsuchen" value="${esc(state.nq)}" autocomplete="off"></div>
-    <div class="row spick"><button class="btn primary" id="nadd">Neue Notiz</button></div>
-    <div class="menu nlist">${list.map(n => `<button class="mbtn note" data-n="${esc(n.id)}"><span>${esc(n.t)}</span><small>${esc(noteSnip(n))}${n.img && n.img.length ? " · " + n.img.length + " Bild" + (n.img.length > 1 ? "er" : "") : ""}</small></button>`).join("") || '<div class="note">Nichts gefunden.</div>'}</div>`;
+  const folders = [...new Set(all.map(noteFolder))].sort((a, b) => a.localeCompare(b, "de"));
+  const inF = state.nf && !s ? all.filter(n => noteFolder(n) === state.nf) : null;
+  const list = s ? all.filter(n => (n.t + " " + n.txt + " " + noteFolder(n)).toLowerCase().includes(s)) : inF;
+  const head = `<section class="hero"><h1>${esc(state.nf && !s ? state.nf : "Notizen")}</h1><p>${state.nf && !s ? "Antippen zum Lesen." : "Notizen der Logistik, aus OneNote übernommen."}</p></section>
+    <div class="srch"><input type="search" id="nq" placeholder="Alle Notizen durchsuchen" aria-label="Notizen durchsuchen" value="${esc(state.nq)}" autocomplete="off"></div>
+    <div class="row spick"><button class="btn primary" id="nadd">Neue Notiz</button></div>`;
+  app.innerHTML = head + (list
+    ? `<div class="menu nlist">${list.map(n => `<button class="mbtn note" data-n="${esc(n.id)}"><span>${esc(n.t)}</span><small>${s ? esc(noteFolder(n)) + " · " : ""}${esc(noteSnip(n))}${n.img && n.img.length ? " · " + n.img.length + " Bild" + (n.img.length > 1 ? "er" : "") : ""}${n.doc && n.doc.length ? " · PDF" : ""}</small></button>`).join("") || '<div class="note">Nichts gefunden.</div>'}</div>`
+    : `<div class="menu nlist">${folders.map(f => `<button class="mbtn note" data-nf="${esc(f)}"><span>${esc(f)}</span><small>${all.filter(n => noteFolder(n) === f).length} Notizen</small></button>`).join("")}</div>`);
   const qi = document.getElementById("nq");
   qi.oninput = () => { clearTimeout(notesT2); notesT2 = setTimeout(() => notesView(qi.value), 250); };
   document.getElementById("nadd").onclick = () => noteEdit(null);
   app.querySelectorAll("[data-n]").forEach(b => b.onclick = () => noteView(b.dataset.n));
+  app.querySelectorAll("[data-nf]").forEach(b => b.onclick = () => { state.nf = b.dataset.nf; notesView(""); });
   notesPull().then(ok => { if (ok && state.view === "notes") notesView(state.nq); });
 }
 let notesT2 = 0;
 function noteView(id) {
   const n = notesAll().find(x => x.id === id); if (!n) return notesView();
   state.view = "note"; state.nid = id; backBtn.hidden = false;
-  app.innerHTML = `<section class="hero"><h1>${esc(n.t)}</h1></section>
+  app.innerHTML = `<section class="hero"><h1>${esc(n.t)}</h1><p>${esc(noteFolder(n))}</p></section>
     ${n.txt ? `<div class="ntxt">${esc(n.txt)}</div>` : ""}
+    ${(n.doc || []).map((d, i) => `<div class="natt"><span>${esc(d.n)}</span><div class="row"><button class="btn" data-pa="open" data-pi="${i}">PDF öffnen</button><button class="btn" data-pa="share" data-pi="${i}">Teilen</button><button class="btn" data-pa="print" data-pi="${i}">Drucken</button></div></div>`).join("")}
+    ${(n.doc || []).length ? '<div class="sinfo" id="namsg" role="status"></div>' : ""}
     ${(n.img || []).map((src, i) => `<img class="nimg" src="${src}" alt="Bild ${i + 1} der Notiz" loading="lazy">`).join("")}
     <div class="row spick"><button class="btn primary" id="ned">Bearbeiten</button><button class="btn wdel" id="ndel">Löschen</button></div>`;
   window.scrollTo(0, 0);
+  const amsg = document.getElementById("namsg");
+  app.querySelectorAll("[data-pa]").forEach(b => b.onclick = () => {
+    const d = (n.doc || [])[+b.dataset.pi]; if (!d) return;
+    try {
+      const bin = atob(d.d.slice(d.d.indexOf(",") + 1)), u8 = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+      if (amsg) amsg.textContent = "";
+      aoPdfActs(new File([u8], d.n, { type: "application/pdf" }), amsg)[b.dataset.pa]();
+    } catch (e) { if (amsg) amsg.textContent = "PDF konnte nicht geöffnet werden."; }
+  });
   document.getElementById("ned").onclick = () => noteEdit(id);
   document.getElementById("ndel").onclick = () => {
     if (!confirm("Diese Notiz wirklich löschen?")) return;
@@ -1379,6 +1437,7 @@ function noteEdit(id) {
   app.innerHTML = `<section class="hero"><h1>${n ? "Notiz bearbeiten" : "Neue Notiz"}</h1></section>
     <div class="wform">
       <label class="wf"><span>Titel</span><input id="ne-t" value="${esc(n ? n.t : "")}" placeholder="z. B. Swisskalk Entkalkungsanlage"></label>
+      <label class="wf"><span>Ordner</span><input id="ne-f" list="ne-fl" value="${esc(n ? noteFolder(n) : (state.nf || NF_DEF))}"><datalist id="ne-fl">${[...new Set(notesAll().map(noteFolder))].map(f => `<option value="${esc(f)}"></option>`).join("")}</datalist></label>
       <label class="wf"><span>Text</span><textarea id="ne-x" rows="12" placeholder="Notiz …">${esc(n ? n.txt : "")}</textarea></label>
     </div>
     ${n && n.img && n.img.length ? `<p class="foot">${n.img.length} Bild${n.img.length > 1 ? "er" : ""} aus OneNote bleiben erhalten.</p>` : ""}
@@ -1391,7 +1450,8 @@ function noteEdit(id) {
     if (!t) { document.getElementById("ne-m").textContent = "Titel ausfüllen."; return; }
     const nid = id || "n" + Date.now().toString(36);
     NSTATE.ed = NSTATE.ed || {};
-    NSTATE.ed[nid] = Object.assign({}, NSTATE.ed[nid] || {}, { t, txt, del: 0 });
+    const f = (document.getElementById("ne-f").value || "").trim() || NF_DEF;
+    NSTATE.ed[nid] = Object.assign({}, NSTATE.ed[nid] || {}, { t, txt, f, del: 0 });
     notesSave(); noteView(nid);
   };
 }
@@ -1833,7 +1893,7 @@ async function lektionen(m, el) {
   });
 }
 
-backBtn.addEventListener("click", () => { if (state.view === "wartf") { wartView(state.wy); return; } if (state.view === "notee") { state.nid ? noteView(state.nid) : notesView(); return; } if (state.view === "note") { notesView(); return; } if (state.view === "notes" || state.view === "wart" || state.view === "fz") { logView(); return; } if (state.view === "fzd") { fzView(); return; } if (state.view === "fze") { state.fzn ? fzDetail(state.fzn) : fzView(); return; } if (state.view === "games") { if (state.gm) gamesView(); else { gmStop(); start(); } return; } if (state.view === "les" && state.lc === "v" && state.vorHome) { state.vorHome = false; state.lc = null; ausbView(); return; } if (state.view === "les" && (state.lc === "vl" || state.lc === "vn")) { state.lc = "v"; lesView(); window.scrollTo(0, 0); return; } if (state.view === "sub" && !state.mod) { home(); return; } if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "sim") { adlView(); return; } if (state.view === "masse" && state.fzBack) { state.fzBack = 0; fzDetail("Autodrehleiter"); return; } if (["masse", "joystick", "haus"].includes(state.view)) { adlView(); return; } if (state.view === "adl" || state.view === "gq" || state.view === "sgv" || state.view === "spick") { (state.sub ? subView(state.sub) : home()); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else (state.sub ? subView(state.sub) : home()); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.view === "les") { ausbView(); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) (state.sub ? subView(state.sub) : home()); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
+backBtn.addEventListener("click", () => { if (state.view === "wartf") { wartView(state.wy); return; } if (state.view === "notee") { state.nid ? noteView(state.nid) : notesView(); return; } if (state.view === "note") { notesView(""); return; } if (state.view === "notes") { if (state.nf || state.nq) { state.nf = null; state.nq = ""; notesView(""); } else logView(); return; } if (state.view === "wart" || state.view === "fz") { logView(); return; } if (state.view === "fzd") { fzView(); return; } if (state.view === "fze" || state.view === "fzl") { state.fzn ? fzDetail(state.fzn) : fzView(); return; } if (state.view === "games") { if (state.gm) gamesView(); else { gmStop(); start(); } return; } if (state.view === "les" && state.lc === "v" && state.vorHome) { state.vorHome = false; state.lc = null; ausbView(); return; } if (state.view === "les" && (state.lc === "vl" || state.lc === "vn")) { state.lc = "v"; lesView(); window.scrollTo(0, 0); return; } if (state.view === "sub" && !state.mod) { home(); return; } if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "sim") { adlView(); return; } if (state.view === "masse" && state.fzBack) { state.fzBack = 0; fzDetail("Autodrehleiter"); return; } if (["masse", "joystick", "haus"].includes(state.view)) { adlView(); return; } if (state.view === "adl" || state.view === "gq" || state.view === "sgv" || state.view === "spick") { (state.sub ? subView(state.sub) : home()); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else (state.sub ? subView(state.sub) : home()); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.view === "les") { ausbView(); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) (state.sub ? subView(state.sub) : home()); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
 /* ---------- Anmeldepflicht ---------- */
 let gateOffline = false;
 function gateNeeded() { return !!FWZ.enabled && !FWZ.user && !gateOffline; }
