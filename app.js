@@ -1,4 +1,4 @@
-const APP_VERSION = "1.218";
+const APP_VERSION = "1.219";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -413,10 +413,10 @@ const RGDEF = {
   adl: { pages: 265, short: "Autodrehleiter", enc: "reglement-adl.enc", file: "Betriebsanleitung L32A-XS Zuchwil.pdf", c: "© Rosenbauer", tile: "", hero: "Betriebsanleitung Autodrehleiter L32A-XS, Feuerwehr Zuchwil (265 Seiten).", online: "" },
   basis: { pages: 296, short: "Basiswissen", enc: "reglement-basiswissen.enc", file: "Reglement Basiswissen FKS.pdf", tile: "Das ganze Reglement mit allen 296 Seiten (FKS 07/2026), direkt in der App zum Blättern.", hero: "Das ganze Reglement Basiswissen, FKS 07/2026.", online: "https://docs.feukos.ch/Basiswissen/ReglementBasiswissenDE/" },
   sgv: { pages: 10, short: "Kantonale Ergänzungen", enc: "reglement-sgv.enc", file: "Kantonale Ergänzungen SGV 14.10.2026.pdf", c: "© SGV Solothurn", tile: "", hero: "Basiswissen Kantonale Ergänzungen SGV Solothurn, Version 14.10.2026.", online: "" },
-  abc1: { pages: 137, short: "ABC-Handbuch Kap. 1–2 Allgemeines, ABC-Wehr", enc: "reglement-abc1.enc", file: "FKS Handbuch ABC Teil 1.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2189 – Teil 1 von 4 (Kap. 1–2 Allgemeines, ABC-Wehr).", online: "" },
-  abc2: { pages: 76, short: "ABC-Handbuch Kap. 3–4 A-Wehr, B-Wehr", enc: "reglement-abc2.enc", file: "FKS Handbuch ABC Teil 2.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2189 – Teil 2 von 4 (Kap. 3–4 A-Wehr, B-Wehr).", online: "" },
-  abc3: { pages: 158, short: "ABC-Handbuch Kap. 5 C-Wehr", enc: "reglement-abc3.enc", file: "FKS Handbuch ABC Teil 3.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2189 – Teil 3 von 4 (Kap. 5 C-Wehr).", online: "" },
-  abc4: { pages: 137, short: "ABC-Handbuch Kap. 6–9 Tabellen, Spezialeinsatzmittel, Glossar, Register", enc: "reglement-abc4.enc", file: "FKS Handbuch ABC Teil 4.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2189 – Teil 4 von 4 (Kap. 6–9 Tabellen, Spezialeinsatzmittel, Glossar, Register).", online: "" },
+  abc1: { pages: 137, short: "ABC-Handbuch Kap. 1–2 Allgemeines, ABC-Wehr", enc: "reglement-abc1.enc", file: "FKS Handbuch ABC Teil 1.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2199 – Teil 1 von 4 (Kap. 1–2 Allgemeines, ABC-Wehr).", online: "" },
+  abc2: { pages: 76, short: "ABC-Handbuch Kap. 3–4 A-Wehr, B-Wehr", enc: "reglement-abc2.enc", file: "FKS Handbuch ABC Teil 2.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2199 – Teil 2 von 4 (Kap. 3–4 A-Wehr, B-Wehr).", online: "" },
+  abc3: { pages: 158, short: "ABC-Handbuch Kap. 5 C-Wehr", enc: "reglement-abc3.enc", file: "FKS Handbuch ABC Teil 3.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2199 – Teil 3 von 4 (Kap. 5 C-Wehr).", online: "" },
+  abc4: { pages: 137, short: "ABC-Handbuch Kap. 6–9 Tabellen, Spezialeinsatzmittel, Glossar, Register", enc: "reglement-abc4.enc", file: "FKS Handbuch ABC Teil 4.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2199 – Teil 4 von 4 (Kap. 6–9 Tabellen, Spezialeinsatzmittel, Glossar, Register).", online: "" },
   mat: { pages: 208, short: "Materialdienst", enc: "reglement-mat.enc", file: "FKS Handbuch Materialdienst.pdf", tile: "", hero: "Handbuch Materialdienst, FKS CSSP CSP, Version 2.01 / 10.03.2020 (208 Seiten).", online: "" },
   veg: { pages: 120, short: "Vegetationsbrände", enc: "reglement-veg.enc", file: "FKS Handbuch Vegetationsbrände.pdf", tile: "", hero: "Handbuch Spezialwissen «Vegetationsbrände», FKS.", online: "" },
   einsatz: { pages: 84, short: "Einsatzführung", enc: "reglement-einsatzfuehrung.enc", file: "Reglement Einsatzführung FKS.pdf", tile: "Das ganze Reglement mit allen 84 Seiten, direkt in der App zum Blättern.", hero: "Das ganze Reglement Einsatzführung, FKS.", online: "" }
@@ -1380,6 +1380,47 @@ function notesAll() {
   return out;
 }
 const NF_DEF = "Notizen Logistik";
+const NIMG = {};
+function imgShrink(file, max, q) {
+  max = max || 1400; q = q || .72;
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => {
+      const im = new Image();
+      im.onload = () => {
+        const k = Math.min(1, max / Math.max(im.width, im.height)), c = document.createElement("canvas");
+        c.width = Math.max(1, Math.round(im.width * k)); c.height = Math.max(1, Math.round(im.height * k));
+        c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
+        let d = c.toDataURL("image/jpeg", q);
+        if (d.length > 900000) d = c.toDataURL("image/jpeg", .55);
+        if (d.length > 900000) { const c2 = document.createElement("canvas"); c2.width = Math.round(c.width * .7); c2.height = Math.round(c.height * .7); c2.getContext("2d").drawImage(c, 0, 0, c2.width, c2.height); d = c2.toDataURL("image/jpeg", .6); }
+        res(d);
+      };
+      im.onerror = rej; im.src = r.result;
+    };
+    r.onerror = rej; r.readAsDataURL(file);
+  });
+}
+async function nimgPut(dataUrl) {
+  const id = "i" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  NIMG[id] = dataUrl;
+  try { localStorage.setItem("fwz-nimg-" + id, dataUrl); } catch (e) {}
+  if (FWZ.user && FWZ.setDoc) { try { await FWZ.setDoc("notimg_" + id, { d: dataUrl, t: Date.now() }); } catch (e) {} }
+  return "ref:" + id;
+}
+async function nimgGet(ref) {
+  const id = ref.slice(4);
+  if (NIMG[id]) return NIMG[id];
+  try { const v = localStorage.getItem("fwz-nimg-" + id); if (v) return (NIMG[id] = v); } catch (e) {}
+  if (FWZ.user && FWZ.getDoc) { try { const o = await FWZ.getDoc("notimg_" + id); if (o && o.d) { NIMG[id] = o.d; try { localStorage.setItem("fwz-nimg-" + id, o.d); } catch (e) {} return o.d; } } catch (e) {} }
+  return null;
+}
+function nimgFill(host) {
+  host.querySelectorAll("img[data-ref]").forEach(async el => {
+    const d = await nimgGet(el.dataset.ref);
+    if (d) el.src = d; else { el.alt = "Bild nicht verfügbar (Internet nötig)"; el.classList.add("miss"); }
+  });
+}
 const noteFolder = n => (n.f || NF_DEF);
 const noteSnip = n => (n.txt || "").replace(/\s+/g, " ").slice(0, 90) + ((n.txt || "").length > 90 ? " …" : "");
 async function notesView(q) {
@@ -1394,16 +1435,19 @@ async function notesView(q) {
   state.nq = q || state.nq || "";
   const folders = [...new Set(all.map(noteFolder))].sort((a, b) => a.localeCompare(b, "de"));
   const inF = state.nf && !s ? all.filter(n => noteFolder(n) === state.nf) : null;
-  const list = s ? all.filter(n => (n.t + " " + n.txt + " " + noteFolder(n)).toLowerCase().includes(s)) : inF;
+  let list = s ? all.filter(n => (n.t + " " + n.txt + " " + noteFolder(n)).toLowerCase().includes(s)) : inF;
+  let srt = "0"; try { srt = localStorage.getItem("fwz-nsort") || "0"; } catch (e) {}
+  if (list && srt === "a") list = list.slice().sort((a, b) => a.t.localeCompare(b.t, "de"));
   const head = `<section class="hero"><h1>${esc(state.nf && !s ? state.nf : "Notizen")}</h1><p>${state.nf && !s ? "Antippen zum Lesen." : "Notizen der Logistik, aus OneNote übernommen."}</p></section>
     <div class="srch"><input type="search" id="nq" placeholder="Alle Notizen durchsuchen" aria-label="Notizen durchsuchen" value="${esc(state.nq)}" autocomplete="off"></div>
-    <div class="row spick"><button class="btn primary" id="nadd">Neue Notiz</button></div>`;
+    <div class="row spick"><button class="btn primary" id="nadd">Neue Notiz</button><button class="btn${srt === "a" ? " on" : ""}" id="nsort">${srt === "a" ? "A–Z" : "Reihenfolge"}</button></div>`;
   app.innerHTML = head + (list
     ? `<div class="menu nlist">${list.map(n => `<button class="mbtn note" data-n="${esc(n.id)}"><span>${esc(n.t)}</span><small>${s ? esc(noteFolder(n)) + " · " : ""}${esc(noteSnip(n))}${n.img && n.img.length ? " · " + n.img.length + " Bild" + (n.img.length > 1 ? "er" : "") : ""}${n.doc && n.doc.length ? " · PDF" : ""}</small></button>`).join("") || '<div class="note">Nichts gefunden.</div>'}</div>`
     : `<div class="menu nlist">${folders.map(f => `<button class="mbtn note" data-nf="${esc(f)}"><span>${esc(f)}</span><small>${all.filter(n => noteFolder(n) === f).length} Notizen</small></button>`).join("")}</div>`);
   const qi = document.getElementById("nq");
   qi.oninput = () => { clearTimeout(notesT2); notesT2 = setTimeout(() => notesView(qi.value), 250); };
   document.getElementById("nadd").onclick = () => noteEdit(null);
+  document.getElementById("nsort").onclick = () => { try { localStorage.setItem("fwz-nsort", srt === "a" ? "0" : "a"); } catch (e) {} notesView(state.nq); };
   app.querySelectorAll("[data-n]").forEach(b => b.onclick = () => noteView(b.dataset.n));
   app.querySelectorAll("[data-nf]").forEach(b => b.onclick = () => { state.nf = b.dataset.nf; notesView(""); });
   notesPull().then(ok => { if (ok && state.view === "notes") notesView(state.nq); });
@@ -1416,9 +1460,9 @@ function noteView(id) {
     ${n.txt ? `<div class="ntxt">${esc(n.txt)}</div>` : ""}
     ${(n.doc || []).map((d, i) => `<div class="natt"><span>${esc(d.n)}</span><div class="row"><button class="btn" data-pa="open" data-pi="${i}">PDF öffnen</button><button class="btn" data-pa="share" data-pi="${i}">Teilen</button><button class="btn" data-pa="print" data-pi="${i}">Drucken</button></div></div>`).join("")}
     ${(n.doc || []).length ? '<div class="sinfo" id="namsg" role="status"></div>' : ""}
-    ${(n.img || []).map((src, i) => `<img class="nimg" src="${src}" alt="Bild ${i + 1} der Notiz" loading="lazy">`).join("")}
+    ${(n.img || []).map((src, i) => src.slice(0, 4) === "ref:" ? `<img class="nimg" data-ref="${esc(src)}" alt="Bild ${i + 1} der Notiz">` : `<img class="nimg" src="${src}" alt="Bild ${i + 1} der Notiz" loading="lazy">`).join("")}
     <div class="row spick"><button class="btn primary" id="ned">Bearbeiten</button><button class="btn wdel" id="ndel">Löschen</button></div>`;
-  window.scrollTo(0, 0);
+  window.scrollTo(0, 0); nimgFill(app);
   const amsg = document.getElementById("namsg");
   app.querySelectorAll("[data-pa]").forEach(b => b.onclick = () => {
     const d = (n.doc || [])[+b.dataset.pi]; if (!d) return;
@@ -1445,11 +1489,30 @@ function noteEdit(id) {
       <label class="wf"><span>Titel</span><input id="ne-t" value="${esc(n ? n.t : "")}" placeholder="z. B. Swisskalk Entkalkungsanlage"></label>
       <label class="wf"><span>Ordner</span><input id="ne-f" list="ne-fl" value="${esc(n ? noteFolder(n) : (state.nf || NF_DEF))}"><datalist id="ne-fl">${[...new Set(notesAll().map(noteFolder))].map(f => `<option value="${esc(f)}"></option>`).join("")}</datalist></label>
       <label class="wf"><span>Text</span><textarea id="ne-x" rows="12" placeholder="Notiz …">${esc(n ? n.txt : "")}</textarea></label>
+      <div class="wf"><span>Bilder</span><div class="nthumbs" id="ne-th"></div>
+        <label class="btn lesup">Bild hinzufügen<input type="file" accept="image/*" id="ne-img" multiple hidden></label></div>
     </div>
-    ${n && n.img && n.img.length ? `<p class="foot">${n.img.length} Bild${n.img.length > 1 ? "er" : ""} aus OneNote bleiben erhalten.</p>` : ""}
+    
     <div class="row spick"><button class="btn primary" id="ne-s">Speichern</button><button class="btn" id="ne-c">Abbrechen</button></div>
     <div class="sinfo" id="ne-m" role="status"></div>`;
   window.scrollTo(0, 0);
+  let imgs = (n && n.img ? n.img.slice() : []);
+  const th = document.getElementById("ne-th");
+  const drawTh = () => {
+    th.innerHTML = imgs.map((src, i) => `<div class="nth">${src.slice(0, 4) === "ref:" ? `<img data-ref="${esc(src)}" alt="">` : `<img src="${src}" alt="">`}<button class="nthx" data-i="${i}" aria-label="Bild entfernen">×</button></div>`).join("") || '<span class="sinfo">Noch keine Bilder.</span>';
+    nimgFill(th);
+    th.querySelectorAll(".nthx").forEach(b => b.onclick = () => { imgs.splice(+b.dataset.i, 1); drawTh(); });
+  };
+  drawTh();
+  document.getElementById("ne-img").onchange = async ev => {
+    const msg2 = document.getElementById("ne-m"), fs = [...ev.target.files];
+    for (const f of fs) {
+      msg2.textContent = "Bild wird verkleinert …";
+      try { imgs.push(await nimgPut(await imgShrink(f))); } catch (e) { msg2.textContent = "Bild konnte nicht gelesen werden."; }
+    }
+    ev.target.value = ""; msg2.textContent = fs.length ? fs.length + (fs.length === 1 ? " Bild hinzugefügt. Nicht vergessen zu speichern." : " Bilder hinzugefügt. Nicht vergessen zu speichern.") : "";
+    drawTh();
+  };
   document.getElementById("ne-c").onclick = () => id ? noteView(id) : notesView();
   document.getElementById("ne-s").onclick = () => {
     const t = document.getElementById("ne-t").value.trim(), txt = document.getElementById("ne-x").value;
@@ -1457,7 +1520,7 @@ function noteEdit(id) {
     const nid = id || "n" + Date.now().toString(36);
     NSTATE.ed = NSTATE.ed || {};
     const f = (document.getElementById("ne-f").value || "").trim() || NF_DEF;
-    NSTATE.ed[nid] = Object.assign({}, NSTATE.ed[nid] || {}, { t, txt, f, del: 0 });
+    NSTATE.ed[nid] = Object.assign({}, NSTATE.ed[nid] || {}, { t, txt, f, img: imgs, del: 0 });
     notesSave(); noteView(nid);
   };
 }

@@ -687,3 +687,11 @@ html.dv .adlf{align-content:start}html.dv .adlf+.foot{max-width:none}
 .wyear[open] > summary::after { transform: none; }
 .wyear > summary b { font-family: var(--font-body); font-weight: 600; font-size: .85rem; text-transform: none; letter-spacing: 0; color: var(--muted); margin-left: auto; }
 .wyear:not([open]) > summary { border-bottom: 0; }
+
+.nthumbs { display: flex; flex-wrap: wrap; gap: 10px; }
+.nth { position: relative; width: 92px; height: 92px; border-radius: 12px; overflow: hidden; border: 1px solid var(--line); background: var(--surface); }
+.nth img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.nthx { position: absolute; top: 4px; right: 4px; width: 28px; height: 28px; border-radius: 50%; border: 0; background: rgba(0,0,0,.65); color: #fff; font-size: 18px; line-height: 1; }
+.nimg.miss { min-height: 60px; }
+.btn.lesup { display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.btn.on { background: var(--red); border-color: var(--red); color: var(--red-ink); }
