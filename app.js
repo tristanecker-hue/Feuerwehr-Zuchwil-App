@@ -1,4 +1,4 @@
-const APP_VERSION = "1.220";
+const APP_VERSION = "1.221";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -1255,12 +1255,13 @@ function fzView() {
     const offen = w.filter(x => x.years.includes(now) && !wartDone(x, now)).length;
     const d = (FSTATE.fz || {})[n] || {};
     const meta = [d.typ, d.kz, w.length ? w.length + (w.length === 1 ? " Wartung" : " Wartungen") : "keine Wartung", ys.length ? "nächste " + ys[0] : ""].filter(Boolean).join(" · ");
-    return `<button class="mbtn note" data-f="${esc(n)}"><span>${esc(n)}${offen ? ` <i class="fzo">${offen} offen</i>` : ""}</span><small>${esc(meta)}</small></button>`;
+    const pic = d.img ? (d.img.slice(0, 4) === "ref:" ? `<img data-ref="${esc(d.img)}" alt="">` : `<img src="${d.img}" alt="">`) : `<span class="fzini">${esc(n.trim().charAt(0).toUpperCase())}</span>`;
+    return `<button class="fztile" data-f="${esc(n)}" title="${esc(meta)}"><span class="fzpic">${pic}${offen ? `<i class="fzbadge">${offen}</i>` : ""}</span><span class="fzname">${esc(n)}</span></button>`;
   }).join("");
-  app.innerHTML = `<section class="hero"><h1>Fahrzeuge</h1><p>Stammdaten und Wartungen je Fahrzeug.</p></section>
+  app.innerHTML = `<section class="hero"><h1>Fahrzeuge</h1><p>Stammdaten, Logbuch und Wartungen je Fahrzeug.</p></section>
     <div class="row spick"><button class="btn primary" id="fzadd">Neues Fahrzeug</button></div>
-    <div class="menu nlist">${rows}</div>`;
-  window.scrollTo(0, 0);
+    <div class="fzgrid">${rows}</div>`;
+  window.scrollTo(0, 0); nimgFill(app);
   app.querySelectorAll("[data-f]").forEach(b => b.onclick = () => fzDetail(b.dataset.f));
   document.getElementById("fzadd").onclick = () => fzEdit(null);
   fzPull().then(ok => { if (ok && state.view === "fz") fzView(); });
@@ -1272,6 +1273,7 @@ function fzDetail(name) {
   const ys = [...new Set(w.flatMap(x => x.years))].filter(v => v >= now - 1).sort((a, b) => a - b).slice(0, 5);
   const stamm = FZ_F.filter(f => d[f[0]]).map(f => `<div class="fzr"><span>${f[1]}</span><b>${esc(d[f[0]])}</b></div>`).join("");
   let h = `<section class="hero"><h1>${esc(name)}</h1><p>${esc([d.typ, d.kz].filter(Boolean).join(" · ") || "Noch keine Stammdaten erfasst.")}</p></section>
+    ${d.img ? (d.img.slice(0, 4) === "ref:" ? `<img class="fzfoto" data-ref="${esc(d.img)}" alt="Foto">` : `<img class="fzfoto" src="${d.img}" alt="Foto">`) : ""}
     ${stamm ? `<section class="wgrp"><h3>Stammdaten</h3><div class="fzbox">${stamm}</div></section>` : ""}
     <div class="row spick"><button class="btn primary" id="fze">Stammdaten bearbeiten</button>${name === "Autodrehleiter" ? '<button class="btn" id="fzadl">Masse Drehleiter</button>' : ""}<button class="btn" id="fzw">Wartung erfassen</button></div>`;
   const yearHtml = ys.map(y => {
@@ -1284,7 +1286,7 @@ function fzDetail(name) {
     (logs.length ? logs.map(e => `<div class="wrow log"><span class="fzd">${esc(fzDate(e.d) || "ohne Datum")}</span><span class="fzt">${esc(e.t)}</span><button class="wedit" data-ld="${esc(e.id)}" aria-label="Eintrag löschen">Löschen</button></div>`).join("")
       : '<div class="wrow log"><span class="fzt">Noch kein Eintrag.</span></div>') + "</section>";
   h += yearHtml || (w.length ? "" : '<div class="note">Für dieses Fahrzeug ist noch keine Wartung erfasst.</div>');
-  app.innerHTML = h; window.scrollTo(0, 0);
+  app.innerHTML = h; window.scrollTo(0, 0); nimgFill(app);
   document.getElementById("fzlog").onclick = () => fzLogAdd(name);
   app.querySelectorAll("[data-ld]").forEach(b => b.onclick = () => {
     if (!confirm("Diesen Logbuch-Eintrag löschen?")) return;
@@ -1329,10 +1331,27 @@ function fzEdit(name) {
     <div class="wform">
       ${name ? "" : '<label class="wf"><span>Bezeichnung</span><input id="fz-name" placeholder="z. B. Tanklöschfahrzeug"></label>'}
       ${FZ_F.map(f => `<label class="wf"><span>${f[1]}</span><input id="fz-${f[0]}" value="${esc(d[f[0]] || "")}"></label>`).join("")}
+      <div class="wf"><span>Foto</span><div class="nthumbs" id="fz-th"></div>
+        <label class="btn lesup">Foto wählen<input type="file" accept="image/*" id="fz-img" hidden></label></div>
     </div>
     <div class="row spick"><button class="btn primary" id="fz-s">Speichern</button><button class="btn" id="fz-c">Abbrechen</button>${name && (FSTATE.add || []).includes(name) ? '<button class="btn wdel" id="fz-d">Fahrzeug löschen</button>' : ""}</div>
     <div class="sinfo" id="fz-m" role="status"></div>`;
   window.scrollTo(0, 0);
+  let foto = d.img || "";
+  const fth = document.getElementById("fz-th"), fmsg = document.getElementById("fz-m");
+  const drawFoto = () => {
+    fth.innerHTML = foto ? `<div class="nth">${foto.slice(0, 4) === "ref:" ? `<img data-ref="${esc(foto)}" alt="">` : `<img src="${foto}" alt="">`}<button class="nthx" id="fz-rm" aria-label="Foto entfernen">×</button></div>` : '<span class="sinfo">Noch kein Foto.</span>';
+    nimgFill(fth);
+    const rm = document.getElementById("fz-rm"); if (rm) rm.onclick = () => { foto = ""; drawFoto(); };
+  };
+  drawFoto();
+  document.getElementById("fz-img").onchange = async ev => {
+    const f = ev.target.files[0]; if (!f) return;
+    fmsg.textContent = "Foto wird verkleinert …";
+    try { foto = await nimgPut(await imgShrink(f, 1200)); fmsg.textContent = "Foto gewählt. Nicht vergessen zu speichern."; }
+    catch (e) { fmsg.textContent = "Foto konnte nicht gelesen werden."; }
+    ev.target.value = ""; drawFoto();
+  };
   document.getElementById("fz-c").onclick = () => name ? fzDetail(name) : fzView();
   const del = document.getElementById("fz-d");
   if (del) del.onclick = () => { if (!confirm("Fahrzeug wirklich löschen?")) return; FSTATE.add = (FSTATE.add || []).filter(x => x !== name); delete FSTATE.fz[name]; fzSave(); fzView(); };
@@ -1341,6 +1360,7 @@ function fzEdit(name) {
     if (!nm) { document.getElementById("fz-m").textContent = "Bezeichnung ausfüllen."; return; }
     const o = {};
     FZ_F.forEach(f => { const v = (document.getElementById("fz-" + f[0]).value || "").trim(); if (v) o[f[0]] = v; });
+    if (foto) o.img = foto;
     FSTATE.fz = FSTATE.fz || {}; FSTATE.fz[nm] = o;
     if (!name && !fzList().includes(nm)) { FSTATE.add = FSTATE.add || []; FSTATE.add.push(nm); }
     fzSave(); fzDetail(nm);

@@ -695,3 +695,14 @@ html.dv .adlf{align-content:start}html.dv .adlf+.foot{max-width:none}
 .nimg.miss { min-height: 60px; }
 .btn.lesup { display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
 .btn.on { background: var(--red); border-color: var(--red); color: var(--red-ink); }
+
+/* Fahrzeuge als Foto-Kacheln */
+.fzgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 16px 12px; margin: 10px 0 20px; }
+.fztile { background: none; border: 0; padding: 0; display: flex; flex-direction: column; align-items: center; gap: 7px; cursor: pointer; color: var(--ink); }
+.fzpic { position: relative; width: 100%; aspect-ratio: 1; border-radius: 18px; overflow: hidden; background: var(--surface); border: 1px solid var(--line); display: grid; place-items: center; }
+.fzpic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.fzini { font-family: var(--font-display); font-size: 2.1rem; font-weight: 600; color: var(--red); }
+.fzbadge { position: absolute; top: 6px; right: 6px; min-width: 24px; height: 24px; padding: 0 6px; border-radius: 12px; background: var(--bad); color: #1a1a1a; font-style: normal; font-weight: 700; font-size: .85rem; display: grid; place-items: center; }
+.fzname { font-family: var(--font-display); font-size: .88rem; line-height: 1.18; text-align: center; letter-spacing: .01em; overflow-wrap: break-word; hyphens: auto; -webkit-hyphens: auto; }
+.fztile:focus-visible .fzpic { outline: 2px solid var(--red); outline-offset: 2px; }
+.fzfoto { display: block; width: 100%; height: auto; border-radius: 16px; border: 1px solid var(--line); margin: 10px 0 14px; }
