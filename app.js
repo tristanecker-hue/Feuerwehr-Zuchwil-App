@@ -1,4 +1,4 @@
-const APP_VERSION = "1.208";
+const APP_VERSION = "1.209";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -414,10 +414,10 @@ const RGDEF = {
   adl: { pages: 265, short: "Autodrehleiter", enc: "reglement-adl.enc", file: "Betriebsanleitung L32A-XS Zuchwil.pdf", c: "© Rosenbauer", tile: "", hero: "Betriebsanleitung Autodrehleiter L32A-XS, Feuerwehr Zuchwil (265 Seiten).", online: "" },
   basis: { pages: 296, short: "Basiswissen", enc: "reglement-basiswissen.enc", file: "Reglement Basiswissen FKS.pdf", tile: "Das ganze Reglement mit allen 296 Seiten (FKS 07/2026), direkt in der App zum Blättern.", hero: "Das ganze Reglement Basiswissen, FKS 07/2026.", online: "https://docs.feukos.ch/Basiswissen/ReglementBasiswissenDE/" },
   sgv: { pages: 10, short: "Kantonale Ergänzungen", enc: "reglement-sgv.enc", file: "Kantonale Ergänzungen SGV 14.10.2026.pdf", c: "© SGV Solothurn", tile: "", hero: "Basiswissen Kantonale Ergänzungen SGV Solothurn, Version 14.10.2026.", online: "" },
-  abc1: { pages: 137, short: "ABC-Handbuch Kap. 1–2 Allgemeines, ABC-Wehr", enc: "reglement-abc1.enc", file: "FKS Handbuch ABC Teil 1.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2089 – Teil 1 von 4 (Kap. 1–2 Allgemeines, ABC-Wehr).", online: "" },
-  abc2: { pages: 76, short: "ABC-Handbuch Kap. 3–4 A-Wehr, B-Wehr", enc: "reglement-abc2.enc", file: "FKS Handbuch ABC Teil 2.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2089 – Teil 2 von 4 (Kap. 3–4 A-Wehr, B-Wehr).", online: "" },
-  abc3: { pages: 158, short: "ABC-Handbuch Kap. 5 C-Wehr", enc: "reglement-abc3.enc", file: "FKS Handbuch ABC Teil 3.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2089 – Teil 3 von 4 (Kap. 5 C-Wehr).", online: "" },
-  abc4: { pages: 137, short: "ABC-Handbuch Kap. 6–9 Tabellen, Spezialeinsatzmittel, Glossar, Register", enc: "reglement-abc4.enc", file: "FKS Handbuch ABC Teil 4.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2089 – Teil 4 von 4 (Kap. 6–9 Tabellen, Spezialeinsatzmittel, Glossar, Register).", online: "" },
+  abc1: { pages: 137, short: "ABC-Handbuch Kap. 1–2 Allgemeines, ABC-Wehr", enc: "reglement-abc1.enc", file: "FKS Handbuch ABC Teil 1.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2099 – Teil 1 von 4 (Kap. 1–2 Allgemeines, ABC-Wehr).", online: "" },
+  abc2: { pages: 76, short: "ABC-Handbuch Kap. 3–4 A-Wehr, B-Wehr", enc: "reglement-abc2.enc", file: "FKS Handbuch ABC Teil 2.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2099 – Teil 2 von 4 (Kap. 3–4 A-Wehr, B-Wehr).", online: "" },
+  abc3: { pages: 158, short: "ABC-Handbuch Kap. 5 C-Wehr", enc: "reglement-abc3.enc", file: "FKS Handbuch ABC Teil 3.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2099 – Teil 3 von 4 (Kap. 5 C-Wehr).", online: "" },
+  abc4: { pages: 137, short: "ABC-Handbuch Kap. 6–9 Tabellen, Spezialeinsatzmittel, Glossar, Register", enc: "reglement-abc4.enc", file: "FKS Handbuch ABC Teil 4.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2099 – Teil 4 von 4 (Kap. 6–9 Tabellen, Spezialeinsatzmittel, Glossar, Register).", online: "" },
   mat: { pages: 208, short: "Materialdienst", enc: "reglement-mat.enc", file: "FKS Handbuch Materialdienst.pdf", tile: "", hero: "Handbuch Materialdienst, FKS CSSP CSP, Version 2.01 / 10.03.2020 (208 Seiten).", online: "" },
   veg: { pages: 120, short: "Vegetationsbrände", enc: "reglement-veg.enc", file: "FKS Handbuch Vegetationsbrände.pdf", tile: "", hero: "Handbuch Spezialwissen «Vegetationsbrände», FKS.", online: "" },
   einsatz: { pages: 84, short: "Einsatzführung", enc: "reglement-einsatzfuehrung.enc", file: "Reglement Einsatzführung FKS.pdf", tile: "Das ganze Reglement mit allen 84 Seiten, direkt in der App zum Blättern.", hero: "Das ganze Reglement Einsatzführung, FKS.", online: "" }
@@ -1243,8 +1243,8 @@ const WART_D = [
   ["alro-maskenwaschanlage-alro-maskenwaschanlage", "Material", "Alro Maskenwaschanlage", "Alro Maskenwaschanlage", [2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035, 2036, 2037, 2038, 2039, 2040], 1, 890, "Rechnung 2026"],
   ["entkalkungsanlage-entkalkungsanlage", "Material", "Entkalkungsanlage", "Entkalkungsanlage", [2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035, 2036, 2037, 2038, 2039, 2040], 1, null, ""]
 ];
-const WART = WART_D.map(r => ({ id: r[0], kind: r[1], grp: r[2], task: r[3], years: r[4] || [], iv: r[5], cost: r[6], note: r[7] || "", loc: r[8] || "" }));
-let WSTATE = (() => { try { const o = JSON.parse(localStorage.getItem("fwz-wart") || "null"); if (o && o.done) return o; } catch (e) {} return { done: {}, t: 0 }; })();
+const WART = WART_D.map(r => ({ id: r[0], kind: r[1], grp: r[2], task: r[3], years: r[4] || [], iv: r[5] || 0, cost: r[6], note: r[7] || "", loc: r[8] || "" }));
+let WSTATE = (() => { try { const o = JSON.parse(localStorage.getItem("fwz-wart") || "null"); if (o && o.done) return { done: o.done, custom: o.custom || {}, t: o.t || 0 }; } catch (e) {} return { done: {}, custom: {}, t: 0 }; })();
 let wartT = 0;
 function wartSave() {
   WSTATE.t = Date.now();
@@ -1254,44 +1254,119 @@ function wartSave() {
 }
 async function wartPull() {
   if (!FWZ.user || !FWZ.getDoc) return false;
-  try { const o = await FWZ.getDoc("wartung"); if (o && o.done && (o.t || 0) > (WSTATE.t || 0)) { WSTATE = o; try { localStorage.setItem("fwz-wart", JSON.stringify(o)); } catch (e) {} return true; } } catch (e) {}
+  try { const o = await FWZ.getDoc("wartung"); if (o && o.done && (o.t || 0) > (WSTATE.t || 0)) { WSTATE = { done: o.done, custom: o.custom || {}, t: o.t || 0 }; try { localStorage.setItem("fwz-wart", JSON.stringify(WSTATE)); } catch (e) {} return true; } } catch (e) {}
   return false;
+}
+function wartItems() {
+  const cu = WSTATE.custom || {}, out = [];
+  WART.forEach(b => { const c = cu[b.id]; if (!c) out.push(b); else if (!c.del && c.it) out.push(c.it); });
+  Object.keys(cu).forEach(k => { if (WART.some(b => b.id === k)) return; const c = cu[k]; if (c && !c.del && c.it) out.push(c.it); });
+  return out;
 }
 const wartDone = (w, y) => { const v = WSTATE.done[w.id + "|" + y]; return v === undefined ? y < new Date().getFullYear() : !!v; };
 const chf = n => "CHF " + Math.round(n).toLocaleString("de-CH");
+const wartMeta = w => [w.iv ? "alle " + w.iv + (w.iv === 1 ? " Jahr" : " Jahre") : "einmalig", w.cost ? chf(w.cost) : "", w.loc, w.note].filter(Boolean).join(" · ");
 function wartRow(w, y) {
-  const d = wartDone(w, y), late = !d && y < new Date().getFullYear();
-  const meta = [w.iv ? "alle " + w.iv + (w.iv === 1 ? " Jahr" : " Jahre") : "", w.cost ? chf(w.cost) : "", w.loc, w.note].filter(Boolean).join(" · ");
-  return `<label class="wrow${d ? " done" : ""}"><input type="checkbox" data-w="${esc(w.id)}"${d ? " checked" : ""}><span><b>${esc(w.task)}</b>${meta ? `<em>${esc(meta)}</em>` : ""}${late ? '<i>überfällig</i>' : ""}</span></label>`;
+  const d = wartDone(w, y), late = !d && y < new Date().getFullYear(), m = wartMeta(w);
+  return `<div class="wrow${d ? " done" : ""}"><label><input type="checkbox" data-w="${esc(w.id)}"${d ? " checked" : ""}><span><b>${esc(w.task)}</b>${m ? `<em>${esc(m)}</em>` : ""}${late ? '<i>überfällig</i>' : ""}</span></label><button class="wedit" data-e="${esc(w.id)}" aria-label="Wartung bearbeiten">Ändern</button></div>`;
+}
+function wartPdf(y) {
+  const list = wartItems().filter(w => w.years.includes(y)), blocks = [];
+  ["Fahrzeuge", "Material"].forEach(k => {
+    const inK = list.filter(w => w.kind === k); if (!inK.length) return;
+    [...new Set(inK.map(w => w.grp))].forEach(g => {
+      blocks.push({ h: g, s: k, t: inK.filter(w => w.grp === g).map(w => (wartDone(w, y) ? "[x] " : "[ ] ") + w.task + "\n        " + wartMeta(w)).join("\n") });
+    });
+  });
+  const open = list.filter(w => !wartDone(w, y)), sum = open.reduce((a, w) => a + (w.cost || 0), 0);
+  return aoPdf("Wartungsarbeiten " + y, "Feuerwehr Zuchwil · " + (list.length - open.length) + " von " + list.length + " erledigt" + (sum ? " · offene Kosten " + chf(sum) : ""), blocks, "Wartungsarbeiten " + y + ".pdf");
 }
 function wartView(year) {
   state.mod = null; state.sub = null; state.view = "wart"; backBtn.hidden = false;
   document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
-  const now = new Date().getFullYear();
-  const ys = [...new Set(WART.flatMap(w => w.years))].sort((a, b) => a - b).filter(v => v >= now - 2 && v <= now + 6);
-  const y = year || state.wy || (ys.includes(now) ? now : ys[0]); state.wy = y;
-  const list = WART.filter(w => w.years.includes(y)), open = list.filter(w => !wartDone(w, y));
+  const now = new Date().getFullYear(), items = wartItems();
+  const ys = [...new Set(items.flatMap(w => w.years))].sort((a, b) => a - b).filter(v => v >= now - 2 && v <= now + 8);
+  const y = year || state.wy || (ys.includes(now) ? now : ys[0] || now); state.wy = y;
+  const list = items.filter(w => w.years.includes(y)), open = list.filter(w => !wartDone(w, y));
   const sumAll = list.reduce((a, w) => a + (w.cost || 0), 0), sumOpen = open.reduce((a, w) => a + (w.cost || 0), 0);
+  const stat = (l, o) => `${l.length - o.length} von ${l.length} erledigt${o.reduce((a, w) => a + (w.cost || 0), 0) ? " · offene Kosten " + chf(o.reduce((a, w) => a + (w.cost || 0), 0)) : ""}${sumAll ? " · Kosten total " + chf(sumAll) : ""}`;
   let h = `<section class="hero"><h1>Wartungsarbeiten</h1><p>Prüfintervalle Fahrzeuge und Material. Abhaken, was erledigt ist. Jahre vor ${now} gelten als erledigt.</p></section>
     <div class="wyr">${ys.map(v => `<button data-y="${v}" class="${v === y ? "on" : ""}">${v}</button>`).join("")}</div>
-    <div class="sinfo" id="wsum">${list.length - open.length} von ${list.length} erledigt${sumOpen ? " · offene Kosten " + chf(sumOpen) : ""}${sumAll ? " · Kosten total " + chf(sumAll) : ""}</div>`;
+    <div class="sinfo" id="wsum">${stat(list, open)}</div>
+    <div class="row spick"><button class="btn primary" id="wadd">Neue Wartung</button><button class="btn" data-sp="open">PDF öffnen</button><button class="btn" data-sp="share">Teilen</button><button class="btn" data-sp="print">Drucken</button></div><div class="sinfo" id="spmsg" role="status"></div>`;
   ["Fahrzeuge", "Material"].forEach(k => {
     const inK = list.filter(w => w.kind === k); if (!inK.length) return;
     h += `<h2 class="zh">${k}</h2>`;
     [...new Set(inK.map(w => w.grp))].forEach(g => {
-      h += `<section class="wgrp"><h3>${esc(g)}</h3>` + inK.filter(w => w.grp === g).map(w => wartRow(w, y)).join("") + "</section>";
+      h += `<section class="wgrp"><h3>${esc(g)}<button class="wadd2" data-k="${esc(k)}" data-g="${esc(g)}" aria-label="Wartung für ${esc(g)} hinzufügen">+</button></h3>` + inK.filter(w => w.grp === g).map(w => wartRow(w, y)).join("") + "</section>";
     });
   });
-  h += `<p class="foot">Grundlage: Wartungsplan «Prüfintervalle Feuerwehr Zuchwil». ${FWZ.user ? "Erledigt-Haken werden mit allen Angemeldeten geteilt." : "Ohne Anmeldung bleiben die Haken nur auf diesem Gerät."}</p>`;
+  if (!list.length) h += '<div class="note">Für dieses Jahr ist nichts eingetragen.</div>';
+  h += `<p class="foot">Grundlage: Wartungsplan «Prüfintervalle Feuerwehr Zuchwil». ${FWZ.user ? "Haken und Änderungen werden mit allen Angemeldeten geteilt." : "Ohne Anmeldung bleibt alles nur auf diesem Gerät."}</p>`;
   app.innerHTML = h; window.scrollTo(0, 0);
   app.querySelectorAll(".wyr button").forEach(b => b.onclick = () => wartView(+b.dataset.y));
   app.querySelectorAll(".wrow input").forEach(i => i.onchange = () => {
     WSTATE.done[i.dataset.w + "|" + y] = i.checked ? 1 : 0; wartSave();
     i.closest(".wrow").classList.toggle("done", i.checked);
-    const l2 = WART.filter(w => w.years.includes(y)), o2 = l2.filter(w => !wartDone(w, y)), s2 = o2.reduce((a, w) => a + (w.cost || 0), 0);
-    const sm = document.getElementById("wsum"); if (sm) sm.textContent = `${l2.length - o2.length} von ${l2.length} erledigt${s2 ? " · offene Kosten " + chf(s2) : ""}${sumAll ? " · Kosten total " + chf(sumAll) : ""}`;
+    const l2 = wartItems().filter(w => w.years.includes(y)), o2 = l2.filter(w => !wartDone(w, y));
+    const sm = document.getElementById("wsum"); if (sm) sm.textContent = stat(l2, o2);
+  });
+  app.querySelectorAll(".wedit").forEach(b => b.onclick = () => wartForm(b.dataset.e));
+  app.querySelectorAll(".wadd2").forEach(b => b.onclick = () => wartForm(null, { kind: b.dataset.k, grp: b.dataset.g }));
+  const wa = document.getElementById("wadd"); if (wa) wa.onclick = () => wartForm(null);
+  const msg = document.getElementById("spmsg");
+  app.querySelectorAll("[data-sp]").forEach(b => b.onclick = () => {
+    try { msg.textContent = ""; aoPdfActs(wartPdf(y), msg)[b.dataset.sp](); }
+    catch (e) { msg.textContent = "PDF konnte nicht erstellt werden."; }
   });
   wartPull().then(ok => { if (ok && state.view === "wart") wartView(state.wy); });
+}
+function wartYears(y, iv, old) {
+  const out = (old || []).filter(v => v < y);
+  if (iv > 0) { for (let v = y; v <= y + 14; v += iv) out.push(v); } else out.push(y);
+  return [...new Set(out)].sort((a, b) => a - b);
+}
+function wartForm(id, pre) {
+  state.view = "wartf"; backBtn.hidden = false;
+  document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
+  const now = new Date().getFullYear(), it = id ? wartItems().find(w => w.id === id) : null;
+  const y0 = it ? (it.years.filter(v => v >= now)[0] || it.years[it.years.length - 1] || now) : (state.wy || now);
+  const grps = [...new Set(wartItems().map(w => w.grp))].sort();
+  const f = (lbl, inner) => `<label class="wf"><span>${lbl}</span>${inner}</label>`;
+  app.innerHTML = `<section class="hero"><h1>${it ? "Wartung ändern" : "Neue Wartung"}</h1><p>${it ? "Angaben anpassen oder die Wartung löschen." : "Fahrzeug oder Material, Arbeit und Intervall erfassen."}</p></section>
+    <div class="wform">
+      ${f("Art", `<select id="wf-kind"><option${(it ? it.kind : pre && pre.kind) === "Material" ? " selected" : ""}>Fahrzeuge</option><option${(it ? it.kind : pre && pre.kind) === "Material" ? " selected" : ""}>Material</option></select>`)}
+      ${f("Fahrzeug oder Material", `<input id="wf-grp" list="wf-grps" value="${esc(it ? it.grp : (pre && pre.grp) || "")}" placeholder="z. B. Tanklöschfahrzeug"><datalist id="wf-grps">${grps.map(g => `<option value="${esc(g)}"></option>`).join("")}</datalist>`)}
+      ${f("Arbeit", `<input id="wf-task" value="${esc(it ? it.task : "")}" placeholder="z. B. Service Fahrzeug">`)}
+      ${f("Nächste Wartung (Jahr)", `<input id="wf-year" type="number" inputmode="numeric" min="2020" max="2060" value="${y0}">`)}
+      ${f("Intervall in Jahren (0 = einmalig)", `<input id="wf-iv" type="number" inputmode="numeric" min="0" max="20" value="${it ? it.iv || 0 : 1}">`)}
+      ${f("Kosten in CHF (optional)", `<input id="wf-cost" type="number" inputmode="decimal" min="0" step="0.05" value="${it && it.cost != null ? it.cost : ""}">`)}
+      ${f("Ort / Firma (optional)", `<input id="wf-loc" value="${esc(it ? it.loc : "")}" placeholder="z. B. Auto AG Truck, Urtenen">`)}
+      ${f("Bemerkung (optional)", `<input id="wf-note" value="${esc(it ? it.note : "")}">`)}
+    </div>
+    <div class="row spick"><button class="btn primary" id="wf-save">Speichern</button><button class="btn" id="wf-cancel">Abbrechen</button>${it ? '<button class="btn wdel" id="wf-del">Löschen</button>' : ""}</div>
+    <div class="sinfo" id="wf-msg" role="status"></div>`;
+  window.scrollTo(0, 0);
+  const g = i => document.getElementById(i), msg = g("wf-msg");
+  g("wf-kind").value = it ? it.kind : (pre && pre.kind) || "Fahrzeuge";
+  g("wf-cancel").onclick = () => wartView(state.wy);
+  if (g("wf-del")) g("wf-del").onclick = () => {
+    if (!confirm("Diese Wartung wirklich löschen?")) return;
+    WSTATE.custom = WSTATE.custom || {};
+    if (WART.some(b => b.id === id)) WSTATE.custom[id] = { del: 1 }; else delete WSTATE.custom[id];
+    wartSave(); wartView(state.wy);
+  };
+  g("wf-save").onclick = () => {
+    const task = g("wf-task").value.trim(), grp = g("wf-grp").value.trim();
+    if (!grp || !task) { msg.textContent = "Fahrzeug oder Material und Arbeit ausfüllen."; return; }
+    const y = Math.max(2020, Math.min(2060, parseInt(g("wf-year").value, 10) || now));
+    const iv = Math.max(0, Math.min(20, parseInt(g("wf-iv").value, 10) || 0));
+    const cost = g("wf-cost").value === "" ? null : Math.max(0, +g("wf-cost").value || 0);
+    const nid = id || (grp + "-" + task).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) + "-" + Date.now().toString(36);
+    WSTATE.custom = WSTATE.custom || {};
+    WSTATE.custom[nid] = { it: { id: nid, kind: g("wf-kind").value, grp, task, years: wartYears(y, iv, it ? it.years : []), iv, cost, note: g("wf-note").value.trim(), loc: g("wf-loc").value.trim() } };
+    wartSave(); state.wy = y; wartView(y);
+  };
 }
 
 /* ---------- Anmeldung ---------- */
@@ -1481,7 +1556,7 @@ async function lektionen(m, el) {
   });
 }
 
-backBtn.addEventListener("click", () => { if (state.view === "games") { if (state.gm) gamesView(); else { gmStop(); start(); } return; } if (state.view === "les" && state.lc === "v" && state.vorHome) { state.vorHome = false; state.lc = null; start(); return; } if (state.view === "les" && (state.lc === "vl" || state.lc === "vn")) { state.lc = "v"; lesView(); window.scrollTo(0, 0); return; } if (state.view === "sub" && !state.mod) { home(); return; } if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "sim") { adlView(); return; } if (["masse", "joystick", "haus"].includes(state.view)) { adlView(); return; } if (state.view === "adl" || state.view === "gq" || state.view === "sgv" || state.view === "spick") { (state.sub ? subView(state.sub) : home()); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else (state.sub ? subView(state.sub) : home()); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) (state.sub ? subView(state.sub) : home()); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
+backBtn.addEventListener("click", () => { if (state.view === "wartf") { wartView(state.wy); return; } if (state.view === "games") { if (state.gm) gamesView(); else { gmStop(); start(); } return; } if (state.view === "les" && state.lc === "v" && state.vorHome) { state.vorHome = false; state.lc = null; start(); return; } if (state.view === "les" && (state.lc === "vl" || state.lc === "vn")) { state.lc = "v"; lesView(); window.scrollTo(0, 0); return; } if (state.view === "sub" && !state.mod) { home(); return; } if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "sim") { adlView(); return; } if (["masse", "joystick", "haus"].includes(state.view)) { adlView(); return; } if (state.view === "adl" || state.view === "gq" || state.view === "sgv" || state.view === "spick") { (state.sub ? subView(state.sub) : home()); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else (state.sub ? subView(state.sub) : home()); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) (state.sub ? subView(state.sub) : home()); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
 /* ---------- Anmeldepflicht ---------- */
 let gateOffline = false;
 function gateNeeded() { return !!FWZ.enabled && !FWZ.user && !gateOffline; }
