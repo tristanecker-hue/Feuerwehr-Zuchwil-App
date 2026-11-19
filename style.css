@@ -658,3 +658,10 @@ html.dv .adlf{align-content:start}html.dv .adlf+.foot{max-width:none}
 .wrow em { font-style: normal; font-size: .9rem; color: var(--muted); overflow-wrap: anywhere; }
 .wrow i { font-style: normal; font-size: .85rem; color: var(--bad); font-weight: 600; }
 .wrow.done b { text-decoration: line-through; color: var(--muted); }
+
+/* Logistik: Notizen */
+.nlist .mbtn.note { text-align: left; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+.nlist .mbtn.note small { font-weight: 400; color: var(--muted); font-size: .85rem; }
+.ntxt { white-space: pre-wrap; overflow-wrap: anywhere; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin: 10px 0; }
+.nimg { display: block; width: 100%; height: auto; border-radius: 14px; border: 1px solid var(--line); margin: 10px 0; background: var(--surface); }
+.wform textarea { background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; font: inherit; width: 100%; resize: vertical; }
