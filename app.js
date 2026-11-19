@@ -1,4 +1,4 @@
-const APP_VERSION = "1.219";
+const APP_VERSION = "1.220";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -413,10 +413,10 @@ const RGDEF = {
   adl: { pages: 265, short: "Autodrehleiter", enc: "reglement-adl.enc", file: "Betriebsanleitung L32A-XS Zuchwil.pdf", c: "© Rosenbauer", tile: "", hero: "Betriebsanleitung Autodrehleiter L32A-XS, Feuerwehr Zuchwil (265 Seiten).", online: "" },
   basis: { pages: 296, short: "Basiswissen", enc: "reglement-basiswissen.enc", file: "Reglement Basiswissen FKS.pdf", tile: "Das ganze Reglement mit allen 296 Seiten (FKS 07/2026), direkt in der App zum Blättern.", hero: "Das ganze Reglement Basiswissen, FKS 07/2026.", online: "https://docs.feukos.ch/Basiswissen/ReglementBasiswissenDE/" },
   sgv: { pages: 10, short: "Kantonale Ergänzungen", enc: "reglement-sgv.enc", file: "Kantonale Ergänzungen SGV 14.10.2026.pdf", c: "© SGV Solothurn", tile: "", hero: "Basiswissen Kantonale Ergänzungen SGV Solothurn, Version 14.10.2026.", online: "" },
-  abc1: { pages: 137, short: "ABC-Handbuch Kap. 1–2 Allgemeines, ABC-Wehr", enc: "reglement-abc1.enc", file: "FKS Handbuch ABC Teil 1.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2199 – Teil 1 von 4 (Kap. 1–2 Allgemeines, ABC-Wehr).", online: "" },
-  abc2: { pages: 76, short: "ABC-Handbuch Kap. 3–4 A-Wehr, B-Wehr", enc: "reglement-abc2.enc", file: "FKS Handbuch ABC Teil 2.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2199 – Teil 2 von 4 (Kap. 3–4 A-Wehr, B-Wehr).", online: "" },
-  abc3: { pages: 158, short: "ABC-Handbuch Kap. 5 C-Wehr", enc: "reglement-abc3.enc", file: "FKS Handbuch ABC Teil 3.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2199 – Teil 3 von 4 (Kap. 5 C-Wehr).", online: "" },
-  abc4: { pages: 137, short: "ABC-Handbuch Kap. 6–9 Tabellen, Spezialeinsatzmittel, Glossar, Register", enc: "reglement-abc4.enc", file: "FKS Handbuch ABC Teil 4.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2199 – Teil 4 von 4 (Kap. 6–9 Tabellen, Spezialeinsatzmittel, Glossar, Register).", online: "" },
+  abc1: { pages: 137, short: "ABC-Handbuch Kap. 1–2 Allgemeines, ABC-Wehr", enc: "reglement-abc1.enc", file: "FKS Handbuch ABC Teil 1.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2209 – Teil 1 von 4 (Kap. 1–2 Allgemeines, ABC-Wehr).", online: "" },
+  abc2: { pages: 76, short: "ABC-Handbuch Kap. 3–4 A-Wehr, B-Wehr", enc: "reglement-abc2.enc", file: "FKS Handbuch ABC Teil 2.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2209 – Teil 2 von 4 (Kap. 3–4 A-Wehr, B-Wehr).", online: "" },
+  abc3: { pages: 158, short: "ABC-Handbuch Kap. 5 C-Wehr", enc: "reglement-abc3.enc", file: "FKS Handbuch ABC Teil 3.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2209 – Teil 3 von 4 (Kap. 5 C-Wehr).", online: "" },
+  abc4: { pages: 137, short: "ABC-Handbuch Kap. 6–9 Tabellen, Spezialeinsatzmittel, Glossar, Register", enc: "reglement-abc4.enc", file: "FKS Handbuch ABC Teil 4.pdf", tile: "", hero: "Handbuch für ABC-Einsätze, FKS, Version 1.1 / 15.11.2209 – Teil 4 von 4 (Kap. 6–9 Tabellen, Spezialeinsatzmittel, Glossar, Register).", online: "" },
   mat: { pages: 208, short: "Materialdienst", enc: "reglement-mat.enc", file: "FKS Handbuch Materialdienst.pdf", tile: "", hero: "Handbuch Materialdienst, FKS CSSP CSP, Version 2.01 / 10.03.2020 (208 Seiten).", online: "" },
   veg: { pages: 120, short: "Vegetationsbrände", enc: "reglement-veg.enc", file: "FKS Handbuch Vegetationsbrände.pdf", tile: "", hero: "Handbuch Spezialwissen «Vegetationsbrände», FKS.", online: "" },
   einsatz: { pages: 84, short: "Einsatzführung", enc: "reglement-einsatzfuehrung.enc", file: "Reglement Einsatzführung FKS.pdf", tile: "Das ganze Reglement mit allen 84 Seiten, direkt in der App zum Blättern.", hero: "Das ganze Reglement Einsatzführung, FKS.", online: "" }
@@ -1297,9 +1297,8 @@ function fzDetail(name) {
   const adl = document.getElementById("fzadl"); if (adl) adl.onclick = () => { state.fzBack = 1; masseView(); };
   document.getElementById("fzw").onclick = () => { state.wy = now; wartForm(null, { kind: "Fahrzeuge", grp: name }); };
   app.querySelectorAll(".wrow input").forEach(i => i.onchange = () => {
-    const y = +i.closest("[data-y]").dataset.y;
-    WSTATE.done[i.dataset.w + "|" + y] = i.checked ? 1 : 0; wartSave();
-    i.closest(".wrow").classList.toggle("done", i.checked);
+    const y = +i.closest("[data-y]").dataset.y, det = i.closest("[data-y]");
+    wartToggle(i, y, () => { const rows = w.filter(x => x.years.includes(y)), off = rows.filter(x => !wartDone(x, y)).length, b = det.querySelector("summary b"); if (b) b.textContent = off ? off + " offen" : "erledigt"; });
   });
   app.querySelectorAll(".wedit").forEach(b => b.onclick = () => { state.wy = now; wartForm(b.dataset.e); });
 }
@@ -1603,6 +1602,14 @@ const wartDone = (w, y) => { const k = w.id + "|" + y, v = WSTATE.done[k]; retur
 const chf = n => "CHF " + Math.round(n).toLocaleString("de-CH");
 const wartIv = w => w.iv === 1 ? "jährlich" : w.iv ? "alle " + w.iv + " Jahre" : "einmalig";
 const wartMeta = (w, noCost) => [wartIv(w), noCost || !w.cost ? "" : chf(w.cost), w.loc, w.note].filter(Boolean).join(" · ");
+function wartToggle(i, y, after) {
+  const w = wartItems().find(x => x.id === i.dataset.w), nm = w ? w.task : "Wartung";
+  const ok = confirm(i.checked ? "«" + nm + "» " + y + " als erledigt abhaken?" : "Haken bei «" + nm + "» " + y + " entfernen?");
+  if (!ok) { i.checked = !i.checked; return; }
+  WSTATE.done[i.dataset.w + "|" + y] = i.checked ? 1 : 0; wartSave();
+  i.closest(".wrow").classList.toggle("done", i.checked);
+  if (after) after();
+}
 function wartRow(w, y) {
   const d = wartDone(w, y), late = !d && y < new Date().getFullYear(), m = wartMeta(w);
   return `<div class="wrow${d ? " done" : ""}"><label><input type="checkbox" data-w="${esc(w.id)}"${d ? " checked" : ""}><span><b>${esc(w.task)}</b>${m ? `<em>${esc(m)}</em>` : ""}${late ? '<i>überfällig</i>' : ""}</span></label><button class="wedit" data-e="${esc(w.id)}" aria-label="Wartung bearbeiten">Ändern</button></div>`;
@@ -1711,12 +1718,10 @@ function wartView(year) {
   h += `<p class="foot">Grundlage: Wartungsplan «Prüfintervalle Feuerwehr Zuchwil». ${FWZ.user ? "Haken und Änderungen werden mit allen Angemeldeten geteilt." : "Ohne Anmeldung bleibt alles nur auf diesem Gerät."}</p>`;
   app.innerHTML = h; window.scrollTo(0, 0);
   app.querySelectorAll(".wyr button").forEach(b => b.onclick = () => wartView(+b.dataset.y));
-  app.querySelectorAll(".wrow input").forEach(i => i.onchange = () => {
-    WSTATE.done[i.dataset.w + "|" + y] = i.checked ? 1 : 0; wartSave();
-    i.closest(".wrow").classList.toggle("done", i.checked);
+  app.querySelectorAll(".wrow input").forEach(i => i.onchange = () => wartToggle(i, y, () => {
     const l2 = wartItems().filter(w => w.years.includes(y)), o2 = l2.filter(w => !wartDone(w, y));
     const sm = document.getElementById("wsum"); if (sm) sm.textContent = stat(l2, o2);
-  });
+  }));
   app.querySelectorAll(".wedit").forEach(b => b.onclick = () => wartForm(b.dataset.e));
   app.querySelectorAll(".wadd2").forEach(b => b.onclick = () => wartForm(null, { kind: b.dataset.k, grp: b.dataset.g }));
   const wa = document.getElementById("wadd"); if (wa) wa.onclick = () => wartForm(null);
