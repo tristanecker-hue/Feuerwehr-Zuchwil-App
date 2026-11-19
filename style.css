@@ -713,15 +713,10 @@ html.dv .adlf{align-content:start}html.dv .adlf+.foot{max-width:none}
 .fzarch .fzname { color: var(--muted, #6b6b6b); }
 
 .fzkz { font-size: .78rem; color: var(--muted); font-variant-numeric: tabular-nums; letter-spacing: .03em; margin-top: -3px; }
-@media (min-width: 700px) {
-  .fzgrid { grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 22px 18px; }
-  .fzname { font-size: 1.02rem; }
-  .fzkz { font-size: .85rem; }
-  .fzini { font-size: 3rem; }
-  .fzbadge { min-width: 28px; height: 28px; font-size: .95rem; top: 8px; right: 8px; }
-}
-@media (min-width: 1000px) {
-  .fzgrid { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 26px 22px; }
-  .fzname { font-size: 1.12rem; }
-  .fzini { font-size: 3.8rem; }
-}
+/* Kachelgrösse folgt --fzc (von fzFit gesetzt), damit alle Fahrzeuge auf den Bildschirm passen */
+.fzgrid { --fzc: 110px; }
+.fzini { font-size: clamp(1.3rem, calc(var(--fzc) * .34), 4.4rem); }
+.fzname { font-size: clamp(.76rem, calc(var(--fzc) * .085), 1.18rem); }
+.fzkz { font-size: clamp(.68rem, calc(var(--fzc) * .07), .95rem); }
+.fzbadge { min-width: clamp(22px, calc(var(--fzc) * .2), 32px); height: clamp(22px, calc(var(--fzc) * .2), 32px); font-size: clamp(.8rem, calc(var(--fzc) * .072), 1.05rem); }
+@media (min-width: 700px) { .fzgrid { gap: 20px 16px; } }

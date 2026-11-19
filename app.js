@@ -1,4 +1,4 @@
-const APP_VERSION = "1.224";
+const APP_VERSION = "1.225";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -1249,6 +1249,24 @@ function fzList(arch) {
   FZ_EXTRA.concat(FSTATE.add || []).forEach(n => { if (!out.includes(n) && !FZ_ARCH.includes(n)) out.push(n); });
   return out.sort((a, b) => a.localeCompare(b, "de"));
 }
+// Kachelgrösse so wählen, dass alle Fahrzeuge ohne Scrollen sichtbar sind.
+function fzFit() {
+  const g = app.querySelector(".fzgrid"); if (!g) return;
+  const n = g.children.length; if (!n) return;
+  const arch = app.querySelector(".fzarch");
+  const avail = () => window.innerHeight - g.getBoundingClientRect().top - (arch ? arch.offsetHeight + 14 : 0) - 30;
+  const max = Math.min(n, 8);
+  let cols = 2;
+  for (; cols < max; cols++) {
+    g.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+    if (g.getBoundingClientRect().height <= avail()) break;
+  }
+  const gap = parseFloat(getComputedStyle(g).columnGap) || 12;
+  while (cols > 2 && (g.clientWidth - gap * (cols - 1)) / cols < 66) cols--;
+  g.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  g.style.setProperty("--fzc", Math.floor((g.clientWidth - gap * (cols - 1)) / cols) + "px");
+  if (arch) { const a = arch.querySelector(".fzgrid"); if (a) { a.style.gridTemplateColumns = g.style.gridTemplateColumns; a.style.setProperty("--fzc", g.style.getPropertyValue("--fzc")); } }
+}
 function fzView() {
   state.mod = null; state.sub = null; state.view = "fz"; backBtn.hidden = false;
   document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
@@ -1267,6 +1285,7 @@ function fzView() {
     <div class="fzgrid">${tiles(fzList())}</div>
     ${arch.length ? `<details class="wgrp wyear fzarch"><summary><span>ARCHIV</span><b>${arch.length} ausser Dienst</b></summary><div class="fzgrid">${tiles(arch)}</div></details>` : ""}`;
   window.scrollTo(0, 0); nimgFill(app);
+  fzFit(); if (!window.__fzres) { window.__fzres = 1; window.addEventListener("resize", () => { if (state.view === "fz") fzFit(); }); }
   app.querySelectorAll("[data-f]").forEach(b => b.onclick = () => fzDetail(b.dataset.f));
   document.getElementById("fzadd").onclick = () => fzEdit(null);
   fzPull().then(ok => { if (ok && state.view === "fz") fzView(); });
