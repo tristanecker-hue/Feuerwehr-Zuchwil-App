@@ -1,4 +1,4 @@
-const APP_VERSION = "1.247";
+const APP_VERSION = "1.248";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -1320,34 +1320,22 @@ function fzFit() {
   const g = app.querySelector(".fzgrid"); if (!g) return;
   const n = g.children.length; if (!n) return;
   const arch = app.querySelector(".fzarch");
-  const cs = getComputedStyle(g), gapX = parseFloat(cs.columnGap) || 12, gapY = parseFloat(cs.rowGap) || 16;
-  const W = g.clientWidth;
   const padB = parseFloat(getComputedStyle(document.body).paddingBottom) || 0;
   const avail = () => window.innerHeight - g.getBoundingClientRect().top - (arch ? arch.offsetHeight + 14 : 0) - padB - 10;
-  let best = null, wide = null;
-  for (let cols = 2; cols <= Math.min(n, 8); cols++) {
-    const w = (W - gapX * (cols - 1)) / cols; if (w < 84) break;
-    wide = { cols, w, pic: w, score: 0 };
-    const rows = Math.ceil(n / cols);
-    /* quadratisch messen, um die Höhe der Beschriftung zu kennen */
-    g.style.setProperty("--fzc", Math.floor(w) + "px");
-    g.style.removeProperty("--fzh");
+  const gap = parseFloat(getComputedStyle(g).columnGap) || 12;
+  g.style.removeProperty("--fzh");
+  const max = Math.min(n, 8);
+  let cols = 2;
+  for (; cols < max; cols++) {
     g.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
-    const lab = Math.max(0, (g.getBoundingClientRect().height - gapY * (rows - 1)) / rows - w);
-    const free = avail() - gapY * (rows - 1);
-    let pic = free / rows - lab;
-    if (pic < 56 || pic < w * 0.78) continue;
-    pic = Math.min(pic, w * 1.45);
-    const score = w * pic;
-    if (!best || score > best.score) best = { cols, w, pic, score };
+    if (g.getBoundingClientRect().height <= avail()) break;
   }
-  if (!best) best = wide || { cols: 2, w: (W - gapX) / 2, pic: 0, score: 0 };
-  g.style.gridTemplateColumns = `repeat(${best.cols}, minmax(0, 1fr))`;
-  g.style.setProperty("--fzc", Math.floor(best.w) + "px");
-  if (best.pic) g.style.setProperty("--fzh", Math.floor(best.pic) + "px"); else g.style.removeProperty("--fzh");
+  while (cols > 2 && (g.clientWidth - gap * (cols - 1)) / cols < 66) cols--;
+  g.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
+  g.style.setProperty("--fzc", Math.floor((g.clientWidth - gap * (cols - 1)) / cols) + "px");
   if (arch) {
     const a = arch.querySelector(".fzgrid");
-    if (a) { a.style.gridTemplateColumns = g.style.gridTemplateColumns; a.style.setProperty("--fzc", g.style.getPropertyValue("--fzc")); a.style.setProperty("--fzh", g.style.getPropertyValue("--fzh")); }
+    if (a) { a.style.gridTemplateColumns = g.style.gridTemplateColumns; a.style.setProperty("--fzc", g.style.getPropertyValue("--fzc")); a.style.removeProperty("--fzh"); }
   }
 }
 function fzView(kind) {
