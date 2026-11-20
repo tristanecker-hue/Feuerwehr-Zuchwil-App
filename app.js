@@ -1,4 +1,4 @@
-const APP_VERSION = "1.245";
+const APP_VERSION = "1.246";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -1320,18 +1320,34 @@ function fzFit() {
   const g = app.querySelector(".fzgrid"); if (!g) return;
   const n = g.children.length; if (!n) return;
   const arch = app.querySelector(".fzarch");
-  const avail = () => window.innerHeight - g.getBoundingClientRect().top - (arch ? arch.offsetHeight + 14 : 0) - 30;
-  const max = Math.min(n, 8);
-  let cols = 2;
-  for (; cols < max; cols++) {
+  const cs = getComputedStyle(g), gapX = parseFloat(cs.columnGap) || 12, gapY = parseFloat(cs.rowGap) || 16;
+  const W = g.clientWidth;
+  const padB = parseFloat(getComputedStyle(document.body).paddingBottom) || 0;
+  const avail = () => window.innerHeight - g.getBoundingClientRect().top - (arch ? arch.offsetHeight + 14 : 0) - padB - 10;
+  let best = null;
+  for (let cols = 2; cols <= Math.min(n, 8); cols++) {
+    const w = (W - gapX * (cols - 1)) / cols; if (w < 66) break;
+    const rows = Math.ceil(n / cols);
+    /* quadratisch messen, um die Höhe der Beschriftung zu kennen */
+    g.style.setProperty("--fzc", Math.floor(w) + "px");
+    g.style.removeProperty("--fzh");
     g.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-    if (g.getBoundingClientRect().height <= avail()) break;
+    const lab = Math.max(0, (g.getBoundingClientRect().height - gapY * (rows - 1)) / rows - w);
+    const free = avail() - gapY * (rows - 1);
+    let pic = free / rows - lab;
+    if (pic < 56 || pic < w * 0.78) continue;
+    pic = Math.min(pic, w * 1.45);
+    const score = w * pic;
+    if (!best || score > best.score) best = { cols, w, pic, score };
   }
-  const gap = parseFloat(getComputedStyle(g).columnGap) || 12;
-  while (cols > 2 && (g.clientWidth - gap * (cols - 1)) / cols < 66) cols--;
-  g.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-  g.style.setProperty("--fzc", Math.floor((g.clientWidth - gap * (cols - 1)) / cols) + "px");
-  if (arch) { const a = arch.querySelector(".fzgrid"); if (a) { a.style.gridTemplateColumns = g.style.gridTemplateColumns; a.style.setProperty("--fzc", g.style.getPropertyValue("--fzc")); } }
+  if (!best) best = { cols: Math.min(n, 4), w: (W - gapX * 3) / Math.min(n, 4), pic: 0, score: 0 };
+  g.style.gridTemplateColumns = `repeat(${best.cols}, 1fr)`;
+  g.style.setProperty("--fzc", Math.floor(best.w) + "px");
+  if (best.pic) g.style.setProperty("--fzh", Math.floor(best.pic) + "px"); else g.style.removeProperty("--fzh");
+  if (arch) {
+    const a = arch.querySelector(".fzgrid");
+    if (a) { a.style.gridTemplateColumns = g.style.gridTemplateColumns; a.style.setProperty("--fzc", g.style.getPropertyValue("--fzc")); a.style.setProperty("--fzh", g.style.getPropertyValue("--fzh")); }
+  }
 }
 function fzView(kind) {
   const K = kind || state.fzk || "Fahrzeuge"; state.fzk = K;
@@ -1349,8 +1365,7 @@ function fzView(kind) {
   const arch = fzList(true, K);
   app.innerHTML = `<section class="hero"><h1>${fzWort(K, 1)}</h1><p>Stammdaten, Logbuch und Wartungen je ${fzWort(K, 0)}.</p></section>
     <div class="fzgrid">${tiles(fzList(false, K))}</div>
-    ${arch.length ? `<details class="wgrp wyear fzarch"><summary><span>ARCHIV</span><b>${arch.length} ausser Dienst</b></summary><div class="fzgrid">${tiles(arch)}</div></details>` : ""}
-    <p class="foot">Neue ${fzWort(K, 1)} fügst du in den Einstellungen hinzu (Zahnrad oben rechts).</p>`;
+    ${arch.length ? `<details class="wgrp wyear fzarch"><summary><span>ARCHIV</span><b>${arch.length} ausser Dienst</b></summary><div class="fzgrid">${tiles(arch)}</div></details>` : ""}`;
   window.scrollTo(0, 0); nimgFill(app);
   if (!FZSEED) fzSeedLoad().then(o => { if (o && state.view === "fz") fzView(K); }).catch(() => {});
   fzFit(); if (!window.__fzres) { window.__fzres = 1; window.addEventListener("resize", () => { if (state.view === "fz") fzFit(); }); }
