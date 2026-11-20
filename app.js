@@ -1,4 +1,4 @@
-const APP_VERSION = "1.243";
+const APP_VERSION = "1.244";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -2262,7 +2262,8 @@ function gateView() {
 
 /* ---------- Einstellungen: Sichtbarkeit und Benutzerverwaltung ---------- */
 const CFG_ITEMS = [
-  ["Startseite", [["home:reg", "Reglemente"], ["home:ausb", "Ausbildung"], ["home:les", "Ausbildung · Lektionen"], ["home:vor", "Ausbildung · Vorlagen"], ["home:ao", "Ausbildung · Ausbildungsoffizier"], ["home:log", "Logistik"], ["home:not", "Notizen"], ["home:games", "Feuerwehr Spiele"]]],
+  ["Startseite", [["home:reg", "Reglemente"], ["home:ausb", "Ausbildung"], ["home:log", "Logistik"], ["home:not", "Notizen"], ["home:games", "Feuerwehr Spiele"]]],
+  ["Im Bereich Ausbildung", [["home:les", "Lektionen"], ["home:vor", "Vorlagen"], ["home:ao", "Ausbildungsoffizier"]]],
   ["Reglemente", [["reg:basis", "Basiswissen"], ["reg:einsatz", "Einsatzführung"], ["reg:sgv", "Kantonale Ergänzungen (SGV)"], ["reg:abc", "ABC-Handbuch"], ["reg:veg", "Vegetationsbrände"], ["reg:mat", "Materialdienst"], ["reg:adl", "Autodrehleiter"]]],
   ["Ausbildungsoffizier", [["ao:check", "Checkliste"], ["ao:keil", "KEIL"], ["ao:lek", "Lektionen"], ["ao:kq", "Kurs-Quiz"], ["ao:fach", "Fachlektionen"], ["ao:meth", "Lektion halten"], ["ao:zahl", "Zahlen-Trainer"], ["ao:bil", "Erfolgsauswertung / Bilanz"], ["ao:prog", "Kursprogramm"], ["ao:regl", "Reglement Basiswissen"]]]
 ];
