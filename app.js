@@ -1,4 +1,4 @@
-const APP_VERSION = "1.240";
+const APP_VERSION = "1.241";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -96,7 +96,6 @@ function start() {
       <div class="menu">
         ${typeof fwzHidden === "function" && fwzHidden("home:reg") ? "" : '<button class="mbtn main" id="t-reg">Reglemente</button>'}
         ${typeof fwzHidden === "function" && fwzHidden("home:ausb") ? "" : '<button class="mbtn main" id="t-ausb">Ausbildung</button>'}
-        ${typeof fwzHidden === "function" && fwzHidden("home:ao") ? "" : '<button class="mbtn main" id="t-ao">Ausbildungsoffizier</button>'}
         ${typeof fwzHidden === "function" && fwzHidden("home:log") ? "" : '<button class="mbtn main" id="t-log">Logistik</button>'}
         ${typeof fwzHidden === "function" && fwzHidden("home:not") ? "" : '<button class="mbtn main" id="t-not">Notizen</button>'}
         ${typeof fwzHidden === "function" && fwzHidden("home:games") ? "" : '<button class="mbtn main" id="t-gm">Feuerwehr Spiele</button>'}
@@ -115,7 +114,7 @@ function start() {
   if (tno) tno.onclick = () => { state.notHome = true; state.nf = null; state.nq = ""; notesView(""); };
   if (tg) tg.onclick = gamesView;
   if (tab) tab.onclick = ausbView;
-  if (tr) tr.onclick = home; if (ta) ta.onclick = aoView;
+  if (tr) tr.onclick = home; if (ta) ta.onclick = aoView;   /* Kachel entfällt, Aufruf über Ausbildung */
   window.scrollTo(0, 0);
 }
 
@@ -1198,10 +1197,11 @@ function ausbView() {
   document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
   const sh = id => !(typeof fwzHidden === "function" && fwzHidden(id));
   app.innerHTML = `<section class="hero"><h1>Ausbildung</h1><p>Lektionen und Vorlagen der Feuerwehr Zuchwil.</p></section>
-    <div class="menu">${sh("home:les") ? '<button class="mbtn main" id="a-les">Lektionen</button>' : ""}${sh("home:vor") ? '<button class="mbtn main" id="a-vor">Vorlagen</button>' : ""}</div>`;
+    <div class="menu">${sh("home:les") ? '<button class="mbtn main" id="a-les">Lektionen</button>' : ""}${sh("home:vor") ? '<button class="mbtn main" id="a-vor">Vorlagen</button>' : ""}${sh("home:ao") ? '<button class="mbtn main" id="a-ao">Ausbildungsoffizier</button>' : ""}</div>`;
   const l = document.getElementById("a-les"), v = document.getElementById("a-vor");
   if (l) l.onclick = () => { state.vorHome = false; state.lc = null; lesView(); };
   if (v) v.onclick = () => { state.vorHome = true; state.lc = "v"; lesView(); };
+  const ao = document.getElementById("a-ao"); if (ao) ao.onclick = () => { state.aoHome = true; aoView(); };
   window.scrollTo(0, 0);
 }
 
@@ -2226,7 +2226,7 @@ async function lektionen(m, el) {
 }
 
 backBtn.addEventListener("click", () => { if (state.view === "wartf") { wartView(state.wy); return; } if (state.view === "notee") { state.nid ? noteView(state.nid) : notesView(); return; } if (state.view === "nsh") { notesView(""); return; }
-  if (state.view === "note") { const nb = state.nBack; state.nBack = null; if (nb && nb.fz) { fzDetail(nb.fz); return; } notesView(""); return; } if (state.view === "notes") { if (state.nf || state.nq) { state.nf = null; state.nq = ""; notesView(""); } else if (state.notHome) { state.notHome = false; start(); } else logView(); return; } if (state.view === "wart" || state.view === "fz") { logView(); return; } if (state.view === "fzd") { fzView(state.fzk); return; } if (state.view === "fze" || state.view === "fzl") { if (!state.fzn && state.fzFrom === "set") { state.fzFrom = null; settingsView(); return; } state.fzn ? fzDetail(state.fzn) : fzView(state.fzk); return; } if (state.view === "games") { if (state.gm) gamesView(); else { gmStop(); start(); } return; } if (state.view === "les" && state.lc === "v" && state.vorHome) { state.vorHome = false; state.lc = null; ausbView(); return; } if (state.view === "les" && (state.lc === "vl" || state.lc === "vn" || state.lc === "aa")) { state.lc = "v"; lesView(); window.scrollTo(0, 0); return; } if (state.view === "sub" && !state.mod) { home(); return; } if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "sim") { adlView(); return; } if (state.view === "masse" && state.fzBack) { state.fzBack = 0; fzDetail("Autodrehleiter"); return; } if (["masse", "joystick", "haus"].includes(state.view)) { adlView(); return; } if (state.view === "adl" || state.view === "gq" || state.view === "sgv" || state.view === "spick") { (state.sub ? subView(state.sub) : home()); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else (state.sub ? subView(state.sub) : home()); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.view === "les") { ausbView(); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) (state.sub ? subView(state.sub) : home()); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
+  if (state.view === "note") { const nb = state.nBack; state.nBack = null; if (nb && nb.fz) { fzDetail(nb.fz); return; } notesView(""); return; } if (state.view === "notes") { if (state.nf || state.nq) { state.nf = null; state.nq = ""; notesView(""); } else if (state.notHome) { state.notHome = false; start(); } else logView(); return; } if (state.view === "wart" || state.view === "fz") { logView(); return; } if (state.view === "fzd") { fzView(state.fzk); return; } if (state.view === "fze" || state.view === "fzl") { if (!state.fzn && state.fzFrom === "set") { state.fzFrom = null; settingsView(); return; } state.fzn ? fzDetail(state.fzn) : fzView(state.fzk); return; } if (state.view === "games") { if (state.gm) gamesView(); else { gmStop(); start(); } return; } if (state.view === "les" && state.lc === "v" && state.vorHome) { state.vorHome = false; state.lc = null; ausbView(); return; } if (state.view === "les" && (state.lc === "vl" || state.lc === "vn" || state.lc === "aa")) { state.lc = "v"; lesView(); window.scrollTo(0, 0); return; } if (state.view === "sub" && !state.mod) { home(); return; } if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "sim") { adlView(); return; } if (state.view === "masse" && state.fzBack) { state.fzBack = 0; fzDetail("Autodrehleiter"); return; } if (["masse", "joystick", "haus"].includes(state.view)) { adlView(); return; } if (state.view === "adl" || state.view === "gq" || state.view === "sgv" || state.view === "spick") { (state.sub ? subView(state.sub) : home()); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else (state.sub ? subView(state.sub) : home()); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.view === "les") { ausbView(); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) (state.sub ? subView(state.sub) : home()); else if (state.view === "ao" || state.view === "ao-sub") { if (state.view === "ao" && state.aoHome) { state.aoHome = false; ausbView(); } else aoBack(); } else start(); });
 /* ---------- Anmeldepflicht ---------- */
 let gateOffline = false;
 function gateNeeded() { return !!FWZ.enabled && !FWZ.user && !gateOffline; }
@@ -2261,7 +2261,7 @@ function gateView() {
 
 /* ---------- Einstellungen: Sichtbarkeit und Benutzerverwaltung ---------- */
 const CFG_ITEMS = [
-  ["Startseite", [["home:reg", "Reglemente"], ["home:ausb", "Ausbildung"], ["home:les", "Ausbildung · Lektionen"], ["home:vor", "Ausbildung · Vorlagen"], ["home:ao", "Ausbildungsoffizier"], ["home:log", "Logistik"], ["home:not", "Notizen"], ["home:games", "Feuerwehr Spiele"]]],
+  ["Startseite", [["home:reg", "Reglemente"], ["home:ausb", "Ausbildung"], ["home:les", "Ausbildung · Lektionen"], ["home:vor", "Ausbildung · Vorlagen"], ["home:ao", "Ausbildung · Ausbildungsoffizier"], ["home:log", "Logistik"], ["home:not", "Notizen"], ["home:games", "Feuerwehr Spiele"]]],
   ["Reglemente", [["reg:basis", "Basiswissen"], ["reg:einsatz", "Einsatzführung"], ["reg:sgv", "Kantonale Ergänzungen (SGV)"], ["reg:abc", "ABC-Handbuch"], ["reg:veg", "Vegetationsbrände"], ["reg:mat", "Materialdienst"], ["reg:adl", "Autodrehleiter"]]],
   ["Ausbildungsoffizier", [["ao:check", "Checkliste"], ["ao:keil", "KEIL"], ["ao:lek", "Lektionen"], ["ao:kq", "Kurs-Quiz"], ["ao:fach", "Fachlektionen"], ["ao:meth", "Lektion halten"], ["ao:zahl", "Zahlen-Trainer"], ["ao:bil", "Erfolgsauswertung / Bilanz"], ["ao:prog", "Kursprogramm"], ["ao:regl", "Reglement Basiswissen"]]]
 ];
