@@ -744,3 +744,7 @@ html.dv .adlf{align-content:start}html.dv .adlf+.foot{max-width:none}
 
 .lgact { display: inline-flex; gap: 6px; flex: 0 0 auto; }
 .lgact .lgi { min-width: 36px; padding: 6px 8px; font-size: 1rem; line-height: 1; text-align: center; }
+
+.fzsvg { display: grid; place-items: center; width: 56%; height: 56%; color: var(--red); }
+.fzsvg svg { width: 100%; height: 100%; }
+.fzarch .fzsvg { color: var(--muted); }

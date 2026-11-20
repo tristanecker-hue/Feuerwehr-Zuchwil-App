@@ -1,4 +1,4 @@
-const APP_VERSION = "1.237";
+const APP_VERSION = "1.238";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -1220,6 +1220,35 @@ function logView() {
 
 /* ---------- Logistik: Fahrzeuge (Stammdaten und Wartungen je Fahrzeug) ---------- */
 const FZ_F = [["typ", "Typ / Marke"], ["kz", "Kontrollschild"], ["stamm", "Stammnummer"], ["vin", "Fahrgestell-Nr."], ["jahr", "1. Inverkehrsetzung / Jahrgang"], ["standort", "Standort"], ["l", "Länge (m)"], ["br", "Breite (m)"], ["h", "Höhe (m)"], ["kg", "Leergewicht (kg)"], ["gkg", "Gesamtgewicht (kg)"], ["nutz", "Nutzlast (kg)"], ["anh", "Anhängelast (kg)"], ["dach", "Dachlast (kg)"], ["plz", "Plätze"], ["mfk", "Letzte Prüfung (MFK)"], ["bem", "Bemerkung"]];
+/* Platzhalter-Symbole, solange kein Foto hinterlegt ist */
+const FZ_SVG = {
+  lkw: '<path d="M4 33V15h21v18"/><path d="M25 21h7l6 6.5V33"/><path d="M4 33h4m8 0h9m8 0h5"/><circle cx="12" cy="34.5" r="3.6"/><circle cx="30" cy="34.5" r="3.6"/>',
+  drehleiter: '<path d="M5 33V22h17v11"/><path d="M22 25h7l6 5.5V33"/><path d="M5 33h3m8 0h9m8 0h5"/><circle cx="11.5" cy="34.5" r="3.4"/><circle cx="29.5" cy="34.5" r="3.4"/><path d="M9 21 36 8M12 26 39 13"/><path d="m12.5 23.5 2 4m6-7 2 4m6-7 2 4m6-7 2 4"/>',
+  tlf: '<rect x="4" y="16" width="20" height="13" rx="5"/><path d="M24 19h7l6 6.5V29"/><path d="M4 29h3m9 0h11m7 0h3"/><circle cx="11.5" cy="31" r="3.4"/><circle cx="30.5" cy="31" r="3.4"/><path d="M9 16v13M17 16v13"/>',
+  van: '<path d="M5 32V19c0-1.1.9-2 2-2h17l9 8v7"/><path d="M24 17v8h9"/><path d="M5 32h4m8 0h10m7 0h3"/><circle cx="13" cy="33.5" r="3.4"/><circle cx="31" cy="33.5" r="3.4"/>',
+  auto: '<path d="M6 31v-6l4-8h17l6 8 4 1v5"/><path d="M10 17h20"/><path d="M6 31h4m8 0h10m7 0h2"/><circle cx="14" cy="32" r="3.4"/><circle cx="32" cy="32" r="3.4"/>',
+  maske: '<path d="M24 8c8 0 12 5.5 12 12.5S31 34 24 34s-12-5-12-13.5S16 8 24 8Z"/><ellipse cx="24" cy="19" rx="7.5" ry="5.5"/><path d="M20 34v3h8v-3"/><rect x="20.5" y="37" width="7" height="6" rx="2"/><path d="M12.5 15 6 12M35.5 15 42 12"/>',
+  blitz: '<path d="M26 5 12 27h10l-3 16 15-23H24l2-15Z"/>',
+  tropfen: '<path d="M24 6c6 8 11 13 11 19a11 11 0 0 1-22 0c0-6 5-11 11-19Z"/><path d="M18 26c0 4 2.6 6.5 6 6.5"/>',
+  leiter: '<path d="M15 6v36M33 6v36"/><path d="M15 13h18M15 20h18M15 27h18M15 34h18"/>',
+  gurt: '<path d="M8 24H6.5C4.6 24 3 22.4 3 20.5S4.6 17 6.5 17"/><path d="M8 20.5h5"/><rect x="13" y="17.5" width="13" height="13" rx="3"/><path d="M16.5 24h6"/><path d="M26 24h8"/><path d="M34 24h2.5c2 0 3.5 1.6 3.5 3.5S38.4 31 36.5 31"/><path d="M13 34l13-3"/>',
+  stapler: '<path d="M13 8v24M17 8v24"/><path d="M13 27H5"/><path d="M17 31h18v-9h-6l-4-6h-8"/><circle cx="22" cy="34" r="3.2"/><circle cx="33" cy="34" r="3.2"/><path d="M13 12h4"/>',
+  flasche: '<rect x="16" y="13" width="16" height="28" rx="7"/><path d="M21 13V9h6v4"/><path d="M24 5v4"/><path d="M19 20h10"/>',
+  messer: '<rect x="13" y="8" width="22" height="32" rx="4"/><rect x="17" y="13" width="14" height="9" rx="1.5"/><circle cx="24" cy="31" r="4"/><path d="M24 8V5"/>',
+  werkzeug: '<path d="M30 9a9 9 0 0 0-9 12L9 33a3.5 3.5 0 0 0 5 5l12-12a9 9 0 0 0 11-12l-6 6-5-1-1-5 5-5Z"/>'
+};
+const FZ_ICON_FZ = [[/drehleiter|adl\b/i, "drehleiter"], [/tankl|tlf/i, "tlf"], [/ptf|personen/i, "van"], [/kdo|kommando/i, "auto"]];
+const FZ_ICON_GE = [
+  [/masken|wasch/i, "maske"], [/elektro|strom/i, "blitz"], [/entkalk|swisskalk|wasser/i, "tropfen"],
+  [/leiter/i, "leiter"], [/spannset|gurt|zurr/i, "gurt"], [/stapler|hubwagen/i, "stapler"],
+  [/kompressor|flasche|atemschutz/i, "flasche"], [/messger|dräger|drager|gas/i, "messer"]
+];
+function fzIcon(name, kind) {
+  const ge = kind === "Material";
+  const hit = (ge ? FZ_ICON_GE : FZ_ICON_FZ).find(r => r[0].test(name));
+  const k = hit ? hit[1] : (ge ? "werkzeug" : "lkw");
+  return `<span class="fzsvg"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${FZ_SVG[k]}</svg></span>`;
+}
 let FZSEED = null;
 async function fzSeedLoad() {
   if (FZSEED) return FZSEED;
@@ -1308,7 +1337,7 @@ function fzView(kind) {
     const offen = w.filter(x => x.years.includes(now) && !wartDone(x, now)).length;
     const d = fzData(n);
     const meta = [d.typ, d.kz, w.length ? w.length + (w.length === 1 ? " Wartung" : " Wartungen") : "keine Wartung", ys.length ? "nächste " + ys[0] : ""].filter(Boolean).join(" · ");
-    const pic = d.img ? (d.img.slice(0, 4) === "ref:" ? `<img data-ref="${esc(d.img)}" alt="">` : `<img src="${d.img}" alt="">`) : `<span class="fzini">${esc(n.trim().charAt(0).toUpperCase())}</span>`;
+    const pic = d.img ? (d.img.slice(0, 4) === "ref:" ? `<img data-ref="${esc(d.img)}" alt="">` : `<img src="${d.img}" alt="">`) : fzIcon(n, K);
     return `<button class="fztile" data-f="${esc(n)}" title="${esc(meta)}"><span class="fzpic">${pic}${offen ? `<i class="fzbadge">${offen}</i>` : ""}</span><span class="fzname">${esc(n)}</span>${d.kz ? `<span class="fzkz">${esc(d.kz)}</span>` : ""}</button>`;
   }).join("");
   const arch = fzList(true, K);
