@@ -1,4 +1,4 @@
-const APP_VERSION = "1.246";
+const APP_VERSION = "1.247";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -1324,14 +1324,15 @@ function fzFit() {
   const W = g.clientWidth;
   const padB = parseFloat(getComputedStyle(document.body).paddingBottom) || 0;
   const avail = () => window.innerHeight - g.getBoundingClientRect().top - (arch ? arch.offsetHeight + 14 : 0) - padB - 10;
-  let best = null;
+  let best = null, wide = null;
   for (let cols = 2; cols <= Math.min(n, 8); cols++) {
-    const w = (W - gapX * (cols - 1)) / cols; if (w < 66) break;
+    const w = (W - gapX * (cols - 1)) / cols; if (w < 84) break;
+    wide = { cols, w, pic: w, score: 0 };
     const rows = Math.ceil(n / cols);
     /* quadratisch messen, um die Höhe der Beschriftung zu kennen */
     g.style.setProperty("--fzc", Math.floor(w) + "px");
     g.style.removeProperty("--fzh");
-    g.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+    g.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
     const lab = Math.max(0, (g.getBoundingClientRect().height - gapY * (rows - 1)) / rows - w);
     const free = avail() - gapY * (rows - 1);
     let pic = free / rows - lab;
@@ -1340,8 +1341,8 @@ function fzFit() {
     const score = w * pic;
     if (!best || score > best.score) best = { cols, w, pic, score };
   }
-  if (!best) best = { cols: Math.min(n, 4), w: (W - gapX * 3) / Math.min(n, 4), pic: 0, score: 0 };
-  g.style.gridTemplateColumns = `repeat(${best.cols}, 1fr)`;
+  if (!best) best = wide || { cols: 2, w: (W - gapX) / 2, pic: 0, score: 0 };
+  g.style.gridTemplateColumns = `repeat(${best.cols}, minmax(0, 1fr))`;
   g.style.setProperty("--fzc", Math.floor(best.w) + "px");
   if (best.pic) g.style.setProperty("--fzh", Math.floor(best.pic) + "px"); else g.style.removeProperty("--fzh");
   if (arch) {
