@@ -1,4 +1,4 @@
-const APP_VERSION = "1.241";
+const APP_VERSION = "1.242";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -99,6 +99,7 @@ function start() {
         ${typeof fwzHidden === "function" && fwzHidden("home:log") ? "" : '<button class="mbtn main" id="t-log">Logistik</button>'}
         ${typeof fwzHidden === "function" && fwzHidden("home:not") ? "" : '<button class="mbtn main" id="t-not">Notizen</button>'}
         ${typeof fwzHidden === "function" && fwzHidden("home:games") ? "" : '<button class="mbtn main" id="t-gm">Feuerwehr Spiele</button>'}
+        ${["home:reg", "home:ausb", "home:log", "home:not", "home:games"].every(i => typeof fwzHidden === "function" && fwzHidden(i)) ? '<div class="note">Für dein Konto ist noch nichts freigegeben. Ein Administrator kann das in den Einstellungen ändern.</div>' : ""}
       </div>
       <div class="bottom">
         <button class="wxcard" id="wxs" aria-label="Wetter Zuchwil"><span class="wxl">Wetter Zuchwil …</span></button>
@@ -2282,7 +2283,7 @@ function cfgSeed(c) {
 }
 const cfgMe = () => (typeof FWZ !== "undefined" && FWZ.user) ? FWZ.label() : (gateOffline ? ((() => { try { return (localStorage.getItem("fwz-user") || "").trim().toLowerCase(); } catch (e) { return ""; } })()) : "");
 const cfgIsAdmin = () => !!cfgMe() && (CFG.admins || []).includes(cfgMe());
-function fwzHidden(id) { const me = cfgMe(), u = me && CFG.users[me]; return ((u ? u.hide : CFG.def.hide) || []).includes(id); }
+function fwzHidden(id) { const me = cfgMe(), u = me && CFG.users[me]; if (!u) return true; return (u.hide || []).includes(id); }
 async function cfgPull() {
   if (typeof FWZ === "undefined" || !FWZ.user) return;
   try {
@@ -2332,7 +2333,7 @@ function settingsView() {
   const me = cfgMe(), adm = cfgIsAdmin(), users = Object.keys(CFG.users).sort();
   const who = !me ? '<div class="note">Nicht angemeldet. Melde dich als Administrator an, um die Einstellungen zu ändern. Angezeigt wird die Standard-Ansicht.</div>' : adm ? '<div class="note"><b>Administrator:</b> ' + esc(me) + '. Haken = sichtbar. Änderungen werden sofort im Konto gespeichert.</div>' : '<div class="note">Angemeldet als <b>' + esc(me) + '</b>. Nur Administratoren können die Sichtbarkeit ändern.</div>';
   const dis = adm ? "" : " disabled";
-  const cols = [{ k: "", n: "Alle", hide: CFG.def.hide }].concat(users.map(u => ({ k: u, n: u, hide: CFG.users[u].hide })));
+  const cols = users.map(u => ({ k: u, n: u, hide: CFG.users[u].hide }));
   const head = cols.map(c => `<th>${esc(c.n)}${adm && c.k ? `<button class="cfgx" data-du="${esc(c.k)}" aria-label="Benutzer ${esc(c.n)} entfernen" title="Benutzer entfernen">×</button>` : ""}</th>`).join("");
   const rows = CFG_ITEMS.map(g => `<tr class="cfgg"><th colspan="${cols.length + 1}">${g[0]}</th></tr>` + g[1].map(i => `<tr><td class="cfgl">${esc(i[1])}</td>${cols.map(c => `<td><input type="checkbox" data-id="${i[0]}" data-u="${esc(c.k)}" aria-label="${esc(i[1])} für ${esc(c.n)}"${c.hide.includes(i[0]) ? "" : " checked"}${dis}></td>`).join("")}</tr>`).join("")).join("");
   const outHtml = FWZ.user ? `<h3 class="zh">Konto</h3><div class="cfgadd"><button class="btn" id="outb">Abmelden (${esc(FWZ.label())})</button></div>` : "";
@@ -2345,7 +2346,7 @@ function settingsView() {
   if (!adm) { app.innerHTML = `<section class="hero"><h1>Einstellungen</h1><p>${me ? "Angemeldet als " + esc(me) + "." : "Nicht angemeldet."}</p></section>${logHtml}${thmHtml}${outHtml}`; outBind(); window.scrollTo(0, 0); return; }
   app.innerHTML = `<section class="hero"><h1>Einstellungen</h1><p>Benutzerverwaltung: Wer kann was sehen.</p></section>${who}
     <div class="cfgtw"><table class="cfgt"><thead><tr><th></th>${head}</tr></thead><tbody>${rows}</tbody></table></div>
-    <p class="foot">Spalte «Alle» gilt für jeden Benutzer ohne eigene Spalte.</p>
+    <p class="foot">Nur eingetragene Benutzer sehen etwas: Wer hier keine Spalte hat, sieht keine Kacheln. Neue Benutzer starten mit den Haken, die zuletzt als Vorgabe galten.</p>
     ${adm ? `<h3 class="zh">Benutzer hinzufügen</h3><div class="cfgadd"><input id="cfgnu" placeholder="Anmeldename, z. B. max" autocomplete="off" autocapitalize="none"><input id="cfgnp" type="text" placeholder="Passwort (mind. 6 Zeichen)" autocomplete="off" autocapitalize="none"><button class="btn primary" id="cfgau">Benutzer erstellen</button></div>
       <h3 class="zh">Administratoren</h3><div class="cfglist">${(CFG.admins || []).map(a => `<div class="cfgrow"><span>${esc(a)}</span>${(CFG.admins.length > 1 && a !== me) ? `<button class="btn ghost" data-da="${esc(a)}">Entfernen</button>` : ""}</div>`).join("")}</div>
       <div class="cfgadd"><input id="cfgna" placeholder="Anmeldename" autocomplete="off" autocapitalize="none"><button class="btn" id="cfgaa">Administrator hinzufügen</button></div>` : ""}
