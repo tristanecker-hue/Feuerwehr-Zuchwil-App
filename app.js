@@ -1,4 +1,4 @@
-const APP_VERSION = "1.227";
+const APP_VERSION = "1.228";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -1208,7 +1208,8 @@ function logView() {
   state.mod = null; state.sub = null; state.view = "log"; backBtn.hidden = false;
   document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
   app.innerHTML = `<section class="hero"><h1>Logistik</h1><p>Fahrzeuge, Geräte, Wartungen und Notizen.</p></section>
-    <div class="menu"><button class="mbtn main" id="l-fz">Fahrzeuge</button><button class="mbtn main" id="l-ger">Geräte</button><button class="mbtn main" id="l-wart">Wartungsarbeiten</button><button class="mbtn main" id="l-not">Notizen</button></div>`;
+    <div class="menu"><button class="mbtn main" id="l-fz">Fahrzeuge</button><button class="mbtn main" id="l-ger">Geräte</button><button class="mbtn main" id="l-not">Notizen</button></div>
+    <p class="foot">Wartungen hakst du direkt beim Fahrzeug oder Gerät ab. <button class="linkbtn" id="l-wart">Jahresübersicht aller Wartungen öffnen</button></p>`;
   document.getElementById("l-fz").onclick = () => fzView("Fahrzeuge");
   document.getElementById("l-ger").onclick = () => fzView("Material");
   document.getElementById("l-wart").onclick = () => { state.wy = 0; wartView(); };
@@ -1293,13 +1294,12 @@ function fzView(kind) {
   }).join("");
   const arch = fzList(true, K);
   app.innerHTML = `<section class="hero"><h1>${fzWort(K, 1)}</h1><p>Stammdaten, Logbuch und Wartungen je ${fzWort(K, 0)}.</p></section>
-    <div class="row spick"><button class="btn primary" id="fzadd">Neues ${fzWort(K, 0)}</button></div>
     <div class="fzgrid">${tiles(fzList(false, K))}</div>
-    ${arch.length ? `<details class="wgrp wyear fzarch"><summary><span>ARCHIV</span><b>${arch.length} ausser Dienst</b></summary><div class="fzgrid">${tiles(arch)}</div></details>` : ""}`;
+    ${arch.length ? `<details class="wgrp wyear fzarch"><summary><span>ARCHIV</span><b>${arch.length} ausser Dienst</b></summary><div class="fzgrid">${tiles(arch)}</div></details>` : ""}
+    <p class="foot">Neue ${fzWort(K, 1)} fügst du in den Einstellungen hinzu (Zahnrad oben rechts).</p>`;
   window.scrollTo(0, 0); nimgFill(app);
   fzFit(); if (!window.__fzres) { window.__fzres = 1; window.addEventListener("resize", () => { if (state.view === "fz") fzFit(); }); }
   app.querySelectorAll("[data-f]").forEach(b => b.onclick = () => fzDetail(b.dataset.f));
-  document.getElementById("fzadd").onclick = () => fzEdit(null, K);
   fzPull().then(ok => { if (ok && state.view === "fz") fzView(K); });
 }
 function fzDetail(name) {
@@ -1390,7 +1390,7 @@ function fzEdit(name, kind) {
     catch (e) { fmsg.textContent = "Foto konnte nicht gelesen werden."; }
     ev.target.value = ""; drawFoto();
   };
-  document.getElementById("fz-c").onclick = () => name ? fzDetail(name) : fzView(K);
+  document.getElementById("fz-c").onclick = () => { if (!name && state.fzFrom === "set") { state.fzFrom = null; settingsView(); return; } name ? fzDetail(name) : fzView(K); };
   const del = document.getElementById("fz-d");
   if (del) del.onclick = () => { if (!confirm(fzWort(K, 0) + " wirklich löschen?")) return; FSTATE.add = (FSTATE.add || []).filter(x => x !== name); FSTATE.addg = (FSTATE.addg || []).filter(x => x !== name); delete FSTATE.fz[name]; fzSave(); fzView(K); };
   document.getElementById("fz-s").onclick = () => {
@@ -1402,7 +1402,7 @@ function fzEdit(name, kind) {
     if (K === "Material") o.k = "Material";
     FSTATE.fz = FSTATE.fz || {}; FSTATE.fz[nm] = o;
     if (!name && !fzList(false, K).includes(nm)) { const key = K === "Material" ? "addg" : "add"; FSTATE[key] = FSTATE[key] || []; FSTATE[key].push(nm); }
-    fzSave(); fzDetail(nm);
+    state.fzFrom = null; fzSave(); fzDetail(nm);
   };
 }
 
@@ -2027,7 +2027,7 @@ async function lektionen(m, el) {
   });
 }
 
-backBtn.addEventListener("click", () => { if (state.view === "wartf") { wartView(state.wy); return; } if (state.view === "notee") { state.nid ? noteView(state.nid) : notesView(); return; } if (state.view === "note") { notesView(""); return; } if (state.view === "notes") { if (state.nf || state.nq) { state.nf = null; state.nq = ""; notesView(""); } else logView(); return; } if (state.view === "wart" || state.view === "fz") { logView(); return; } if (state.view === "fzd") { fzView(state.fzk); return; } if (state.view === "fze" || state.view === "fzl") { state.fzn ? fzDetail(state.fzn) : fzView(state.fzk); return; } if (state.view === "games") { if (state.gm) gamesView(); else { gmStop(); start(); } return; } if (state.view === "les" && state.lc === "v" && state.vorHome) { state.vorHome = false; state.lc = null; ausbView(); return; } if (state.view === "les" && (state.lc === "vl" || state.lc === "vn" || state.lc === "aa")) { state.lc = "v"; lesView(); window.scrollTo(0, 0); return; } if (state.view === "sub" && !state.mod) { home(); return; } if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "sim") { adlView(); return; } if (state.view === "masse" && state.fzBack) { state.fzBack = 0; fzDetail("Autodrehleiter"); return; } if (["masse", "joystick", "haus"].includes(state.view)) { adlView(); return; } if (state.view === "adl" || state.view === "gq" || state.view === "sgv" || state.view === "spick") { (state.sub ? subView(state.sub) : home()); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else (state.sub ? subView(state.sub) : home()); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.view === "les") { ausbView(); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) (state.sub ? subView(state.sub) : home()); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
+backBtn.addEventListener("click", () => { if (state.view === "wartf") { wartView(state.wy); return; } if (state.view === "notee") { state.nid ? noteView(state.nid) : notesView(); return; } if (state.view === "note") { notesView(""); return; } if (state.view === "notes") { if (state.nf || state.nq) { state.nf = null; state.nq = ""; notesView(""); } else logView(); return; } if (state.view === "wart" || state.view === "fz") { logView(); return; } if (state.view === "fzd") { fzView(state.fzk); return; } if (state.view === "fze" || state.view === "fzl") { if (!state.fzn && state.fzFrom === "set") { state.fzFrom = null; settingsView(); return; } state.fzn ? fzDetail(state.fzn) : fzView(state.fzk); return; } if (state.view === "games") { if (state.gm) gamesView(); else { gmStop(); start(); } return; } if (state.view === "les" && state.lc === "v" && state.vorHome) { state.vorHome = false; state.lc = null; ausbView(); return; } if (state.view === "les" && (state.lc === "vl" || state.lc === "vn" || state.lc === "aa")) { state.lc = "v"; lesView(); window.scrollTo(0, 0); return; } if (state.view === "sub" && !state.mod) { home(); return; } if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "sim") { adlView(); return; } if (state.view === "masse" && state.fzBack) { state.fzBack = 0; fzDetail("Autodrehleiter"); return; } if (["masse", "joystick", "haus"].includes(state.view)) { adlView(); return; } if (state.view === "adl" || state.view === "gq" || state.view === "sgv" || state.view === "spick") { (state.sub ? subView(state.sub) : home()); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else (state.sub ? subView(state.sub) : home()); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.view === "les") { ausbView(); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) (state.sub ? subView(state.sub) : home()); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
 /* ---------- Anmeldepflicht ---------- */
 let gateOffline = false;
 function gateNeeded() { return !!FWZ.enabled && !FWZ.user && !gateOffline; }
@@ -2140,17 +2140,19 @@ function settingsView() {
   const zwOn = document.documentElement.classList.contains("zw");
   const thmHtml = `<h3 class="zh">Darstellung</h3><div class="cfgadd"><button class="btn thm" id="thm">Design: ${zwOn ? "Zuchwil hell · auf Dunkel wechseln" : "Dunkel · auf Zuchwil hell wechseln"}</button></div><div class="cfgadd" id="vwm">${[["auto", "Ansicht: Automatisch"], ["desktop", "Desktop"], ["mobile", "Handy"]].map(v => `<button class="btn ${fwzViewMode() === v[0] ? "" : "ghost"}" data-vw="${v[0]}">${fwzViewMode() === v[0] ? "✓ " : ""}${v[1]}</button>`).join("")}</div>`;
   const thmBind = () => { document.querySelectorAll("[data-vw]").forEach(b => b.onclick = () => { try { localStorage.setItem("fwz-view", b.dataset.vw); } catch (e) { } fwzViewApply(); settingsView(); }); const tb = document.getElementById("thm"); if (tb) tb.onclick = () => { const h = document.documentElement.classList, z = h.toggle("zw"); try { localStorage.setItem("fwz-theme", z ? "zw" : "dark"); } catch (e) {} const m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = z ? "#c8161d" : "#121419"; tb.textContent = z ? "Design: Zuchwil hell · auf Dunkel wechseln" : "Design: Dunkel · auf Zuchwil hell wechseln"; }; };
-  const outBind = () => { thmBind(); const ob = document.getElementById("outb"); if (ob) ob.onclick = () => FWZ.logout().then(() => start()); };
-  if (!adm) { app.innerHTML = `<section class="hero"><h1>Einstellungen</h1><p>${me ? "Angemeldet als " + esc(me) + "." : "Nicht angemeldet."}</p></section>${thmHtml}${outHtml}`; outBind(); window.scrollTo(0, 0); return; }
+  const logHtml = `<h3 class="zh">Logistik: Fahrzeuge und Geräte</h3><div class="cfgadd"><button class="btn" id="cfgnfz">Neues Fahrzeug anlegen</button><button class="btn" id="cfgnge">Neues Gerät anlegen</button></div><p class="foot">Stammdaten, Foto und Wartungen bearbeitest du danach direkt beim Fahrzeug oder Gerät.</p>`;
+  const logBind = () => { const a = document.getElementById("cfgnfz"), b2 = document.getElementById("cfgnge"); if (a) a.onclick = () => { state.fzFrom = "set"; fzEdit(null, "Fahrzeuge"); }; if (b2) b2.onclick = () => { state.fzFrom = "set"; fzEdit(null, "Material"); }; };
+  const outBind = () => { thmBind(); logBind(); const ob = document.getElementById("outb"); if (ob) ob.onclick = () => FWZ.logout().then(() => start()); };
+  if (!adm) { app.innerHTML = `<section class="hero"><h1>Einstellungen</h1><p>${me ? "Angemeldet als " + esc(me) + "." : "Nicht angemeldet."}</p></section>${logHtml}${thmHtml}${outHtml}`; outBind(); window.scrollTo(0, 0); return; }
   app.innerHTML = `<section class="hero"><h1>Einstellungen</h1><p>Benutzerverwaltung: Wer kann was sehen.</p></section>${who}
     <div class="cfgtw"><table class="cfgt"><thead><tr><th></th>${head}</tr></thead><tbody>${rows}</tbody></table></div>
     <p class="foot">Spalte «Alle» gilt für jeden Benutzer ohne eigene Spalte.</p>
     ${adm ? `<h3 class="zh">Benutzer hinzufügen</h3><div class="cfgadd"><input id="cfgnu" placeholder="Anmeldename, z. B. max" autocomplete="off" autocapitalize="none"><input id="cfgnp" type="text" placeholder="Passwort (mind. 6 Zeichen)" autocomplete="off" autocapitalize="none"><button class="btn primary" id="cfgau">Benutzer erstellen</button></div>
       <h3 class="zh">Administratoren</h3><div class="cfglist">${(CFG.admins || []).map(a => `<div class="cfgrow"><span>${esc(a)}</span>${(CFG.admins.length > 1 && a !== me) ? `<button class="btn ghost" data-da="${esc(a)}">Entfernen</button>` : ""}</div>`).join("")}</div>
       <div class="cfgadd"><input id="cfgna" placeholder="Anmeldename" autocomplete="off" autocapitalize="none"><button class="btn" id="cfgaa">Administrator hinzufügen</button></div>` : ""}
-    <h3 class="zh">Geräte</h3><div id="cfgdev" class="cfgdev"><p class="sinfo">Lade …</p></div>
+    <h3 class="zh">Angemeldete Geräte</h3><div id="cfgdev" class="cfgdev"><p class="sinfo">Lade …</p></div>
     <h3 class="zh">Protokoll: wer war wann online</h3><div id="cfglog" class="cfgdev"><p class="sinfo">Lade …</p></div>
-    ${thmHtml}${outHtml}
+    ${logHtml}${thmHtml}${outHtml}
     <div id="cfgmsg" class="sinfo" role="status"></div>
     <p class="foot">Bestehende Passwörter lassen sich in der App nicht ändern; bei Vergessen: Zugang in Firebase löschen und hier mit neuem Passwort neu erstellen. Neue Benutzer legst du oben direkt an (Name und Passwort). Hier legst du fest, was ein Name in der App sieht. Ausgeblendete Kacheln sind weg, aber keine Zugriffssperre: Dateien und Lektionen schützt die Datenbank.</p>`;
   const msg = document.getElementById("cfgmsg"), nm = s => (s || "").trim().toLowerCase().replace(/@.*$/, "").replace(/[^a-z0-9._-]/g, "");
