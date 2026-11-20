@@ -1,4 +1,4 @@
-const APP_VERSION = "1.233";
+const APP_VERSION = "1.234";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -1219,7 +1219,21 @@ function logView() {
 }
 
 /* ---------- Logistik: Fahrzeuge (Stammdaten und Wartungen je Fahrzeug) ---------- */
-const FZ_F = [["typ", "Typ / Marke"], ["kz", "Kontrollschild"], ["jahr", "Jahrgang"], ["standort", "Standort"], ["l", "Länge (m)"], ["br", "Breite (m)"], ["h", "Höhe (m)"], ["kg", "Gewicht (kg)"], ["bem", "Bemerkung"]];
+const FZ_F = [["typ", "Typ / Marke"], ["kz", "Kontrollschild"], ["stamm", "Stammnummer"], ["vin", "Fahrgestell-Nr."], ["jahr", "1. Inverkehrsetzung / Jahrgang"], ["standort", "Standort"], ["l", "Länge (m)"], ["br", "Breite (m)"], ["h", "Höhe (m)"], ["kg", "Leergewicht (kg)"], ["gkg", "Gesamtgewicht (kg)"], ["nutz", "Nutzlast (kg)"], ["anh", "Anhängelast (kg)"], ["dach", "Dachlast (kg)"], ["plz", "Plätze"], ["mfk", "Letzte Prüfung (MFK)"], ["bem", "Bemerkung"]];
+let FZSEED = null;
+async function fzSeedLoad() {
+  if (FZSEED) return FZSEED;
+  if (!window.FWZ_CODE) return null;
+  try {
+    const r = await fetch("fz.enc"); if (!r.ok) return null;
+    const raw = new Uint8Array(await r.arrayBuffer());
+    const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(window.FWZ_CODE), "PBKDF2", false, ["deriveKey"]);
+    const key = await crypto.subtle.deriveKey({ name: "PBKDF2", salt: raw.slice(0, 16), iterations: 600000, hash: "SHA-256" }, base, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
+    const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: raw.slice(16, 28) }, key, raw.slice(28));
+    return FZSEED = JSON.parse(new TextDecoder().decode(pt)).fz || {};
+  } catch (e) { return null; }
+}
+const fzData = n => Object.assign({}, (FZSEED || {})[n] || {}, (FSTATE.fz || {})[n] || {});
 const GR_F = [["typ", "Typ / Marke"], ["lief", "Lieferant / Service"], ["jahr", "Jahrgang"], ["standort", "Standort"], ["anz", "Anzahl"], ["bem", "Bemerkung"]];
 const fzFields = k => k === "Material" ? GR_F : FZ_F;
 const fzWort = (k, a) => k === "Material" ? ["Gerät", "Geräte"][a] : ["Fahrzeug", "Fahrzeuge"][a];
@@ -1292,7 +1306,7 @@ function fzView(kind) {
   const tiles = ls => ls.map(n => {
     const w = items.filter(x => x.grp === n), ys = [...new Set(w.flatMap(x => x.years))].filter(v => v >= now).sort((a, b) => a - b);
     const offen = w.filter(x => x.years.includes(now) && !wartDone(x, now)).length;
-    const d = (FSTATE.fz || {})[n] || {};
+    const d = fzData(n);
     const meta = [d.typ, d.kz, w.length ? w.length + (w.length === 1 ? " Wartung" : " Wartungen") : "keine Wartung", ys.length ? "nächste " + ys[0] : ""].filter(Boolean).join(" · ");
     const pic = d.img ? (d.img.slice(0, 4) === "ref:" ? `<img data-ref="${esc(d.img)}" alt="">` : `<img src="${d.img}" alt="">`) : `<span class="fzini">${esc(n.trim().charAt(0).toUpperCase())}</span>`;
     return `<button class="fztile" data-f="${esc(n)}" title="${esc(meta)}"><span class="fzpic">${pic}${offen ? `<i class="fzbadge">${offen}</i>` : ""}</span><span class="fzname">${esc(n)}</span>${d.kz ? `<span class="fzkz">${esc(d.kz)}</span>` : ""}</button>`;
@@ -1303,6 +1317,7 @@ function fzView(kind) {
     ${arch.length ? `<details class="wgrp wyear fzarch"><summary><span>ARCHIV</span><b>${arch.length} ausser Dienst</b></summary><div class="fzgrid">${tiles(arch)}</div></details>` : ""}
     <p class="foot">Neue ${fzWort(K, 1)} fügst du in den Einstellungen hinzu (Zahnrad oben rechts).</p>`;
   window.scrollTo(0, 0); nimgFill(app);
+  if (!FZSEED) fzSeedLoad().then(o => { if (o && state.view === "fz") fzView(K); }).catch(() => {});
   fzFit(); if (!window.__fzres) { window.__fzres = 1; window.addEventListener("resize", () => { if (state.view === "fz") fzFit(); }); }
   app.querySelectorAll("[data-f]").forEach(b => b.onclick = () => fzDetail(b.dataset.f));
   fzPull().then(ok => { if (ok && state.view === "fz") fzView(K); });
@@ -1310,7 +1325,7 @@ function fzView(kind) {
 function fzDetail(name) {
   state.view = "fzd"; state.fzn = name; backBtn.hidden = false;
   const K = fzKind(name); state.fzk = K;
-  const now = new Date().getFullYear(), d = (FSTATE.fz || {})[name] || {};
+  const now = new Date().getFullYear(), d = fzData(name);
   const w = wartItems().filter(x => x.grp === name);
   const ys = [...new Set(w.flatMap(x => x.years))].filter(v => v >= now - 1).sort((a, b) => a - b).slice(0, 5);
   const stamm = fzFields(K).filter(f => d[f[0]]).map(f => `<div class="fzr"><span>${f[1]}</span><b>${esc(d[f[0]])}</b></div>`).join("");
@@ -1330,6 +1345,7 @@ function fzDetail(name) {
   h += yearHtml || (w.length ? "" : `<div class="note">Für dieses ${fzWort(K, 0)} ist noch keine Wartung erfasst.</div>`);
   h += '<section class="wgrp" id="fznot" hidden><h3>Notizen</h3><div class="menu nlist" id="fznotl"></div></section>';
   app.innerHTML = h; window.scrollTo(0, 0); nimgFill(app);
+  if (!FZSEED) fzSeedLoad().then(o => { if (o && state.view === "fzd" && state.fzn === name) fzDetail(name); }).catch(() => {});
   if (!window.__nPull) { window.__nPull = 1; notesPull().then(ok => { if (ok && state.view === "fzd" && state.fzn === name) fzDetail(name); }).catch(() => {}); }
   notesLoad().then(() => {
     if (state.view !== "fzd" || state.fzn !== name) return;
@@ -1378,7 +1394,7 @@ function fzLogAdd(name) {
 function fzEdit(name, kind) {
   state.view = "fze"; state.fzn = name; backBtn.hidden = false;
   const K = kind || (name ? fzKind(name) : state.fzk) || "Fahrzeuge"; state.fzk = K;
-  const d = name ? ((FSTATE.fz || {})[name] || {}) : {};
+  const d = name ? fzData(name) : {};
   app.innerHTML = `<section class="hero"><h1>${name ? esc(name) : "Neues " + fzWort(K, 0)}</h1><p>Stammdaten des ${fzWort(K, 0)}s.</p></section>
     <div class="wform">
       ${name ? "" : `<label class="wf"><span>Bezeichnung</span><input id="fz-name" placeholder="z. B. ${K === "Material" ? "Wärmebildkamera" : "Tanklöschfahrzeug"}"></label>`}
