@@ -1,4 +1,4 @@
-const APP_VERSION = "1.229";
+const APP_VERSION = "1.230";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -1236,7 +1236,7 @@ async function fzPull() {
   return false;
 }
 const FZ_LOG_SEED = {
-  "Atemschutzfahrzeug": [{ id: "a1", d: "2023-07-25", t: "Batterie gewechselt" }, { id: "a2", d: "", t: "MFK: Feuerlöscher, Jumper für Rückfahrkamera" }],
+  "Atemschutzfahrzeug": [{ id: "a1", d: "2023-07-25", t: "Batterie gewechselt" }],
   "Autodrehleiter": [{ id: "d1", d: "2024-04-04", t: "Probleme mit AdBlue\nSoftwareupdate bei Moser" }, { id: "d2", d: "2026-07-15", t: "Zylinder beim Korb gewechselt\nLuftmesser gewechselt" }, { id: "d3", d: "2026-08-20", t: "Batterie beim Stromaggregat gewechselt" }],
   "KDO Fahrzeug": [{ id: "s1", d: "2024-04-16", t: "Service + Batterie ersetzt" }],
   "Rüstfahrzeug": [{ id: "r1", d: "2023-07-25", t: "Batterie gewechselt" }, { id: "r2", d: "2023-08-29", t: "Batterie gewechselt (Aufbau)" }, { id: "r3", d: "2024-04-04", t: "Fahrzeugservice bei Moser" }],
@@ -1248,6 +1248,8 @@ function fzLogs(name) {
   const seed = (FZ_LOG_SEED[name] || []).filter(e => !del[name + "|" + e.id]);
   return seed.concat(own).sort((a, b) => (b.d || "0").localeCompare(a.d || "0"));
 }
+const FZ_NOTE_MAP = { on3: "Alro Maskenwaschanlage", on9: "Stapler", on10: "Entkalkungsanlage" };
+const fzNotes = name => notesAll().filter(n => (n.fz || FZ_NOTE_MAP[n.id]) === name);
 const fzDate = d => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d || ""); return m ? m[3] + "." + m[2] + "." + m[1] : (d || ""); };
 const FZ_ARCH = ["Puch"], FZ_EXTRA = ["Logistikfahrzeug"];
 const wartAct = () => wartItems().filter(w => !FZ_ARCH.includes(w.grp));
@@ -1325,7 +1327,15 @@ function fzDetail(name) {
     (logs.length ? logs.map(e => `<div class="wrow log"><span class="fzd">${esc(fzDate(e.d) || "ohne Datum")}</span><span class="fzt">${esc(e.t)}</span><button class="wedit" data-ld="${esc(e.id)}" aria-label="Eintrag löschen">Löschen</button></div>`).join("")
       : '<div class="wrow log"><span class="fzt">Noch kein Eintrag.</span></div>') + "</section>";
   h += yearHtml || (w.length ? "" : `<div class="note">Für dieses ${fzWort(K, 0)} ist noch keine Wartung erfasst.</div>`);
+  h += '<section class="wgrp" id="fznot" hidden><h3>Notizen</h3><div class="menu nlist" id="fznotl"></div></section>';
   app.innerHTML = h; window.scrollTo(0, 0); nimgFill(app);
+  notesLoad().then(() => {
+    if (state.view !== "fzd" || state.fzn !== name) return;
+    const list = fzNotes(name), host = document.getElementById("fznotl"); if (!list.length || !host) return;
+    document.getElementById("fznot").hidden = false;
+    host.innerHTML = list.map(n => `<button class="mbtn note" data-nn="${esc(n.id)}"><span>${esc(n.t)}</span><small>${esc(((n.txt || "").split("\n").find(Boolean) || "").slice(0, 70))}${(n.img || []).length ? " · " + (n.img || []).length + " Bild" + ((n.img || []).length > 1 ? "er" : "") : ""}</small></button>`).join("");
+    host.querySelectorAll("[data-nn]").forEach(b => b.onclick = () => { state.nBack = { fz: name }; noteView(b.dataset.nn); });
+  }).catch(() => {});
   document.getElementById("fzlog").onclick = () => fzLogAdd(name);
   app.querySelectorAll("[data-ld]").forEach(b => b.onclick = () => {
     if (!confirm("Diesen Logbuch-Eintrag löschen?")) return;
@@ -1513,11 +1523,25 @@ async function notesView(q) {
   notesPull().then(ok => { if (ok && state.view === "notes") notesView(state.nq); });
 }
 let notesT2 = 0;
+function nLinks(t) {
+  const re = /(https?:\/\/[^\s<>"']+|www\.[^\s<>"']+|[\w.+-]+@[\w-]+(?:\.[\w-]+)+|\+41[\s\d]{9,14}|\b0\d{2}\s?\d{3}\s?\d{2}\s?\d{2}\b)/g;
+  let out = "", last = 0, m;
+  while ((m = re.exec(t))) {
+    out += esc(t.slice(last, m.index));
+    let v = m[0], tail = "";
+    const tm = /[\s.,;:!?)\]]+$/.exec(v); if (tm) { tail = tm[0]; v = v.slice(0, -tail.length); }
+    const mail = v.indexOf("@") > -1 && !/^(https?:|www\.)/.test(v);
+    const href = mail ? "mailto:" + v : /^[+0]/.test(v) ? "tel:" + v.replace(/\s/g, "") : /^www\./.test(v) ? "https://" + v : v;
+    out += `<a href="${esc(href)}"${href.slice(0, 4) === "http" ? ' target="_blank" rel="noopener"' : ""}>${esc(v)}</a>` + esc(tail);
+    last = m.index + m[0].length;
+  }
+  return out + esc(t.slice(last));
+}
 function noteView(id) {
   const n = notesAll().find(x => x.id === id); if (!n) return notesView();
   state.view = "note"; state.nid = id; backBtn.hidden = false;
   app.innerHTML = `<section class="hero"><h1>${esc(n.t)}</h1><p>${esc(noteFolder(n))}</p></section>
-    ${n.txt ? `<div class="ntxt">${esc(n.txt)}</div>` : ""}
+    ${n.txt ? `<div class="ntxt">${nLinks(n.txt)}</div>` : ""}
     ${(n.doc || []).map((d, i) => `<div class="natt"><span>${esc(d.n)}</span><div class="row"><button class="btn" data-pa="open" data-pi="${i}">PDF öffnen</button><button class="btn" data-pa="share" data-pi="${i}">Teilen</button><button class="btn" data-pa="print" data-pi="${i}">Drucken</button></div></div>`).join("")}
     ${(n.doc || []).length ? '<div class="sinfo" id="namsg" role="status"></div>' : ""}
     ${(n.img || []).map((src, i) => src.slice(0, 4) === "ref:" ? `<img class="nimg" data-ref="${esc(src)}" alt="Bild ${i + 1} der Notiz">` : `<img class="nimg" src="${src}" alt="Bild ${i + 1} der Notiz" loading="lazy">`).join("")}
@@ -2029,7 +2053,7 @@ async function lektionen(m, el) {
   });
 }
 
-backBtn.addEventListener("click", () => { if (state.view === "wartf") { wartView(state.wy); return; } if (state.view === "notee") { state.nid ? noteView(state.nid) : notesView(); return; } if (state.view === "note") { notesView(""); return; } if (state.view === "notes") { if (state.nf || state.nq) { state.nf = null; state.nq = ""; notesView(""); } else logView(); return; } if (state.view === "wart" || state.view === "fz") { logView(); return; } if (state.view === "fzd") { fzView(state.fzk); return; } if (state.view === "fze" || state.view === "fzl") { if (!state.fzn && state.fzFrom === "set") { state.fzFrom = null; settingsView(); return; } state.fzn ? fzDetail(state.fzn) : fzView(state.fzk); return; } if (state.view === "games") { if (state.gm) gamesView(); else { gmStop(); start(); } return; } if (state.view === "les" && state.lc === "v" && state.vorHome) { state.vorHome = false; state.lc = null; ausbView(); return; } if (state.view === "les" && (state.lc === "vl" || state.lc === "vn" || state.lc === "aa")) { state.lc = "v"; lesView(); window.scrollTo(0, 0); return; } if (state.view === "sub" && !state.mod) { home(); return; } if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "sim") { adlView(); return; } if (state.view === "masse" && state.fzBack) { state.fzBack = 0; fzDetail("Autodrehleiter"); return; } if (["masse", "joystick", "haus"].includes(state.view)) { adlView(); return; } if (state.view === "adl" || state.view === "gq" || state.view === "sgv" || state.view === "spick") { (state.sub ? subView(state.sub) : home()); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else (state.sub ? subView(state.sub) : home()); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.view === "les") { ausbView(); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) (state.sub ? subView(state.sub) : home()); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
+backBtn.addEventListener("click", () => { if (state.view === "wartf") { wartView(state.wy); return; } if (state.view === "notee") { state.nid ? noteView(state.nid) : notesView(); return; } if (state.view === "note") { const nb = state.nBack; state.nBack = null; if (nb && nb.fz) { fzDetail(nb.fz); return; } notesView(""); return; } if (state.view === "notes") { if (state.nf || state.nq) { state.nf = null; state.nq = ""; notesView(""); } else logView(); return; } if (state.view === "wart" || state.view === "fz") { logView(); return; } if (state.view === "fzd") { fzView(state.fzk); return; } if (state.view === "fze" || state.view === "fzl") { if (!state.fzn && state.fzFrom === "set") { state.fzFrom = null; settingsView(); return; } state.fzn ? fzDetail(state.fzn) : fzView(state.fzk); return; } if (state.view === "games") { if (state.gm) gamesView(); else { gmStop(); start(); } return; } if (state.view === "les" && state.lc === "v" && state.vorHome) { state.vorHome = false; state.lc = null; ausbView(); return; } if (state.view === "les" && (state.lc === "vl" || state.lc === "vn" || state.lc === "aa")) { state.lc = "v"; lesView(); window.scrollTo(0, 0); return; } if (state.view === "sub" && !state.mod) { home(); return; } if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "sim") { adlView(); return; } if (state.view === "masse" && state.fzBack) { state.fzBack = 0; fzDetail("Autodrehleiter"); return; } if (["masse", "joystick", "haus"].includes(state.view)) { adlView(); return; } if (state.view === "adl" || state.view === "gq" || state.view === "sgv" || state.view === "spick") { (state.sub ? subView(state.sub) : home()); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else (state.sub ? subView(state.sub) : home()); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.view === "les") { ausbView(); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) (state.sub ? subView(state.sub) : home()); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
 /* ---------- Anmeldepflicht ---------- */
 let gateOffline = false;
 function gateNeeded() { return !!FWZ.enabled && !FWZ.user && !gateOffline; }

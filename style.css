@@ -726,3 +726,5 @@ html.dv .adlf{align-content:start}html.dv .adlf+.foot{max-width:none}
 .aalek .aanr { flex: 1 1 auto; white-space: nowrap; font-family: var(--font-display); font-size: 1rem; letter-spacing: .04em; text-transform: uppercase; }
 .aalek .vlr1 .btn { flex: 0 0 auto; width: 44px; min-width: 44px; padding: 9px 0; text-align: center; }
 .aalek .vlf { margin-top: 8px; }
+
+.ntxt a { color: var(--red); text-underline-offset: 2px; overflow-wrap: anywhere; }
