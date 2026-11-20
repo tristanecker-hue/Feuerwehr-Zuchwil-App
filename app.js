@@ -1,4 +1,4 @@
-const APP_VERSION = "1.226";
+const APP_VERSION = "1.227";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -1207,9 +1207,10 @@ function ausbView() {
 function logView() {
   state.mod = null; state.sub = null; state.view = "log"; backBtn.hidden = false;
   document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
-  app.innerHTML = `<section class="hero"><h1>Logistik</h1><p>Wartungsplan und Notizen der Logistik.</p></section>
-    <div class="menu"><button class="mbtn main" id="l-fz">Fahrzeuge</button><button class="mbtn main" id="l-wart">Wartungsarbeiten</button><button class="mbtn main" id="l-not">Notizen</button></div>`;
-  document.getElementById("l-fz").onclick = () => fzView();
+  app.innerHTML = `<section class="hero"><h1>Logistik</h1><p>Fahrzeuge, Geräte, Wartungen und Notizen.</p></section>
+    <div class="menu"><button class="mbtn main" id="l-fz">Fahrzeuge</button><button class="mbtn main" id="l-ger">Geräte</button><button class="mbtn main" id="l-wart">Wartungsarbeiten</button><button class="mbtn main" id="l-not">Notizen</button></div>`;
+  document.getElementById("l-fz").onclick = () => fzView("Fahrzeuge");
+  document.getElementById("l-ger").onclick = () => fzView("Material");
   document.getElementById("l-wart").onclick = () => { state.wy = 0; wartView(); };
   document.getElementById("l-not").onclick = () => { state.nf = null; state.nq = ""; notesView(""); };
   window.scrollTo(0, 0);
@@ -1217,6 +1218,9 @@ function logView() {
 
 /* ---------- Logistik: Fahrzeuge (Stammdaten und Wartungen je Fahrzeug) ---------- */
 const FZ_F = [["typ", "Typ / Marke"], ["kz", "Kontrollschild"], ["jahr", "Jahrgang"], ["standort", "Standort"], ["l", "Länge (m)"], ["br", "Breite (m)"], ["h", "Höhe (m)"], ["kg", "Gewicht (kg)"], ["bem", "Bemerkung"]];
+const GR_F = [["typ", "Typ / Marke"], ["lief", "Lieferant / Service"], ["jahr", "Jahrgang"], ["standort", "Standort"], ["anz", "Anzahl"], ["bem", "Bemerkung"]];
+const fzFields = k => k === "Material" ? GR_F : FZ_F;
+const fzWort = (k, a) => k === "Material" ? ["Gerät", "Geräte"][a] : ["Fahrzeug", "Fahrzeuge"][a];
 let FSTATE = (() => { try { const o = JSON.parse(localStorage.getItem("fwz-fz") || "null"); if (o && o.fz) return o; } catch (e) {} return { fz: {}, add: [], t: 0 }; })();
 let fzT = 0;
 function fzSave() {
@@ -1244,10 +1248,16 @@ function fzLogs(name) {
 const fzDate = d => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d || ""); return m ? m[3] + "." + m[2] + "." + m[1] : (d || ""); };
 const FZ_ARCH = ["Puch"], FZ_EXTRA = ["Logistikfahrzeug"];
 const wartAct = () => wartItems().filter(w => !FZ_ARCH.includes(w.grp));
-function fzList(arch) {
-  if (arch) return FZ_ARCH.slice();
-  const out = [...new Set(wartItems().filter(w => w.kind === "Fahrzeuge" && !FZ_ARCH.includes(w.grp)).map(w => w.grp))];
-  FZ_EXTRA.concat(FSTATE.add || []).forEach(n => { if (!out.includes(n) && !FZ_ARCH.includes(n)) out.push(n); });
+function fzKind(name) {
+  const w = wartItems().find(x => x.grp === name); if (w) return w.kind;
+  const d = (FSTATE.fz || {})[name]; if (d && d.k) return d.k;
+  return (FSTATE.addg || []).includes(name) ? "Material" : "Fahrzeuge";
+}
+function fzList(arch, kind) {
+  const k = kind || "Fahrzeuge";
+  if (arch) return k === "Material" ? [] : FZ_ARCH.slice();
+  const out = [...new Set(wartItems().filter(w => w.kind === k && !FZ_ARCH.includes(w.grp)).map(w => w.grp))];
+  (k === "Material" ? (FSTATE.addg || []) : FZ_EXTRA.concat(FSTATE.add || [])).forEach(n => { if (!out.includes(n) && !FZ_ARCH.includes(n)) out.push(n); });
   return out.sort((a, b) => a.localeCompare(b, "de"));
 }
 // Kachelgrösse so wählen, dass alle Fahrzeuge ohne Scrollen sichtbar sind.
@@ -1268,7 +1278,8 @@ function fzFit() {
   g.style.setProperty("--fzc", Math.floor((g.clientWidth - gap * (cols - 1)) / cols) + "px");
   if (arch) { const a = arch.querySelector(".fzgrid"); if (a) { a.style.gridTemplateColumns = g.style.gridTemplateColumns; a.style.setProperty("--fzc", g.style.getPropertyValue("--fzc")); } }
 }
-function fzView() {
+function fzView(kind) {
+  const K = kind || state.fzk || "Fahrzeuge"; state.fzk = K;
   state.mod = null; state.sub = null; state.view = "fz"; backBtn.hidden = false;
   document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
   const now = new Date().getFullYear(), items = wartItems();
@@ -1280,23 +1291,24 @@ function fzView() {
     const pic = d.img ? (d.img.slice(0, 4) === "ref:" ? `<img data-ref="${esc(d.img)}" alt="">` : `<img src="${d.img}" alt="">`) : `<span class="fzini">${esc(n.trim().charAt(0).toUpperCase())}</span>`;
     return `<button class="fztile" data-f="${esc(n)}" title="${esc(meta)}"><span class="fzpic">${pic}${offen ? `<i class="fzbadge">${offen}</i>` : ""}</span><span class="fzname">${esc(n)}</span>${d.kz ? `<span class="fzkz">${esc(d.kz)}</span>` : ""}</button>`;
   }).join("");
-  const arch = fzList(true);
-  app.innerHTML = `<section class="hero"><h1>Fahrzeuge</h1><p>Stammdaten, Logbuch und Wartungen je Fahrzeug.</p></section>
-    <div class="row spick"><button class="btn primary" id="fzadd">Neues Fahrzeug</button></div>
-    <div class="fzgrid">${tiles(fzList())}</div>
+  const arch = fzList(true, K);
+  app.innerHTML = `<section class="hero"><h1>${fzWort(K, 1)}</h1><p>Stammdaten, Logbuch und Wartungen je ${fzWort(K, 0)}.</p></section>
+    <div class="row spick"><button class="btn primary" id="fzadd">Neues ${fzWort(K, 0)}</button></div>
+    <div class="fzgrid">${tiles(fzList(false, K))}</div>
     ${arch.length ? `<details class="wgrp wyear fzarch"><summary><span>ARCHIV</span><b>${arch.length} ausser Dienst</b></summary><div class="fzgrid">${tiles(arch)}</div></details>` : ""}`;
   window.scrollTo(0, 0); nimgFill(app);
   fzFit(); if (!window.__fzres) { window.__fzres = 1; window.addEventListener("resize", () => { if (state.view === "fz") fzFit(); }); }
   app.querySelectorAll("[data-f]").forEach(b => b.onclick = () => fzDetail(b.dataset.f));
-  document.getElementById("fzadd").onclick = () => fzEdit(null);
-  fzPull().then(ok => { if (ok && state.view === "fz") fzView(); });
+  document.getElementById("fzadd").onclick = () => fzEdit(null, K);
+  fzPull().then(ok => { if (ok && state.view === "fz") fzView(K); });
 }
 function fzDetail(name) {
   state.view = "fzd"; state.fzn = name; backBtn.hidden = false;
+  const K = fzKind(name); state.fzk = K;
   const now = new Date().getFullYear(), d = (FSTATE.fz || {})[name] || {};
   const w = wartItems().filter(x => x.grp === name);
   const ys = [...new Set(w.flatMap(x => x.years))].filter(v => v >= now - 1).sort((a, b) => a - b).slice(0, 5);
-  const stamm = FZ_F.filter(f => d[f[0]]).map(f => `<div class="fzr"><span>${f[1]}</span><b>${esc(d[f[0]])}</b></div>`).join("");
+  const stamm = fzFields(K).filter(f => d[f[0]]).map(f => `<div class="fzr"><span>${f[1]}</span><b>${esc(d[f[0]])}</b></div>`).join("");
   let h = `<section class="hero"><h1>${esc(name)}</h1><p>${FZ_ARCH.includes(name) ? "Archiviert · ausser Dienst. " : ""}${esc([d.typ, d.kz].filter(Boolean).join(" · ") || "Noch keine Stammdaten erfasst.")}</p></section>
     ${d.img ? (d.img.slice(0, 4) === "ref:" ? `<img class="fzfoto" data-ref="${esc(d.img)}" alt="Foto">` : `<img class="fzfoto" src="${d.img}" alt="Foto">`) : ""}
     ${stamm ? `<section class="wgrp"><h3>Stammdaten</h3><div class="fzbox">${stamm}</div></section>` : ""}
@@ -1310,7 +1322,7 @@ function fzDetail(name) {
   h += `<section class="wgrp"><h3>Logbuch<button class="wadd2" id="fzlog" aria-label="Logbuch-Eintrag erfassen">+</button></h3>` +
     (logs.length ? logs.map(e => `<div class="wrow log"><span class="fzd">${esc(fzDate(e.d) || "ohne Datum")}</span><span class="fzt">${esc(e.t)}</span><button class="wedit" data-ld="${esc(e.id)}" aria-label="Eintrag löschen">Löschen</button></div>`).join("")
       : '<div class="wrow log"><span class="fzt">Noch kein Eintrag.</span></div>') + "</section>";
-  h += yearHtml || (w.length ? "" : '<div class="note">Für dieses Fahrzeug ist noch keine Wartung erfasst.</div>');
+  h += yearHtml || (w.length ? "" : `<div class="note">Für dieses ${fzWort(K, 0)} ist noch keine Wartung erfasst.</div>`);
   app.innerHTML = h; window.scrollTo(0, 0); nimgFill(app);
   document.getElementById("fzlog").onclick = () => fzLogAdd(name);
   app.querySelectorAll("[data-ld]").forEach(b => b.onclick = () => {
@@ -1320,9 +1332,9 @@ function fzDetail(name) {
     else { FSTATE.log = FSTATE.log || {}; FSTATE.log[name] = (FSTATE.log[name] || []).filter(e => e.id !== id); }
     fzSave(); fzDetail(name);
   });
-  document.getElementById("fze").onclick = () => fzEdit(name);
+  document.getElementById("fze").onclick = () => fzEdit(name, K);
   const adl = document.getElementById("fzadl"); if (adl) adl.onclick = () => { state.fzBack = 1; masseView(); };
-  document.getElementById("fzw").onclick = () => { state.wy = now; wartForm(null, { kind: "Fahrzeuge", grp: name }); };
+  document.getElementById("fzw").onclick = () => { state.wy = now; wartForm(null, { kind: K, grp: name }); };
   app.querySelectorAll(".wrow input").forEach(i => i.onchange = () => {
     const y = +i.closest("[data-y]").dataset.y, det = i.closest("[data-y]");
     wartToggle(i, y, () => { const rows = w.filter(x => x.years.includes(y)), off = rows.filter(x => !wartDone(x, y)).length, b = det.querySelector("summary b"); if (b) b.textContent = off ? off + " offen" : "erledigt"; });
@@ -1349,17 +1361,18 @@ function fzLogAdd(name) {
     fzSave(); fzDetail(name);
   };
 }
-function fzEdit(name) {
+function fzEdit(name, kind) {
   state.view = "fze"; state.fzn = name; backBtn.hidden = false;
+  const K = kind || (name ? fzKind(name) : state.fzk) || "Fahrzeuge"; state.fzk = K;
   const d = name ? ((FSTATE.fz || {})[name] || {}) : {};
-  app.innerHTML = `<section class="hero"><h1>${name ? esc(name) : "Neues Fahrzeug"}</h1><p>Stammdaten des Fahrzeugs.</p></section>
+  app.innerHTML = `<section class="hero"><h1>${name ? esc(name) : "Neues " + fzWort(K, 0)}</h1><p>Stammdaten des ${fzWort(K, 0)}s.</p></section>
     <div class="wform">
-      ${name ? "" : '<label class="wf"><span>Bezeichnung</span><input id="fz-name" placeholder="z. B. Tanklöschfahrzeug"></label>'}
-      ${FZ_F.map(f => `<label class="wf"><span>${f[1]}</span><input id="fz-${f[0]}" value="${esc(d[f[0]] || "")}"${f[0] === "kz" ? ' placeholder="SO 12345" inputmode="numeric"' : ""}></label>`).join("")}
+      ${name ? "" : `<label class="wf"><span>Bezeichnung</span><input id="fz-name" placeholder="z. B. ${K === "Material" ? "Wärmebildkamera" : "Tanklöschfahrzeug"}"></label>`}
+      ${fzFields(K).map(f => `<label class="wf"><span>${f[1]}</span><input id="fz-${f[0]}" value="${esc(d[f[0]] || "")}"${f[0] === "kz" ? ' placeholder="SO 12345" inputmode="numeric"' : ""}></label>`).join("")}
       <div class="wf"><span>Foto</span><div class="nthumbs" id="fz-th"></div>
         <label class="btn lesup">Foto wählen<input type="file" accept="image/*" id="fz-img" hidden></label></div>
     </div>
-    <div class="row spick"><button class="btn primary" id="fz-s">Speichern</button><button class="btn" id="fz-c">Abbrechen</button>${name && (FSTATE.add || []).includes(name) ? '<button class="btn wdel" id="fz-d">Fahrzeug löschen</button>' : ""}</div>
+    <div class="row spick"><button class="btn primary" id="fz-s">Speichern</button><button class="btn" id="fz-c">Abbrechen</button>${name && (FSTATE.add || []).concat(FSTATE.addg || []).includes(name) ? `<button class="btn wdel" id="fz-d">${fzWort(K, 0)} löschen</button>` : ""}</div>
     <div class="sinfo" id="fz-m" role="status"></div>`;
   window.scrollTo(0, 0);
   let foto = d.img || "";
@@ -1377,17 +1390,18 @@ function fzEdit(name) {
     catch (e) { fmsg.textContent = "Foto konnte nicht gelesen werden."; }
     ev.target.value = ""; drawFoto();
   };
-  document.getElementById("fz-c").onclick = () => name ? fzDetail(name) : fzView();
+  document.getElementById("fz-c").onclick = () => name ? fzDetail(name) : fzView(K);
   const del = document.getElementById("fz-d");
-  if (del) del.onclick = () => { if (!confirm("Fahrzeug wirklich löschen?")) return; FSTATE.add = (FSTATE.add || []).filter(x => x !== name); delete FSTATE.fz[name]; fzSave(); fzView(); };
+  if (del) del.onclick = () => { if (!confirm(fzWort(K, 0) + " wirklich löschen?")) return; FSTATE.add = (FSTATE.add || []).filter(x => x !== name); FSTATE.addg = (FSTATE.addg || []).filter(x => x !== name); delete FSTATE.fz[name]; fzSave(); fzView(K); };
   document.getElementById("fz-s").onclick = () => {
     const nm = name || (document.getElementById("fz-name").value || "").trim();
     if (!nm) { document.getElementById("fz-m").textContent = "Bezeichnung ausfüllen."; return; }
     const o = {};
-    FZ_F.forEach(f => { let v = (document.getElementById("fz-" + f[0]).value || "").trim(); if (f[0] === "kz" && v) v = "SO " + v.replace(/^so[\s-]*/i, "").trim(); if (v) o[f[0]] = v; });
+    fzFields(K).forEach(f => { let v = (document.getElementById("fz-" + f[0]).value || "").trim(); if (f[0] === "kz" && v) v = "SO " + v.replace(/^so[\s-]*/i, "").trim(); if (v) o[f[0]] = v; });
     if (foto) o.img = foto;
+    if (K === "Material") o.k = "Material";
     FSTATE.fz = FSTATE.fz || {}; FSTATE.fz[nm] = o;
-    if (!name && !fzList().includes(nm)) { FSTATE.add = FSTATE.add || []; FSTATE.add.push(nm); }
+    if (!name && !fzList(false, K).includes(nm)) { const key = K === "Material" ? "addg" : "add"; FSTATE[key] = FSTATE[key] || []; FSTATE[key].push(nm); }
     fzSave(); fzDetail(nm);
   };
 }
@@ -1748,7 +1762,7 @@ function wartView(year) {
   const list = items.filter(w => w.years.includes(y)), open = list.filter(w => !wartDone(w, y));
   const sumAll = list.reduce((a, w) => a + (w.cost || 0), 0), sumOpen = open.reduce((a, w) => a + (w.cost || 0), 0);
   const stat = (l, o) => `${l.length - o.length} von ${l.length} erledigt${o.reduce((a, w) => a + (w.cost || 0), 0) ? " · offene Kosten " + chf(o.reduce((a, w) => a + (w.cost || 0), 0)) : ""}${sumAll ? " · Kosten total " + chf(sumAll) : ""}`;
-  let h = `<section class="hero"><h1>Wartungsarbeiten</h1><p>Prüfintervalle Fahrzeuge und Material. Abhaken, was erledigt ist. Jahre vor ${now} gelten als erledigt.</p></section>
+  let h = `<section class="hero"><h1>Wartungsarbeiten</h1><p>Jahresübersicht über alle Fahrzeuge und Geräte: was fällig ist, was erledigt ist, mit Kosten und PDF. Jahre vor ${now} gelten als erledigt.</p></section>
     <div class="wyr">${ys.map(v => `<button data-y="${v}" class="${v === y ? "on" : ""}">${v}</button>`).join("")}</div>
     <div class="sinfo" id="wsum">${stat(list, open)}</div>
     <div class="row spick"><button class="btn primary" id="wadd">Neue Wartung</button><button class="btn" data-sp="open">PDF öffnen</button><button class="btn" data-sp="share">Teilen</button><button class="btn" data-sp="print">Drucken</button></div><div class="sinfo" id="spmsg" role="status"></div>`;
@@ -2013,7 +2027,7 @@ async function lektionen(m, el) {
   });
 }
 
-backBtn.addEventListener("click", () => { if (state.view === "wartf") { wartView(state.wy); return; } if (state.view === "notee") { state.nid ? noteView(state.nid) : notesView(); return; } if (state.view === "note") { notesView(""); return; } if (state.view === "notes") { if (state.nf || state.nq) { state.nf = null; state.nq = ""; notesView(""); } else logView(); return; } if (state.view === "wart" || state.view === "fz") { logView(); return; } if (state.view === "fzd") { fzView(); return; } if (state.view === "fze" || state.view === "fzl") { state.fzn ? fzDetail(state.fzn) : fzView(); return; } if (state.view === "games") { if (state.gm) gamesView(); else { gmStop(); start(); } return; } if (state.view === "les" && state.lc === "v" && state.vorHome) { state.vorHome = false; state.lc = null; ausbView(); return; } if (state.view === "les" && (state.lc === "vl" || state.lc === "vn")) { state.lc = "v"; lesView(); window.scrollTo(0, 0); return; } if (state.view === "sub" && !state.mod) { home(); return; } if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "sim") { adlView(); return; } if (state.view === "masse" && state.fzBack) { state.fzBack = 0; fzDetail("Autodrehleiter"); return; } if (["masse", "joystick", "haus"].includes(state.view)) { adlView(); return; } if (state.view === "adl" || state.view === "gq" || state.view === "sgv" || state.view === "spick") { (state.sub ? subView(state.sub) : home()); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else (state.sub ? subView(state.sub) : home()); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.view === "les") { ausbView(); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) (state.sub ? subView(state.sub) : home()); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
+backBtn.addEventListener("click", () => { if (state.view === "wartf") { wartView(state.wy); return; } if (state.view === "notee") { state.nid ? noteView(state.nid) : notesView(); return; } if (state.view === "note") { notesView(""); return; } if (state.view === "notes") { if (state.nf || state.nq) { state.nf = null; state.nq = ""; notesView(""); } else logView(); return; } if (state.view === "wart" || state.view === "fz") { logView(); return; } if (state.view === "fzd") { fzView(state.fzk); return; } if (state.view === "fze" || state.view === "fzl") { state.fzn ? fzDetail(state.fzn) : fzView(state.fzk); return; } if (state.view === "games") { if (state.gm) gamesView(); else { gmStop(); start(); } return; } if (state.view === "les" && state.lc === "v" && state.vorHome) { state.vorHome = false; state.lc = null; ausbView(); return; } if (state.view === "les" && (state.lc === "vl" || state.lc === "vn" || state.lc === "aa")) { state.lc = "v"; lesView(); window.scrollTo(0, 0); return; } if (state.view === "sub" && !state.mod) { home(); return; } if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "sim") { adlView(); return; } if (state.view === "masse" && state.fzBack) { state.fzBack = 0; fzDetail("Autodrehleiter"); return; } if (["masse", "joystick", "haus"].includes(state.view)) { adlView(); return; } if (state.view === "adl" || state.view === "gq" || state.view === "sgv" || state.view === "spick") { (state.sub ? subView(state.sub) : home()); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else (state.sub ? subView(state.sub) : home()); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.view === "les") { ausbView(); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) (state.sub ? subView(state.sub) : home()); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
 /* ---------- Anmeldepflicht ---------- */
 let gateOffline = false;
 function gateNeeded() { return !!FWZ.enabled && !FWZ.user && !gateOffline; }
