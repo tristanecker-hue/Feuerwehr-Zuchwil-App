@@ -1,4 +1,4 @@
-const APP_VERSION = "1.225";
+const APP_VERSION = "1.226";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -1182,6 +1182,7 @@ function lesView() {
   const grp = (t, n, inner) => `<details class="lgrp"><summary><span>${t}</span><b>${n}</b></summary><div class="lgbody">${inner}</div></details>`;
   const mlHtml = ml && !state.lc ? grp("Musterlektionen (50 Min.)", nA + nF, '<h3 class="zh">Anlernstufe</h3>' + tiles(AO_LEK, "m") + (nF ? '<h3 class="zh">Festigungsstufe</h3>' + tiles(AO_LEKF, "f") : "")) : "";
   if (state.lc === "vl" || state.lc === "vn") { vorlageView(state.lc === "vn"); return; }
+  if (state.lc === "aa") { aaView(); return; }
   if (state.lc === "v") { app.innerHTML = '<section class="hero"><h1>Vorlagen</h1><p>Vorlagen der Feuerwehr Zuchwil (PDF / Word), für alle angemeldeten Mitglieder.</p></section><div id="vbm" class="sinfo" role="status"></div><div id="body"></div>'; lektionen(VMOD, document.getElementById("body")); return; }
   app.innerHTML = '<section class="hero"><h1>Lektionen</h1></section>' + loginBox + mlHtml + (state.lc ? '<div id="body"></div>' : '<details class="lgrp" id="eig"><summary><span>Eigene Lektionen (PDF / Word)</span><b id="eign">…</b></summary><div class="lgbody" id="body"></div></details>');
   const lgo0 = document.getElementById("lgo"); if (lgo0) lgo0.onclick = loginView;
@@ -1894,6 +1895,7 @@ function vlLinksBind() {
   [["vb1", false], ["vb2", true]].forEach(([id, n]) => { g(id).onclick = () => { const keep = VLN; VLN = n; try { aoPdfActs(vlDocx(true), g("vbm")).open(); } catch (e) { g("vbm").textContent = e.message || "Word-Datei konnte nicht erstellt werden."; } VLN = keep; }; });
   if (g("vbil")) g("vbil").onclick = () => aoGo("bil");
   g("vlt").onclick = () => { state.lc = "vl"; lesView(); }; g("vln").onclick = () => { state.lc = "vn"; lesView(); };
+  if (g("vaa")) g("vaa").onclick = () => { state.lc = "aa"; lesView(); };
 }
 function lesNum(name) { const x = /(?:^|[^\d.])(\d{1,2}(?:\.\d{1,2}){1,3})(?![\d])/.exec(String(name).replace(/\.(pdf|docx?|PDF|DOCX?)$/, "").replace(/\bL\d+\b/g, " ")); return x ? x[1] : ""; }
 function lesCmp(a, b) { const x = a.split(".").map(Number), y = b.split(".").map(Number); for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] ?? -1) - (y[i] ?? -1); if (d) return d; } return 0; }
@@ -1911,7 +1913,7 @@ function lesGroups(m, c, mine, rowH) {
     state.lfo = state.lfo || new Set();
     const fz = mine.filter(f => /Zuchwil/i.test(f.name)), ne = mine.filter(f => !/Zuchwil/i.test(f.name));
     const fold = (key, title, fs, links) => `<details class="lfold" data-k="${key}"${state.lfo.has(key) ? " open" : ""}><summary><span>${title}</span><b>${fs.length + links.split("vlink").length - 1}</b></summary><div class="lfbody">${links}${fs.sort((a, b) => a.name.localeCompare(b.name, "de", { numeric: true })).map(rowH).join("") || ""}</div></details>`;
-    return fold("v:fwz", "Feuerwehr Zuchwil Vorlagen", fz, vlLk("vlt", "Vorlage Lektion Feuerwehr Zuchwil (Formular)") + vlLk("vb1", "Feuerwehr Zuchwil leer (Word)") + vlLk("vbil", "Erfolgsauswertung / Bilanz 3.17.1 (Formular)")) + fold("v:neu", "Neutrale Vorlagen", ne, vlLk("vln", "Vorlage Lektion Neutral (Formular)") + vlLk("vb2", "Neutral leer (Word)"));
+    return fold("v:fwz", "Feuerwehr Zuchwil Vorlagen", fz, vlLk("vlt", "Vorlage Lektion Feuerwehr Zuchwil (Formular)") + vlLk("vaa", "Vorlage Ausbildungsauftrag (Formular)") + vlLk("vb1", "Feuerwehr Zuchwil leer (Word)") + vlLk("vbil", "Erfolgsauswertung / Bilanz 3.17.1 (Formular)")) + fold("v:neu", "Neutrale Vorlagen", ne, vlLk("vln", "Vorlage Lektion Neutral (Formular)") + vlLk("vb2", "Neutral leer (Word)"));
   }
   const secs = c.g ? m.sections.filter(x => x.g === c.g) : [];
   if (!secs.length) return mine.map(rowH).join("");
@@ -2244,6 +2246,173 @@ function vlDocxIn(blank) {
   });
   const cdLen = cd.reduce((n, c) => n + c.length, 0), end = new Uint8Array([0x50, 0x4b, 5, 6, ...u16(0), ...u16(0), ...u16(cd.length), ...u16(cd.length), ...u32(cdLen), ...u32(off), ...u16(0)]);
   return new File([...parts, ...cd, end], blank ? (VLN ? "Lektion Neutral leer.docx" : "Lektion Feuerwehr Zuchwil leer.docx") : m.fname.replace(/\.pdf$/, ".docx"), { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+}
+/* ---------- Vorlage Ausbildungsauftrag (Formular, PDF + Word) ---------- */
+const AA_ART = ["Kernaufgaben", "AS-Übung", "PbU-Übung", "Kaderübung", "Offiziersübung", "Fahrerausbildung", "Einsatzübung"];
+const AA_STUFE = ["Anlernstufe", "Festigungsstufe", "Anwendungsstufe"];
+const AA_LEK = () => ({ thema: "", ziele: "", ort: "", mat: "", fz: "Keine" });
+const aaToday = () => { const d = new Date(); return String(d.getDate()).padStart(2, "0") + "." + String(d.getMonth() + 1).padStart(2, "0") + "." + d.getFullYear(); };
+const AA_DEF = () => ({ art: AA_ART[0], ver: aaToday(), datum: new Date().toISOString().slice(0, 10), stufe: AA_STUFE[0], dauer: "55", lek: [AA_LEK(), AA_LEK()] });
+let AA = null;
+function aaLoad() { try { AA = JSON.parse(localStorage.getItem("fwz-aa") || "null"); } catch (e) {} if (!AA || !Array.isArray(AA.lek) || !AA.lek.length) AA = AA_DEF(); }
+function aaSave() { try { localStorage.setItem("fwz-aa", JSON.stringify(AA)); return true; } catch (e) { return false; } }
+const aaLines = s => String(s || "").split("\n").map(x => x.trim()).filter(Boolean);
+function aaDatum() {
+  const v = String(AA.datum || "").trim(); if (!v) return "";
+  const d = new Date(v + "T00:00:00"); if (isNaN(d)) return v;
+  return ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"][d.getDay()] + ", " + String(d.getDate()).padStart(2, "0") + "." + String(d.getMonth() + 1).padStart(2, "0") + "." + d.getFullYear();
+}
+const aaDauer = () => { const t = String(AA.dauer || "").trim(); return t ? (/min/i.test(t) ? t : t + " Min.") : ""; };
+const aaName = () => ("Ausbildungsauftrag " + (AA.art || "") + " " + (AA.datum || "")).replace(/[\\/:*?"<>|]/g, "-").trim();
+const AA_F = [["thema", "Thema"], ["ziele", "Ziele:"], ["ort", "Arbeitsplatz:"], ["mat", "Spezialmaterial:"], ["fz", "Fahrzeuge:"]];
+
+function aaPdf() {
+  const W = 595, H = 842, M = 46, TW = W - 2 * M, RED = "0.784 0.086 0.114", DARK = "0.13 0.15 0.17", GREY = "0.42 0.45 0.49", LITE = "0.94 0.93 0.92";
+  const cv = document.createElement("canvas").getContext("2d");
+  const fix = t => String(t == null ? "" : t).replace(/[“”„]/g, '"').replace(/[‘’]/g, "'").replace(/[–—]/g, "-").replace(/…/g, "...").replace(/\t/g, " ").replace(/[^\n\x20-\x7e\xa0-\xff]/g, "?");
+  const esc2 = t => t.replace(/[\\()]/g, "\\$&");
+  const wid = (t, size, bold) => { cv.font = (bold ? "bold " : "") + size + "px Helvetica, Arial, sans-serif"; return cv.measureText(fix(t)).width; };
+  const wrap = (t, size, bold, w) => { const out = []; let line = ""; fix(t).split(" ").forEach(word => { const x = line ? line + " " + word : word; if (wid(x, size, bold) > w && line) { out.push(line); line = word; } else line = x; }); if (line) out.push(line); return out; };
+  const pages = []; let ops = null, yy = 0;
+  const txt = (t, x, Y, size, bold, col) => ops.push(`BT /${bold ? "F2" : "F1"} ${size} Tf ${col || DARK} rg ${x.toFixed(1)} ${Y.toFixed(1)} Td (${esc2(fix(t))}) Tj ET`);
+  const rect = (x, Y, w, h, col) => ops.push(`${col} rg ${x.toFixed(1)} ${Y.toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)} re f`);
+  const line = (x1, y1, x2, y2, col, lw) => ops.push(`${col} RG ${lw || 1} w ${x1.toFixed(1)} ${y1.toFixed(1)} m ${x2.toFixed(1)} ${y2.toFixed(1)} l S`);
+  const newPage = () => { ops = []; pages.push(ops); rect(0, H - 34, W, 34, RED); txt("FEUERWEHR ZUCHWIL", M, H - 23, 12, true, "1 1 1"); const r = "Bereich Ausbildung"; txt(r, W - M - wid(r, 10, false), H - 22, 10, false, "1 1 1"); yy = H - 62; };
+  newPage();
+  const need = h => { if (yy - h < M + 26) newPage(); };
+  txt("Ausbildungsauftrag " + (AA.art || ""), M, yy - 17, 21, true, DARK); yy -= 26;
+  const kopf = [aaDatum(), AA.stufe, aaDauer() ? "Lektionsdauer " + aaDauer() : "", AA.ver ? "Version " + AA.ver : ""].filter(Boolean).join("   ·   ");
+  txt(kopf, M, yy - 10, 10, false, GREY); yy -= 20;
+  line(M, yy, W - M, yy, RED, 2); yy -= 24;
+  const LW = 108;
+  AA.lek.forEach((l, i) => {
+    need(70);
+    rect(M, yy - 21, TW, 21, LITE); rect(M, yy - 21, 3.5, 21, RED);
+    txt("Lektion " + (i + 1), M + 11, yy - 14.5, 11.5, true, DARK);
+    yy -= 28;
+    AA_F.forEach(f => {
+      const val = aaLines(l[f[0]]); if (!val.length && f[0] !== "thema") return;
+      const lines = val.length ? val : [""];
+      let first = true;
+      lines.forEach(v => {
+        const wl = wrap(v, 10.5, false, TW - LW); need(wl.length * 14 + 6);
+        if (first) { txt(f[1].replace(/:$/, "") + ":", M + 4, yy - 10, 10.5, true, DARK); first = false; }
+        wl.forEach((t, k) => txt(t, M + LW, yy - 10 - k * 14, 10.5, false, DARK));
+        yy -= Math.max(1, wl.length) * 14;
+      });
+      yy -= 3;
+    });
+    yy -= 12;
+  });
+  const dstr = new Date().toLocaleDateString("de-CH");
+  pages.forEach((p, i) => {
+    const sv = ops; ops = p;
+    line(M, M + 16, W - M, M + 16, "0.85 0.85 0.85", .8);
+    txt("Ausbildungsauftrag Feuerwehr Zuchwil · Stand " + dstr, M, M + 5, 8, false, GREY);
+    const pg = "Seite " + (i + 1) + " / " + pages.length;
+    txt(pg, W - M - wid(pg, 8, false), M + 5, 8, false, GREY);
+    ops = sv;
+  });
+  const objs = [null, "<< /Type /Catalog /Pages 2 0 R >>", null, "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>", "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>"];
+  const kids = [];
+  pages.forEach(p => { const st = p.join("\n"), ci = objs.length + 1, pi = objs.length; objs.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${ci} 0 R >>`, `<< /Length ${st.length} >>\nstream\n${st}\nendstream`); kids.push(pi); });
+  objs[2] = `<< /Type /Pages /Kids [${kids.map(k => k + " 0 R").join(" ")}] /Count ${kids.length} >>`;
+  let out = "%PDF-1.4\n"; const off = [];
+  objs.slice(1).forEach((o, i) => { off.push(out.length); out += `${i + 1} 0 obj\n${o}\nendobj\n`; });
+  const xr = out.length; out += `xref\n0 ${objs.length}\n0000000000 65535 f \n` + off.map(o => String(o).padStart(10, "0") + " 00000 n \n").join("") + `trailer\n<< /Size ${objs.length} /Root 1 0 R >>\nstartxref\n${xr}\n%%EOF`;
+  const u = new Uint8Array(out.length); for (let i = 0; i < out.length; i++) u[i] = out.charCodeAt(i) & 255;
+  return new File([u], aaName() + ".pdf", { type: "application/pdf" });
+}
+
+function docxPack(body, fname) {
+  const T = window.DOCXT; if (!T) throw new Error("Word-Vorlage nicht geladen.");
+  const xml = new TextEncoder().encode(T.pre + body + T.sect + "</w:body></w:document>");
+  const parts = [], cd = [], enc = new TextEncoder(); let off = 0;
+  const u16 = n => [n & 255, (n >> 8) & 255], u32 = n => [n & 255, (n >> 8) & 255, (n >> 16) & 255, (n >>> 24) & 255];
+  T.ents.forEach(e => {
+    const nm = enc.encode(e.n); let data, meth, crc, cs, us;
+    if (e.t != null) { data = enc.encode(e.t); meth = 0; crc = crc32(data); cs = us = data.length; }
+    else if (e.doc) { data = xml; meth = 0; crc = crc32(xml); cs = us = xml.length; }
+    else { const bin = atob(e.d); data = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) data[i] = bin.charCodeAt(i); meth = e.m; crc = e.c; cs = e.cs; us = e.us; }
+    const lh = new Uint8Array([0x50, 0x4b, 3, 4, ...u16(20), ...u16(0), ...u16(meth), ...u16(0), ...u16(0x21), ...u32(crc), ...u32(cs), ...u32(us), ...u16(nm.length), ...u16(0), ...nm]);
+    cd.push(new Uint8Array([0x50, 0x4b, 1, 2, ...u16(20), ...u16(20), ...u16(0), ...u16(meth), ...u16(0), ...u16(0x21), ...u32(crc), ...u32(cs), ...u32(us), ...u16(nm.length), ...u16(0), ...u16(0), ...u16(0), ...u16(0), ...u32(0), ...u32(off), ...nm]));
+    parts.push(lh, data); off += lh.length + data.length;
+  });
+  const cdLen = cd.reduce((n, c) => n + c.length, 0), end = new Uint8Array([0x50, 0x4b, 5, 6, ...u16(0), ...u16(0), ...u16(cd.length), ...u16(cd.length), ...u32(cdLen), ...u32(off), ...u16(0)]);
+  return new File([...parts, ...cd, end], fname, { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+}
+
+function aaDocx() {
+  const X = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const rp = o => `<w:rPr><w:rFonts w:cs="Arial"/>${o.b ? "<w:b/>" : ""}${o.sz ? `<w:sz w:val="${o.sz}"/><w:szCs w:val="${o.sz}"/>` : '<w:szCs w:val="22"/>'}</w:rPr>`;
+  const r = (t, o = {}) => `<w:r>${rp(o)}<w:t xml:space="preserve">${X(t)}</w:t></w:r>`, tb = (o = {}) => `<w:r>${rp(o)}<w:tab/></w:r>`;
+  const para = (inner, ppr = "") => `<w:p><w:pPr>${ppr}</w:pPr>${inner}</w:p>`, empty = () => para("");
+  const hdrTabs = '<w:pStyle w:val="Kopfzeile"/><w:tabs><w:tab w:val="clear" w:pos="4536"/><w:tab w:val="clear" w:pos="9072"/><w:tab w:val="right" w:pos="9639"/></w:tabs>';
+  const tabs = '<w:tabs><w:tab w:val="left" w:pos="2552"/></w:tabs>';
+  let b = para(r("Ausbildungsauftrag " + (AA.art || ""), { b: 1, sz: 28 }) + tb({ sz: 16 }) + r("Version: " + (AA.ver || ""), { sz: 16 }), hdrTabs) + empty();
+  b += para(r("Datum:", { b: 1 }) + tb() + r(aaDatum()), tabs);
+  b += para(r("Ausbildungsstufe:", { b: 1 }) + tb() + r(AA.stufe || ""), tabs);
+  b += para(r("Lektionsdauer:", { b: 1 }) + tb() + r(aaDauer()), tabs) + empty();
+  const W2 = [2552, 7087], bd = '<w:tblBorders>' + ["top", "left", "bottom", "right", "insideH", "insideV"].map(k => `<w:${k} w:val="single" w:sz="4" w:space="0" w:color="000000"/>`).join("") + '</w:tblBorders>';
+  const sp = '<w:spacing w:before="60" w:after="60"/>';
+  const cell = (w, inner, shade) => `<w:tc><w:tcPr><w:tcW w:w="${w}" w:type="dxa"/>${shade ? '<w:shd w:val="clear" w:color="auto" w:fill="BFBFBF"/>' : ""}</w:tcPr>${inner || para("")}</w:tc>`;
+  AA.lek.forEach((l, i) => {
+    b += para(r("Lektion " + (i + 1), { b: 1, sz: 24 }));
+    let t = `<w:tbl><w:tblPr><w:tblW w:w="9639" w:type="dxa"/><w:tblInd w:w="0" w:type="dxa"/>${bd}<w:tblLayout w:type="fixed"/><w:tblCellMar><w:left w:w="85" w:type="dxa"/><w:right w:w="85" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>${W2.map(w => `<w:gridCol w:w="${w}"/>`).join("")}</w:tblGrid>`;
+    AA_F.forEach(f => {
+      const vals = aaLines(l[f[0]]), inner = (vals.length ? vals : [""]).map(v => para(r(v), sp)).join("");
+      t += `<w:tr><w:trPr><w:cantSplit/></w:trPr>${cell(W2[0], para(r(f[1].replace(/:$/, "") + ":", { b: 1 }), sp), 1)}${cell(W2[1], inner)}</w:tr>`;
+    });
+    b += t + "</w:tbl>" + empty();
+  });
+  return docxPack(b, aaName() + ".docx");
+}
+
+function aaView() {
+  aaLoad(); state.mod = null; state.view = "les"; state.lc = "aa"; backBtn.hidden = false;
+  document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
+  const sel = (k, l, opts) => `<label class="vlf"><span>${l}</span><select data-a="${k}">${opts.map(o => `<option${AA[k] === o ? " selected" : ""}>${o}</option>`).join("")}</select></label>`;
+  const inp = (k, l, ph, type) => `<label class="vlf"><span>${l}</span><input data-a="${k}" type="${type || "text"}" value="${esc(AA[k] || "")}" placeholder="${esc(ph || "")}"></label>`;
+  const lek = () => AA.lek.map((l, i) => `<div class="vlrow aalek" data-i="${i}">
+      <div class="vlr1"><b class="aanr">Lektion ${i + 1}</b><button class="btn vlup" aria-label="Nach oben">▲</button><button class="btn vldn" aria-label="Nach unten">▼</button><button class="btn vldel" aria-label="Lektion löschen">×</button></div>
+      <label class="vlf"><span>Thema</span><input data-l="thema" value="${esc(l.thema)}" placeholder="z. B. 1.1 | Einsatz"></label>
+      <label class="vlf"><span>Ziele (eine pro Zeile)</span><textarea data-l="ziele" rows="3" placeholder="Ziel 1&#10;Ziel 2">${esc(l.ziele)}</textarea></label>
+      <label class="vlf"><span>Arbeitsplatz</span><input data-l="ort" value="${esc(l.ort)}" placeholder="Magazin, ALST-PP / Tor 5 / SH Blumenfeld"></label>
+      <label class="vlf"><span>Spezialmaterial</span><textarea data-l="mat" rows="2" placeholder="…">${esc(l.mat)}</textarea></label>
+      <label class="vlf"><span>Fahrzeuge</span><input data-l="fz" value="${esc(l.fz)}" list="aafz" autocomplete="off" placeholder="Keine"></label>
+    </div>`).join("");
+  app.innerHTML = `<section class="hero"><h1>Vorlage Ausbildungsauftrag (Formular)</h1><p>Felder ausfüllen, dann als PDF oder Word exportieren. Deine Eingaben bleiben auf diesem Gerät gespeichert.</p></section>
+    <datalist id="aafz">${["Keine"].concat(typeof fzList === "function" ? fzList() : []).map(n => `<option value="${esc(n)}"></option>`).join("")}</datalist>
+    <div class="vlform">
+      <div class="vl2">${sel("art", "Art des Auftrags", AA_ART)}${inp("ver", "Version", "TT.MM.JJJJ")}</div>
+      <div class="vl2">${inp("datum", "Datum", "", "date")}${sel("stufe", "Ausbildungsstufe", AA_STUFE)}</div>
+      ${inp("dauer", "Lektionsdauer (Min.)", "z. B. 55")}
+      <h3 class="zh">Lektionen</h3><div id="aalist">${lek()}</div>
+      <button class="btn" id="aaadd">+ Lektion hinzufügen</button>
+      <div class="vlact"><button class="btn primary" id="aapdf">PDF öffnen</button><button class="btn" id="aapsh">PDF teilen</button><button class="btn" id="aaprn">Drucken</button><button class="btn primary" id="aadoc">Word (.docx)</button><button class="btn" id="aadsh">Word teilen</button></div>
+      <div id="aamsg" class="sinfo" role="status"></div>
+      <button class="linkbtn" id="aareset">Alles zurücksetzen</button>
+    </div>`;
+  const msg = document.getElementById("aamsg");
+  app.querySelectorAll("[data-a]").forEach(e => e.addEventListener("input", () => { AA[e.dataset.a] = e.value; aaSave(); }));
+  const redraw = () => { document.getElementById("aalist").innerHTML = lek(); bind(); };
+  const move = (i, j) => { if (j < 0 || j >= AA.lek.length) return; const [x] = AA.lek.splice(i, 1); AA.lek.splice(j, 0, x); aaSave(); redraw(); };
+  const bind = () => app.querySelectorAll(".aalek").forEach(row => {
+    const i = +row.dataset.i;
+    row.querySelectorAll("[data-l]").forEach(e => e.addEventListener("input", () => { AA.lek[i][e.dataset.l] = e.value; aaSave(); }));
+    row.querySelector(".vldel").onclick = () => { if (AA.lek.length < 2) return; AA.lek.splice(i, 1); aaSave(); redraw(); };
+    row.querySelector(".vlup").onclick = () => move(i, i - 1); row.querySelector(".vldn").onclick = () => move(i, i + 1);
+  });
+  bind();
+  document.getElementById("aaadd").onclick = () => { AA.lek.push(AA_LEK()); aaSave(); redraw(); const l = app.querySelectorAll(".aalek"); l[l.length - 1].scrollIntoView({ block: "center" }); };
+  const run = f => () => { msg.textContent = ""; try { f(); } catch (e) { msg.textContent = (e && e.message) || "Export nicht möglich."; } };
+  document.getElementById("aapdf").onclick = run(() => aoPdfActs(aaPdf(), msg).open());
+  document.getElementById("aapsh").onclick = run(() => aoPdfActs(aaPdf(), msg).share());
+  document.getElementById("aaprn").onclick = run(() => aoPdfActs(aaPdf(), msg).print());
+  document.getElementById("aadoc").onclick = run(() => aoPdfActs(aaDocx(), msg).open());
+  document.getElementById("aadsh").onclick = run(() => aoPdfActs(aaDocx(), msg).share());
+  document.getElementById("aareset").onclick = () => { const b = document.getElementById("aareset"); if (b.dataset.c) { AA = AA_DEF(); aaSave(); aaView(); } else { b.dataset.c = 1; b.textContent = "Wirklich zurücksetzen? Nochmals tippen."; } };
+  window.scrollTo(0, 0);
 }
 function vorlageView(neutral) {
   VLN = !!neutral; vlLoad(); state.mod = null; state.view = "les"; backBtn.hidden = false;
