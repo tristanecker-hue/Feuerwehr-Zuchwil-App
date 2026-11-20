@@ -1,4 +1,4 @@
-const APP_VERSION = "1.239";
+const APP_VERSION = "1.240";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -1337,7 +1337,7 @@ function fzView(kind) {
     const offen = w.filter(x => x.years.includes(now) && !wartDone(x, now)).length;
     const d = fzData(n);
     const meta = [d.typ, d.kz, w.length ? w.length + (w.length === 1 ? " Wartung" : " Wartungen") : "keine Wartung", ys.length ? "nächste " + ys[0] : ""].filter(Boolean).join(" · ");
-    const pic = d.img ? (d.img.slice(0, 4) === "ref:" ? `<img data-ref="${esc(d.img)}" alt="">` : `<img src="${d.img}" alt="">`) : fzIcon(n, K);
+    const pic = d.img ? (d.img.slice(0, 4) === "ref:" ? `<img data-ref="${esc(d.img)}" alt="">` : `<img src="${d.img}" alt="">`) : (K === "Material" ? fzIcon(n, K) : `<span class="fzini">${esc(n.trim().charAt(0).toUpperCase())}</span>`);
     return `<button class="fztile" data-f="${esc(n)}" title="${esc(meta)}"><span class="fzpic">${pic}${offen ? `<i class="fzbadge">${offen}</i>` : ""}</span><span class="fzname">${esc(n)}</span>${d.kz ? `<span class="fzkz">${esc(d.kz)}</span>` : ""}</button>`;
   }).join("");
   const arch = fzList(true, K);
