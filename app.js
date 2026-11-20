@@ -1,4 +1,4 @@
-const APP_VERSION = "1.234";
+const APP_VERSION = "1.235";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -2310,13 +2310,16 @@ function settingsView() {
     ${adm ? `<h3 class="zh">Benutzer hinzufügen</h3><div class="cfgadd"><input id="cfgnu" placeholder="Anmeldename, z. B. max" autocomplete="off" autocapitalize="none"><input id="cfgnp" type="text" placeholder="Passwort (mind. 6 Zeichen)" autocomplete="off" autocapitalize="none"><button class="btn primary" id="cfgau">Benutzer erstellen</button></div>
       <h3 class="zh">Administratoren</h3><div class="cfglist">${(CFG.admins || []).map(a => `<div class="cfgrow"><span>${esc(a)}</span>${(CFG.admins.length > 1 && a !== me) ? `<button class="btn ghost" data-da="${esc(a)}">Entfernen</button>` : ""}</div>`).join("")}</div>
       <div class="cfgadd"><input id="cfgna" placeholder="Anmeldename" autocomplete="off" autocapitalize="none"><button class="btn" id="cfgaa">Administrator hinzufügen</button></div>` : ""}
-    <h3 class="zh">Angemeldete Geräte</h3><div id="cfgdev" class="cfgdev"><p class="sinfo">Lade …</p></div>
-    <h3 class="zh">Protokoll: wer war wann online</h3><div id="cfglog" class="cfgdev"><p class="sinfo">Lade …</p></div>
-    ${logHtml}${thmHtml}${outHtml}
+    ${logHtml}${thmHtml}
+    <details class="wgrp wyear cfgfold" id="fdev"><summary><span>Angemeldete Geräte</span><b>anzeigen</b></summary><div id="cfgdev" class="cfgdev"><p class="sinfo">Lade …</p></div></details>
+    <details class="wgrp wyear cfgfold" id="flog"><summary><span>Protokoll: wer war wann online</span><b>anzeigen</b></summary><div id="cfglog" class="cfgdev"><p class="sinfo">Lade …</p></div></details>
+    ${outHtml}
     <div id="cfgmsg" class="sinfo" role="status"></div>
     <p class="foot">Bestehende Passwörter lassen sich in der App nicht ändern; bei Vergessen: Zugang in Firebase löschen und hier mit neuem Passwort neu erstellen. Neue Benutzer legst du oben direkt an (Name und Passwort). Hier legst du fest, was ein Name in der App sieht. Ausgeblendete Kacheln sind weg, aber keine Zugriffssperre: Dateien und Lektionen schützt die Datenbank.</p>`;
   const msg = document.getElementById("cfgmsg"), nm = s => (s || "").trim().toLowerCase().replace(/@.*$/, "").replace(/[^a-z0-9._-]/g, "");
-  outBind(); cfgDevices(); cfgLog();
+  outBind();
+  const lazy = (id, fn) => { const d = document.getElementById(id); if (!d) return; d.ontoggle = () => { if (d.open && !d.dataset.l) { d.dataset.l = 1; fn(); } d.querySelector("summary b").textContent = d.open ? "" : "anzeigen"; }; };
+  lazy("fdev", cfgDevices); lazy("flog", cfgLog);
   app.querySelectorAll("input[data-id]").forEach(c => c.onchange = () => { const l = c.dataset.u ? CFG.users[c.dataset.u] : CFG.def; l.hide = l.hide.filter(x => x !== c.dataset.id); if (!c.checked) l.hide.push(c.dataset.id); cfgSave(msg); });
   app.querySelectorAll("[data-du]").forEach(b => b.onclick = () => { if (!b.dataset.c) { b.dataset.c = 1; b.textContent = "Entfernen?"; b.classList.add("sure"); return; } delete CFG.users[b.dataset.du]; cfgSave(msg).then(settingsView); });
   document.getElementById("cfgau").onclick = async () => {
