@@ -734,3 +734,6 @@ html.dv .adlf{align-content:start}html.dv .adlf+.foot{max-width:none}
 .nfrow .wedit { flex: 0 0 auto; align-self: center; }
 .nmove { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; color: var(--muted); font-size: .9rem; }
 .nmove select { flex: 1 1 auto; max-width: 320px; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 12px; padding: 9px 12px; font: inherit; }
+
+.nfed { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 0 0 14px; }
+.nfed input { flex: 1 1 200px; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; font: inherit; }

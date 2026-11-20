@@ -1,4 +1,4 @@
-const APP_VERSION = "1.231";
+const APP_VERSION = "1.232";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -1210,12 +1210,11 @@ function logView() {
   state.mod = null; state.sub = null; state.view = "log"; backBtn.hidden = false;
   document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
   app.innerHTML = `<section class="hero"><h1>Logistik</h1><p>Fahrzeuge, Geräte, Wartungen und Notizen.</p></section>
-    <div class="menu"><button class="mbtn main" id="l-fz">Fahrzeuge</button><button class="mbtn main" id="l-ger">Geräte</button><button class="mbtn main" id="l-not">Notizen</button></div>
+    <div class="menu"><button class="mbtn main" id="l-fz">Fahrzeuge</button><button class="mbtn main" id="l-ger">Geräte</button></div>
     <p class="foot">Wartungen hakst du direkt beim Fahrzeug oder Gerät ab. <button class="linkbtn" id="l-wart">Jahresübersicht aller Wartungen öffnen</button></p>`;
   document.getElementById("l-fz").onclick = () => fzView("Fahrzeuge");
   document.getElementById("l-ger").onclick = () => fzView("Material");
   document.getElementById("l-wart").onclick = () => { state.wy = 0; wartView(); };
-  document.getElementById("l-not").onclick = () => { state.notHome = false; state.nf = null; state.nq = ""; notesView(""); };
   window.scrollTo(0, 0);
 }
 
@@ -1331,6 +1330,7 @@ function fzDetail(name) {
   h += yearHtml || (w.length ? "" : `<div class="note">Für dieses ${fzWort(K, 0)} ist noch keine Wartung erfasst.</div>`);
   h += '<section class="wgrp" id="fznot" hidden><h3>Notizen</h3><div class="menu nlist" id="fznotl"></div></section>';
   app.innerHTML = h; window.scrollTo(0, 0); nimgFill(app);
+  if (!window.__nPull) { window.__nPull = 1; notesPull().then(ok => { if (ok && state.view === "fzd" && state.fzn === name) fzDetail(name); }).catch(() => {}); }
   notesLoad().then(() => {
     if (state.view !== "fzd" || state.fzn !== name) return;
     const list = fzNotes(name), host = document.getElementById("fznotl"); if (!list.length || !host) return;
@@ -1421,19 +1421,62 @@ function fzEdit(name, kind) {
 }
 
 /* ---------- Logistik: Notizen (aus OneNote übernommen, in der App bearbeitbar) ---------- */
-let NOTES = null, NSEED = null;
-let NSTATE = (() => { try { const o = JSON.parse(localStorage.getItem("fwz-notes") || "null"); if (o && o.ed) return o; } catch (e) {} return { ed: {}, t: 0 }; })();
+let NOTES = null, NSEED = null, NUSER = null, NOTHER = {}, NSHARE = null;
+const NOWNER = "tristan";                                   /* Besitzer der aus OneNote übernommenen Notizen */
+const nUser = () => (((typeof cfgMe === "function" && cfgMe()) || "lokal") + "").toLowerCase();
+const nKey = u => "fwz-notes-" + u;
+let NSTATE = { ed: {}, t: 0 };
 let notesT = 0;
-function notesSave() {
-  NSTATE.t = Date.now();
-  try { localStorage.setItem("fwz-notes", JSON.stringify(NSTATE)); } catch (e) {}
-  if (!FWZ.user || !FWZ.setDoc) return;
-  clearTimeout(notesT); notesT = setTimeout(() => { FWZ.setDoc("notizen", NSTATE).catch(() => {}); }, 900);
+function nsEnsure() {
+  const u = nUser();
+  if (NUSER === u) return NSTATE;
+  NUSER = u;
+  let o = null;
+  try { o = JSON.parse(localStorage.getItem(nKey(u)) || "null"); } catch (e) {}
+  if ((!o || !o.ed) && u === NOWNER) { try { const alt = JSON.parse(localStorage.getItem("fwz-notes") || "null"); if (alt && alt.ed) o = alt; } catch (e) {} }
+  NSTATE = (o && o.ed) ? o : { ed: {}, t: 0 };
+  return NSTATE;
 }
+function nShare() {
+  if (NSHARE && NSHARE.sh) return NSHARE;
+  try { NSHARE = JSON.parse(localStorage.getItem("fwz-nshare") || "null"); } catch (e) {}
+  if (!NSHARE || !NSHARE.sh) NSHARE = { sh: {}, t: 0 };
+  return NSHARE;
+}
+const nShareGet = (owner, f) => nShare().sh[owner + "|" + f] || null;
+function nShareOk(owner, f) { const s = nShareGet(owner, f); if (!s) return false; const u = s.u || []; return u.includes("alle") || u.includes(nUser()); }
+function nShareSave(msgEl) {
+  const sh = nShare(); sh.t = Date.now();
+  try { localStorage.setItem("fwz-nshare", JSON.stringify(sh)); } catch (e) {}
+  if (FWZ.user && FWZ.setDoc) FWZ.setDoc("notizen_share", sh).catch(() => { if (msgEl) msgEl.textContent = "Freigabe konnte nicht gespeichert werden."; });
+}
+const nStoreOf = owner => { nsEnsure(); return owner === NUSER ? NSTATE : (NOTHER[owner] = NOTHER[owner] || { ed: {}, t: 0 }); };
+function notesSaveOwner(owner) {
+  const st = nStoreOf(owner); st.t = Date.now();
+  if (owner === NUSER) { try { localStorage.setItem(nKey(NUSER), JSON.stringify(st)); } catch (e) {} }
+  if (!FWZ.user || !FWZ.setDoc) return;
+  clearTimeout(notesT); notesT = setTimeout(() => { FWZ.setDoc("notizen_" + owner, st).catch(() => {}); }, 900);
+}
+function notesSave() { nsEnsure(); notesSaveOwner(NUSER); }
 async function notesPull() {
+  nsEnsure();
   if (!FWZ.user || !FWZ.getDoc) return false;
-  try { const o = await FWZ.getDoc("notizen"); if (o && o.ed && (o.t || 0) > (NSTATE.t || 0)) { NSTATE = o; try { localStorage.setItem("fwz-notes", JSON.stringify(o)); } catch (e) {} return true; } } catch (e) {}
-  return false;
+  let ch = false;
+  try {
+    let o = await FWZ.getDoc("notizen_" + NUSER);
+    if ((!o || !o.ed) && NUSER === NOWNER) o = await FWZ.getDoc("notizen");       /* Übernahme aus dem früheren gemeinsamen Stand */
+    if (o && o.ed && (o.t || 0) > (NSTATE.t || 0)) { NSTATE = o; try { localStorage.setItem(nKey(NUSER), JSON.stringify(o)); } catch (e) {} ch = true; }
+  } catch (e) {}
+  try { const sh = await FWZ.getDoc("notizen_share"); if (sh && sh.sh && (sh.t || 0) >= (nShare().t || 0)) { NSHARE = sh; try { localStorage.setItem("fwz-nshare", JSON.stringify(sh)); } catch (e) {} ch = true; } } catch (e) {}
+  const owners = [...new Set(Object.keys(nShare().sh || {}).filter(k => nShareOk(k.split("|")[0], k.slice(k.indexOf("|") + 1))).map(k => k.split("|")[0]))].filter(o => o !== NUSER);
+  for (const o of owners) {
+    try {
+      let d = await FWZ.getDoc("notizen_" + o);
+      if ((!d || !d.ed) && o === NOWNER) d = await FWZ.getDoc("notizen");
+      NOTHER[o] = d && d.ed ? d : { ed: {}, t: 0 }; ch = true;
+    } catch (e) {}
+  }
+  return ch;
 }
 async function notesLoad() {
   if (NSEED) return NSEED;
@@ -1445,10 +1488,16 @@ async function notesLoad() {
   const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: raw.slice(16, 28) }, key, raw.slice(28));
   return NSEED = JSON.parse(new TextDecoder().decode(pt)).notes || [];
 }
+function nBuild(owner, ed) {
+  const seed = owner === NOWNER ? (NSEED || []) : [], list = [];
+  seed.forEach(n => { const e = ed[n.id]; if (e && e.del) return; list.push(e ? Object.assign({}, n, { t: e.t != null ? e.t : n.t, txt: e.txt != null ? e.txt : n.txt, img: e.img || n.img, f: e.f || n.f }) : n); });
+  Object.keys(ed).forEach(k => { const e = ed[k]; if (e.del || seed.some(n => n.id === k)) return; if (e.t != null || e.txt != null) list.push({ id: k, t: e.t || "Ohne Titel", txt: e.txt || "", img: e.img || [], f: e.f, fz: e.fz }); });
+  return list.map(n => { const s = owner === NUSER ? null : nShareGet(owner, noteFolder(n)); return Object.assign({}, n, { own: owner, ro: owner !== NUSER && !(s && s.w) }); });
+}
 function notesAll() {
-  const ed = NSTATE.ed || {}, out = [];
-  (NSEED || []).forEach(n => { const e = ed[n.id]; if (e && e.del) return; out.push(e ? Object.assign({}, n, { t: e.t != null ? e.t : n.t, txt: e.txt != null ? e.txt : n.txt, img: e.img || n.img, f: e.f || n.f }) : n); });
-  Object.keys(ed).forEach(k => { const e = ed[k]; if (e.del || (NSEED || []).some(n => n.id === k)) return; if (e.t != null || e.txt != null) out.push({ id: k, t: e.t || "Ohne Titel", txt: e.txt || "", img: e.img || [], f: e.f }); });
+  nsEnsure();
+  const out = nBuild(NUSER, NSTATE.ed || {});
+  Object.keys(NOTHER).forEach(o => { if (o === NUSER) return; nBuild(o, NOTHER[o].ed || {}).forEach(n => { if (nShareOk(o, noteFolder(n))) out.push(n); }); });
   return out;
 }
 const NF_DEF = "Notizen Logistik";
@@ -1510,34 +1559,77 @@ async function notesView(q) {
   let list = s ? all.filter(n => (n.t + " " + n.txt + " " + noteFolder(n)).toLowerCase().includes(s)) : inF;
   let srt = "0"; try { srt = localStorage.getItem("fwz-nsort") || "0"; } catch (e) {}
   if (list && srt === "a") list = list.slice().sort((a, b) => a.t.localeCompare(b.t, "de"));
-  const head = `<section class="hero"><h1>${esc(state.nf && !s ? state.nf : "Notizen")}</h1><p>${state.nf && !s ? "Antippen zum Lesen." : "Notizen der Logistik, aus OneNote übernommen."}</p></section>
+  const inOwn = state.nf && !s && all.some(n => noteFolder(n) === state.nf && n.own === NUSER);
+  const shOwner = state.nf && !s ? (all.find(n => noteFolder(n) === state.nf) || {}).own : null;
+  const shInfo = f => { const sh = nShareGet(NUSER, f); return sh ? "geteilt mit " + ((sh.u || []).includes("alle") ? "allen" : (sh.u || []).join(", ")) + (sh.w ? " · darf bearbeiten" : " · nur lesen") : ""; };
+  const head = `<section class="hero"><h1>${esc(state.nf && !s ? state.nf : "Notizen")}</h1><p>${state.nf && !s ? (inOwn ? (shInfo(state.nf) || "Deine Notizen. Antippen zum Lesen.") : "Geteilt von " + esc(shOwner || "") + " · antippen zum Lesen.") : "Deine Notizen und die Ordner, die mit dir geteilt sind."}</p></section>
     <div class="srch"><input type="search" id="nq" placeholder="Alle Notizen durchsuchen" aria-label="Notizen durchsuchen" value="${esc(state.nq)}" autocomplete="off"></div>
-    <div class="row spick"><button class="btn primary" id="nadd">Neue Notiz</button><button class="btn${srt === "a" ? " on" : ""}" id="nsort">${srt === "a" ? "A–Z" : "Reihenfolge"}</button></div>`;
+    <div class="row spick"><button class="btn primary" id="nadd">Neue Notiz</button><button class="btn${srt === "a" ? " on" : ""}" id="nsort">${srt === "a" ? "A–Z" : "Reihenfolge"}</button>${inOwn ? '<button class="btn" id="nfren">Ordner umbenennen</button>' : ""}${inOwn && cfgIsAdmin() ? '<button class="btn" id="nfsh">Teilen …</button>' : ""}</div>
+    ${inOwn ? `<div class="nfed" id="nfedit" hidden><input id="nfn" value="${esc(state.nf || "")}" aria-label="Neuer Ordnername"><button class="btn primary" id="nfok">Speichern</button><button class="btn" id="nfno">Abbrechen</button></div>` : ""}`;
   app.innerHTML = head + (list
     ? `<div class="menu nlist">${list.map(n => `<button class="mbtn note" data-n="${esc(n.id)}"><span>${esc(n.t)}</span><small>${s ? esc(noteFolder(n)) + " · " : ""}${esc(noteSnip(n))}${n.img && n.img.length ? " · " + n.img.length + " Bild" + (n.img.length > 1 ? "er" : "") : ""}${n.doc && n.doc.length ? " · PDF" : ""}</small></button>`).join("") || '<div class="note">Nichts gefunden.</div>'}</div>`
-    : `<div class="menu nlist">${folders.map(f => `<div class="nfrow"><button class="mbtn note" data-nf="${esc(f)}"><span>${esc(f)}</span><small>${all.filter(n => noteFolder(n) === f).length} Notizen</small></button><button class="wedit" data-nfr="${esc(f)}" aria-label="Ordner ${esc(f)} umbenennen">Umbenennen</button></div>`).join("")}</div>`);
+    : `<div class="menu nlist">${folders.map(f => { const inF2 = all.filter(n => noteFolder(n) === f), own = inF2.every(n => n.own === NUSER), from = (inF2[0] || {}).own;
+        return `<button class="mbtn note" data-nf="${esc(f)}"><span>${esc(f)}</span><small>${inF2.length} Notizen${own ? (shInfo(f) ? " · " + esc(shInfo(f)) : "") : " · geteilt von " + esc(from || "")}</small></button>`; }).join("") || '<div class="note">Noch keine Notizen. Lege mit «Neue Notiz» die erste an.</div>'}</div>`);
   const qi = document.getElementById("nq");
   qi.oninput = () => { clearTimeout(notesT2); notesT2 = setTimeout(() => notesView(qi.value), 250); };
   document.getElementById("nadd").onclick = () => noteEdit(null);
   document.getElementById("nsort").onclick = () => { try { localStorage.setItem("fwz-nsort", srt === "a" ? "0" : "a"); } catch (e) {} notesView(state.nq); };
   app.querySelectorAll("[data-n]").forEach(b => b.onclick = () => noteView(b.dataset.n));
   app.querySelectorAll("[data-nf]").forEach(b => b.onclick = () => { state.nf = b.dataset.nf; notesView(""); });
-  app.querySelectorAll("[data-nfr]").forEach(b => b.onclick = () => noteFolderRename(b.dataset.nfr));
+  const fre = document.getElementById("nfren"), fed = document.getElementById("nfedit");
+  if (fre) fre.onclick = () => { fed.hidden = !fed.hidden; if (!fed.hidden) { const i = document.getElementById("nfn"); i.value = state.nf; i.focus(); i.select(); } };
+  if (fed) {
+    document.getElementById("nfno").onclick = () => { fed.hidden = true; };
+    document.getElementById("nfok").onclick = () => noteFolderRename(state.nf, document.getElementById("nfn").value);
+    document.getElementById("nfn").onkeydown = e => { if (e.key === "Enter") noteFolderRename(state.nf, document.getElementById("nfn").value); };
+  }
+  const fsh = document.getElementById("nfsh"); if (fsh) fsh.onclick = () => nShareView(state.nf);
   notesPull().then(ok => { if (ok && state.view === "notes") notesView(state.nq); });
 }
 let notesT2 = 0;
-function noteSetFolder(ids, f) {
-  NSTATE.ed = NSTATE.ed || {};
-  ids.forEach(id => { NSTATE.ed[id] = Object.assign({}, NSTATE.ed[id] || {}, { f }); });
-  notesSave();
+function noteSetFolder(ids, f, owner) {
+  const o = owner || NUSER, st = nStoreOf(o);
+  st.ed = st.ed || {};
+  ids.forEach(id => { st.ed[id] = Object.assign({}, st.ed[id] || {}, { f }); });
+  notesSaveOwner(o);
 }
 function noteFolders() { return [...new Set(notesAll().map(noteFolder))].sort((a, b) => a.localeCompare(b, "de")); }
-function noteFolderRename(oldF) {
-  const nf = (prompt("Ordner umbenennen", oldF) || "").trim();
+function noteFolderRename(oldF, nf) {
+  nf = (nf || "").trim();
   if (!nf || nf === oldF) return;
-  noteSetFolder(notesAll().filter(n => noteFolder(n) === oldF).map(n => n.id), nf);
+  const mine = notesAll().filter(n => noteFolder(n) === oldF && n.own === NUSER);
+  if (!mine.length) return;
+  noteSetFolder(mine.map(n => n.id), nf, NUSER);
+  const sh = nShare(), k = NUSER + "|" + oldF;
+  if (sh.sh[k]) { sh.sh[NUSER + "|" + nf] = sh.sh[k]; delete sh.sh[k]; nShareSave(); }
   if (state.nf === oldF) state.nf = nf;
   notesView(state.nq);
+}
+function nShareView(folder) {
+  state.view = "nsh"; state.nf = folder; backBtn.hidden = false;
+  const users = Object.keys(CFG.users || {}).filter(u => u !== NUSER).sort();
+  const cur = nShareGet(NUSER, folder) || { u: [], w: 0 }, alle = (cur.u || []).includes("alle");
+  app.innerHTML = `<section class="hero"><h1>Ordner teilen</h1><p>«${esc(folder)}»: Wer darf diese Notizen sehen?</p></section>
+    <section class="wgrp">
+      <div class="wrow"><label><input type="checkbox" id="sh-all"${alle ? " checked" : ""}><span>Alle Benutzer</span></label></div>
+      ${users.map(u => `<div class="wrow"><label><input type="checkbox" data-su="${esc(u)}"${(cur.u || []).includes(u) ? " checked" : ""}${alle ? " disabled" : ""}><span>${esc(u)}</span></label></div>`).join("")}
+    </section>
+    <section class="wgrp"><div class="wrow"><label><input type="checkbox" id="sh-w"${cur.w ? " checked" : ""}><span>Dürfen Notizen in diesem Ordner bearbeiten und ergänzen</span></label></div></section>
+    <div class="row spick"><button class="btn primary" id="sh-s">Speichern</button><button class="btn" id="sh-c">Abbrechen</button>${(cur.u || []).length ? '<button class="btn wdel" id="sh-x">Freigabe aufheben</button>' : ""}</div>
+    <div class="sinfo" id="sh-m" role="status"></div>`;
+  window.scrollTo(0, 0);
+  const all = document.getElementById("sh-all"), msg = document.getElementById("sh-m");
+  all.onchange = () => app.querySelectorAll("[data-su]").forEach(c => { c.disabled = all.checked; if (all.checked) c.checked = false; });
+  document.getElementById("sh-c").onclick = () => notesView("");
+  const x = document.getElementById("sh-x");
+  if (x) x.onclick = () => { delete nShare().sh[NUSER + "|" + folder]; nShareSave(msg); notesView(""); };
+  document.getElementById("sh-s").onclick = () => {
+    const u = all.checked ? ["alle"] : [...app.querySelectorAll("[data-su]")].filter(c => c.checked).map(c => c.dataset.su);
+    const sh = nShare();
+    if (!u.length) delete sh.sh[NUSER + "|" + folder];
+    else sh.sh[NUSER + "|" + folder] = { u, w: document.getElementById("sh-w").checked ? 1 : 0 };
+    nShareSave(msg); notesView("");
+  };
 }
 function nLinks(t) {
   const re = /(https?:\/\/[^\s<>"']+|www\.[^\s<>"']+|[\w.+-]+@[\w-]+(?:\.[\w-]+)+|\+41[\s\d]{9,14}|\b0\d{2}\s?\d{3}\s?\d{2}\s?\d{2}\b)/g;
@@ -1562,7 +1654,7 @@ function noteView(id) {
     ${(n.doc || []).map((d, i) => `<div class="natt"><span>${esc(d.n)}</span><div class="row"><button class="btn" data-pa="open" data-pi="${i}">PDF öffnen</button><button class="btn" data-pa="share" data-pi="${i}">Teilen</button><button class="btn" data-pa="print" data-pi="${i}">Drucken</button></div></div>`).join("")}
     ${(n.doc || []).length ? '<div class="sinfo" id="namsg" role="status"></div>' : ""}
     ${(n.img || []).map((src, i) => src.slice(0, 4) === "ref:" ? `<img class="nimg" data-ref="${esc(src)}" alt="Bild ${i + 1} der Notiz">` : `<img class="nimg" src="${src}" alt="Bild ${i + 1} der Notiz" loading="lazy">`).join("")}
-    <div class="row spick"><button class="btn primary" id="ned">Bearbeiten</button><button class="btn wdel" id="ndel">Löschen</button></div>`;
+    ${n.ro ? `<p class="foot">Geteilt von ${esc(n.own)} · nur lesen.</p>` : '<div class="row spick"><button class="btn primary" id="ned">Bearbeiten</button><button class="btn wdel" id="ndel">Löschen</button></div>'}`;
   window.scrollTo(0, 0); nimgFill(app);
   const amsg = document.getElementById("namsg");
   app.querySelectorAll("[data-pa]").forEach(b => b.onclick = () => {
@@ -1579,14 +1671,15 @@ function noteView(id) {
     let f = mv.value;
     if (f === "__new") { f = (prompt("Name des neuen Ordners", "") || "").trim(); if (!f) { noteView(id); return; } }
     if (f === noteFolder(n)) return;
-    noteSetFolder([id], f); state.nf = f; noteView(id);
+    noteSetFolder([id], f, n.own); state.nf = f; noteView(id);
   };
+  if (n.ro) { const m2 = document.getElementById("nmv"); if (m2) m2.disabled = true; return; }
   document.getElementById("ned").onclick = () => noteEdit(id);
   document.getElementById("ndel").onclick = () => {
     if (!confirm("Diese Notiz wirklich löschen?")) return;
-    NSTATE.ed = NSTATE.ed || {};
-    if ((NSEED || []).some(x => x.id === id)) NSTATE.ed[id] = { del: 1 }; else delete NSTATE.ed[id];
-    notesSave(); notesView();
+    const ow = n.own || NUSER, st = nStoreOf(ow); st.ed = st.ed || {};
+    if ((NSEED || []).some(x => x.id === id)) st.ed[id] = { del: 1 }; else delete st.ed[id];
+    notesSaveOwner(ow); notesView();
   };
 }
 function noteEdit(id) {
@@ -1626,10 +1719,10 @@ function noteEdit(id) {
     const t = document.getElementById("ne-t").value.trim(), txt = document.getElementById("ne-x").value;
     if (!t) { document.getElementById("ne-m").textContent = "Titel ausfüllen."; return; }
     const nid = id || "n" + Date.now().toString(36);
-    NSTATE.ed = NSTATE.ed || {};
+    const ow = (n && n.own) || NUSER, st = nStoreOf(ow); st.ed = st.ed || {};
     const f = (document.getElementById("ne-f").value || "").trim() || NF_DEF;
-    NSTATE.ed[nid] = Object.assign({}, NSTATE.ed[nid] || {}, { t, txt, f, img: imgs, del: 0 });
-    notesSave(); noteView(nid);
+    st.ed[nid] = Object.assign({}, st.ed[nid] || {}, { t, txt, f, img: imgs, del: 0 });
+    notesSaveOwner(ow); noteView(nid);
   };
 }
 
@@ -2077,7 +2170,8 @@ async function lektionen(m, el) {
   });
 }
 
-backBtn.addEventListener("click", () => { if (state.view === "wartf") { wartView(state.wy); return; } if (state.view === "notee") { state.nid ? noteView(state.nid) : notesView(); return; } if (state.view === "note") { const nb = state.nBack; state.nBack = null; if (nb && nb.fz) { fzDetail(nb.fz); return; } notesView(""); return; } if (state.view === "notes") { if (state.nf || state.nq) { state.nf = null; state.nq = ""; notesView(""); } else if (state.notHome) { state.notHome = false; start(); } else logView(); return; } if (state.view === "wart" || state.view === "fz") { logView(); return; } if (state.view === "fzd") { fzView(state.fzk); return; } if (state.view === "fze" || state.view === "fzl") { if (!state.fzn && state.fzFrom === "set") { state.fzFrom = null; settingsView(); return; } state.fzn ? fzDetail(state.fzn) : fzView(state.fzk); return; } if (state.view === "games") { if (state.gm) gamesView(); else { gmStop(); start(); } return; } if (state.view === "les" && state.lc === "v" && state.vorHome) { state.vorHome = false; state.lc = null; ausbView(); return; } if (state.view === "les" && (state.lc === "vl" || state.lc === "vn" || state.lc === "aa")) { state.lc = "v"; lesView(); window.scrollTo(0, 0); return; } if (state.view === "sub" && !state.mod) { home(); return; } if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "sim") { adlView(); return; } if (state.view === "masse" && state.fzBack) { state.fzBack = 0; fzDetail("Autodrehleiter"); return; } if (["masse", "joystick", "haus"].includes(state.view)) { adlView(); return; } if (state.view === "adl" || state.view === "gq" || state.view === "sgv" || state.view === "spick") { (state.sub ? subView(state.sub) : home()); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else (state.sub ? subView(state.sub) : home()); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.view === "les") { ausbView(); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) (state.sub ? subView(state.sub) : home()); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
+backBtn.addEventListener("click", () => { if (state.view === "wartf") { wartView(state.wy); return; } if (state.view === "notee") { state.nid ? noteView(state.nid) : notesView(); return; } if (state.view === "nsh") { notesView(""); return; }
+  if (state.view === "note") { const nb = state.nBack; state.nBack = null; if (nb && nb.fz) { fzDetail(nb.fz); return; } notesView(""); return; } if (state.view === "notes") { if (state.nf || state.nq) { state.nf = null; state.nq = ""; notesView(""); } else if (state.notHome) { state.notHome = false; start(); } else logView(); return; } if (state.view === "wart" || state.view === "fz") { logView(); return; } if (state.view === "fzd") { fzView(state.fzk); return; } if (state.view === "fze" || state.view === "fzl") { if (!state.fzn && state.fzFrom === "set") { state.fzFrom = null; settingsView(); return; } state.fzn ? fzDetail(state.fzn) : fzView(state.fzk); return; } if (state.view === "games") { if (state.gm) gamesView(); else { gmStop(); start(); } return; } if (state.view === "les" && state.lc === "v" && state.vorHome) { state.vorHome = false; state.lc = null; ausbView(); return; } if (state.view === "les" && (state.lc === "vl" || state.lc === "vn" || state.lc === "aa")) { state.lc = "v"; lesView(); window.scrollTo(0, 0); return; } if (state.view === "sub" && !state.mod) { home(); return; } if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "sim") { adlView(); return; } if (state.view === "masse" && state.fzBack) { state.fzBack = 0; fzDetail("Autodrehleiter"); return; } if (["masse", "joystick", "haus"].includes(state.view)) { adlView(); return; } if (state.view === "adl" || state.view === "gq" || state.view === "sgv" || state.view === "spick") { (state.sub ? subView(state.sub) : home()); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else (state.sub ? subView(state.sub) : home()); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.view === "les") { ausbView(); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) (state.sub ? subView(state.sub) : home()); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
 /* ---------- Anmeldepflicht ---------- */
 let gateOffline = false;
 function gateNeeded() { return !!FWZ.enabled && !FWZ.user && !gateOffline; }
