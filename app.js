@@ -1,4 +1,4 @@
-const APP_VERSION = "1.238";
+const APP_VERSION = "1.239";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -1357,10 +1357,14 @@ function fzDetail(name) {
   const now = new Date().getFullYear(), d = fzData(name);
   const w = wartItems().filter(x => x.grp === name);
   const ys = [...new Set(w.flatMap(x => x.years))].filter(v => v >= now - 1).sort((a, b) => a - b).slice(0, 5);
-  const stamm = fzFields(K).filter(f => d[f[0]]).map(f => `<div class="fzr"><span>${f[1]}</span><b>${esc(d[f[0]])}</b></div>`).join("");
+  const row = f => `<div class="fzr"><span>${f[1]}</span><b>${esc(d[f[0]])}</b></div>`;
+  const MAIN = K === "Material" ? ["typ", "standort"] : ["typ", "kz"];
+  const have = fzFields(K).filter(f => d[f[0]]);
+  const stamm = have.filter(f => MAIN.includes(f[0])).map(row).join("");
+  const rest = have.filter(f => !MAIN.includes(f[0])).map(row).join("");
   let h = `<section class="hero"><h1>${esc(name)}</h1><p>${FZ_ARCH.includes(name) ? "Archiviert · ausser Dienst. " : ""}${esc([d.typ, d.kz].filter(Boolean).join(" · ") || "Noch keine Stammdaten erfasst.")}</p></section>
     ${d.img ? (d.img.slice(0, 4) === "ref:" ? `<img class="fzfoto" data-ref="${esc(d.img)}" alt="Foto">` : `<img class="fzfoto" src="${d.img}" alt="Foto">`) : ""}
-    ${stamm ? `<section class="wgrp"><h3>Stammdaten</h3><div class="fzbox">${stamm}</div></section>` : ""}
+    ${stamm || rest ? `<section class="wgrp"><h3>Stammdaten</h3>${stamm ? `<div class="fzbox">${stamm}</div>` : ""}${rest ? `<details class="wyear fzmore"><summary><span>Weitere Angaben</span><b>${have.length - (stamm ? stamm.split("fzr").length - 1 : 0)} Felder</b></summary><div class="fzbox">${rest}</div></details>` : ""}</section>` : ""}
     <div class="row spick"><button class="btn primary" id="fze">Stammdaten bearbeiten</button>${name === "Autodrehleiter" ? '<button class="btn" id="fzadl">Masse Drehleiter</button>' : ""}<button class="btn" id="fzw">Wartung erfassen</button></div>`;
   const yearHtml = ys.map(y => {
     const rows = w.filter(x => x.years.includes(y)); if (!rows.length) return "";
