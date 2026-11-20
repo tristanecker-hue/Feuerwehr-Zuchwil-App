@@ -1,4 +1,4 @@
-const APP_VERSION = "1.236";
+const APP_VERSION = "1.237";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -1340,7 +1340,7 @@ function fzDetail(name) {
   }).join("");
   const logs = fzLogs(name);
   h += `<section class="wgrp"><h3>Logbuch<button class="wadd2" id="fzlog" aria-label="Logbuch-Eintrag erfassen">+</button></h3>` +
-    (logs.length ? logs.map(e => `<div class="wrow log"><span class="fzd">${esc(fzDate(e.d) || "ohne Datum")}</span><span class="fzt">${esc(e.t)}</span><button class="wedit" data-ld="${esc(e.id)}" aria-label="Eintrag löschen">Löschen</button></div>`).join("")
+    (logs.length ? logs.map(e => `<div class="wrow log"><span class="fzd">${esc(fzDate(e.d) || "ohne Datum")}</span><span class="fzt">${esc(e.t)}</span><span class="lgact"><button class="wedit lgi" data-le="${esc(e.id)}" aria-label="Eintrag bearbeiten" title="Bearbeiten">✎</button><button class="wedit lgi" data-ld="${esc(e.id)}" aria-label="Eintrag löschen" title="Löschen">✕</button></span></div>`).join("")
       : '<div class="wrow log"><span class="fzt">Noch kein Eintrag.</span></div>') + "</section>";
   h += yearHtml || (w.length ? "" : `<div class="note">Für dieses ${fzWort(K, 0)} ist noch keine Wartung erfasst.</div>`);
   h += '<section class="wgrp" id="fznot" hidden><h3>Notizen</h3><div class="menu nlist" id="fznotl"></div></section>';
@@ -1355,6 +1355,7 @@ function fzDetail(name) {
     host.querySelectorAll("[data-nn]").forEach(b => b.onclick = () => { state.nBack = { fz: name }; noteView(b.dataset.nn); });
   }).catch(() => {});
   document.getElementById("fzlog").onclick = () => fzLogAdd(name);
+  app.querySelectorAll("[data-le]").forEach(b => b.onclick = () => fzLogAdd(name, b.dataset.le));
   app.querySelectorAll("[data-ld]").forEach(b => b.onclick = () => {
     if (!confirm("Diesen Logbuch-Eintrag löschen?")) return;
     const id = b.dataset.ld;
@@ -1369,15 +1370,16 @@ function fzDetail(name) {
     const y = +i.closest("[data-y]").dataset.y, det = i.closest("[data-y]");
     wartToggle(i, y, () => { const rows = w.filter(x => x.years.includes(y)), off = rows.filter(x => !wartDone(x, y)).length, b = det.querySelector("summary b"); if (b) b.textContent = off ? off + " offen" : "erledigt"; });
   });
-  app.querySelectorAll(".wedit").forEach(b => b.onclick = () => { state.wy = now; wartForm(b.dataset.e); });
+  app.querySelectorAll(".wedit[data-e]").forEach(b => b.onclick = () => { state.wy = now; wartForm(b.dataset.e); });
 }
-function fzLogAdd(name) {
+function fzLogAdd(name, id) {
   state.view = "fzl"; state.fzn = name; backBtn.hidden = false;
+  const cur = id ? fzLogs(name).find(e => e.id === id) : null;
   const today = new Date().toISOString().slice(0, 10);
-  app.innerHTML = `<section class="hero"><h1>Logbuch</h1><p>${esc(name)}: Eintrag erfassen.</p></section>
+  app.innerHTML = `<section class="hero"><h1>Logbuch</h1><p>${esc(name)}: Eintrag ${cur ? "bearbeiten" : "erfassen"}.</p></section>
     <div class="wform">
-      <label class="wf"><span>Datum</span><input id="fl-d" type="date" value="${today}"></label>
-      <label class="wf"><span>Eintrag</span><textarea id="fl-t" rows="4" placeholder="z. B. Service + Batterie ersetzt"></textarea></label>
+      <label class="wf"><span>Datum</span><input id="fl-d" type="date" value="${esc(cur ? (cur.d || "") : today)}"></label>
+      <label class="wf"><span>Eintrag</span><textarea id="fl-t" rows="4" placeholder="z. B. Service + Batterie ersetzt">${esc(cur ? cur.t : "")}</textarea></label>
     </div>
     <div class="row spick"><button class="btn primary" id="fl-s">Speichern</button><button class="btn" id="fl-c">Abbrechen</button></div>
     <div class="sinfo" id="fl-m" role="status"></div>`;
@@ -1387,7 +1389,11 @@ function fzLogAdd(name) {
     const t = document.getElementById("fl-t").value.trim(), d = document.getElementById("fl-d").value;
     if (!t) { document.getElementById("fl-m").textContent = "Eintrag ausfüllen."; return; }
     FSTATE.log = FSTATE.log || {}; FSTATE.log[name] = FSTATE.log[name] || [];
-    FSTATE.log[name].push({ id: "l" + Date.now().toString(36), d, t });
+    if (cur) {
+      const own = FSTATE.log[name].find(e => e.id === id);
+      if (own) { own.d = d; own.t = t; }
+      else { FSTATE.logdel = FSTATE.logdel || {}; FSTATE.logdel[name + "|" + id] = 1; FSTATE.log[name].push({ id: "l" + Date.now().toString(36), d, t }); }
+    } else FSTATE.log[name].push({ id: "l" + Date.now().toString(36), d, t });
     fzSave(); fzDetail(name);
   };
 }

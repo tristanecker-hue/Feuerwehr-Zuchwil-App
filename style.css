@@ -741,3 +741,6 @@ html.dv .adlf{align-content:start}html.dv .adlf+.foot{max-width:none}
 
 .cfgfold { margin-top: 14px; }
 .cfgfold .cfgdev { padding: 4px 2px 10px; }
+
+.lgact { display: inline-flex; gap: 6px; flex: 0 0 auto; }
+.lgact .lgi { min-width: 36px; padding: 6px 8px; font-size: 1rem; line-height: 1; text-align: center; }
