@@ -1,4 +1,4 @@
-const APP_VERSION = "1.228";
+const APP_VERSION = "1.229";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -1236,6 +1236,8 @@ async function fzPull() {
   return false;
 }
 const FZ_LOG_SEED = {
+  "Atemschutzfahrzeug": [{ id: "a1", d: "2023-07-25", t: "Batterie gewechselt" }, { id: "a2", d: "", t: "MFK: Feuerlöscher, Jumper für Rückfahrkamera" }],
+  "Autodrehleiter": [{ id: "d1", d: "2024-04-04", t: "Probleme mit AdBlue\nSoftwareupdate bei Moser" }, { id: "d2", d: "2026-07-15", t: "Zylinder beim Korb gewechselt\nLuftmesser gewechselt" }, { id: "d3", d: "2026-08-20", t: "Batterie beim Stromaggregat gewechselt" }],
   "KDO Fahrzeug": [{ id: "s1", d: "2024-04-16", t: "Service + Batterie ersetzt" }],
   "Rüstfahrzeug": [{ id: "r1", d: "2023-07-25", t: "Batterie gewechselt" }, { id: "r2", d: "2023-08-29", t: "Batterie gewechselt (Aufbau)" }, { id: "r3", d: "2024-04-04", t: "Fahrzeugservice bei Moser" }],
   "Modulfahrzeug": [{ id: "m1", d: "2024-09-11", t: "Aufbaubatterie leer und defekt\nLadegerät defekt\nSicherung durchgebrannt" }],
