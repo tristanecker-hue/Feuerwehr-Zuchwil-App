@@ -1,4 +1,4 @@
-const APP_VERSION = "1.244";
+const APP_VERSION = "1.245";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -1185,6 +1185,11 @@ function lesView() {
   const mlHtml = ml && !state.lc ? grp("Musterlektionen (50 Min.)", nA + nF, '<h3 class="zh">Anlernstufe</h3>' + tiles(AO_LEK, "m") + (nF ? '<h3 class="zh">Festigungsstufe</h3>' + tiles(AO_LEKF, "f") : "")) : "";
   if (state.lc === "vl" || state.lc === "vn") { vorlageView(state.lc === "vn"); return; }
   if (state.lc === "aa") { aaView(); return; }
+  if (state.lc === "k10" || state.lc === "k20") {
+    const n = state.lc.slice(1);
+    app.innerHTML = `<section class="hero"><h1>Kurs ${n} · Lektionen</h1><p>Dateien (PDF / Word) zum Kurs ${n}, für alle angemeldeten Mitglieder.</p></section><div id="body"></div>`;
+    lektionen(KMOD[state.lc], document.getElementById("body")); return;
+  }
   if (state.lc === "v") { app.innerHTML = '<section class="hero"><h1>Vorlagen</h1><p>Vorlagen der Feuerwehr Zuchwil (PDF / Word), für alle angemeldeten Mitglieder.</p></section><div id="vbm" class="sinfo" role="status"></div><div id="body"></div>'; lektionen(VMOD, document.getElementById("body")); return; }
   app.innerHTML = '<section class="hero"><h1>Lektionen</h1></section>' + loginBox + mlHtml + (state.lc ? '<div id="body"></div>' : '<details class="lgrp" id="eig"><summary><span>Eigene Lektionen (PDF / Word)</span><b id="eign">…</b></summary><div class="lgbody" id="body"></div></details>');
   const lgo0 = document.getElementById("lgo"); if (lgo0) lgo0.onclick = loginView;
@@ -1615,7 +1620,8 @@ async function notesView(q) {
   let list = s ? all.filter(n => (n.t + " " + n.txt + " " + noteFolder(n)).toLowerCase().includes(s)) : inF;
   let srt = "0"; try { srt = localStorage.getItem("fwz-nsort") || "0"; } catch (e) {}
   if (list && srt === "a") list = list.slice().sort((a, b) => a.t.localeCompare(b.t, "de"));
-  const inOwn = state.nf && !s && all.some(n => noteFolder(n) === state.nf && n.own === NUSER);
+  const inFolder = state.nf && !s ? all.filter(n => noteFolder(n) === state.nf) : [];
+  const inOwn = !!state.nf && !s && (!inFolder.length || inFolder.some(n => n.own === NUSER));
   const shOwner = state.nf && !s ? (all.find(n => noteFolder(n) === state.nf) || {}).own : null;
   const shInfo = f => { const sh = nShareGet(NUSER, f); return sh ? "geteilt mit " + ((sh.u || []).includes("alle") ? "allen" : (sh.u || []).join(", ")) + (sh.w ? " · darf bearbeiten" : " · nur lesen") : ""; };
   const head = `<section class="hero"><h1>${esc(state.nf && !s ? state.nf : "Notizen")}</h1><p>${state.nf && !s ? (inOwn ? (shInfo(state.nf) || "Deine Notizen. Antippen zum Lesen.") : "Geteilt von " + esc(shOwner || "") + " · antippen zum Lesen.") : "Deine Notizen und die Ordner, die mit dir geteilt sind."}</p></section>
@@ -1623,7 +1629,7 @@ async function notesView(q) {
     <div class="row spick"><button class="btn primary" id="nadd">Neue Notiz</button><button class="btn${srt === "a" ? " on" : ""}" id="nsort">${srt === "a" ? "A–Z" : "Reihenfolge"}</button>${inOwn ? '<button class="btn" id="nfren">Ordner umbenennen</button>' : ""}${inOwn && cfgIsAdmin() ? '<button class="btn" id="nfsh">Teilen …</button>' : ""}</div>
     ${inOwn ? `<div class="nfed" id="nfedit" hidden><input id="nfn" value="${esc(state.nf || "")}" aria-label="Neuer Ordnername"><button class="btn primary" id="nfok">Speichern</button><button class="btn" id="nfno">Abbrechen</button></div>` : ""}`;
   app.innerHTML = head + (list
-    ? `<div class="menu nlist">${list.map(n => `<button class="mbtn note" data-n="${esc(n.id)}"><span>${esc(n.t)}</span><small>${s ? esc(noteFolder(n)) + " · " : ""}${esc(noteSnip(n))}${n.img && n.img.length ? " · " + n.img.length + " Bild" + (n.img.length > 1 ? "er" : "") : ""}${n.doc && n.doc.length ? " · PDF" : ""}</small></button>`).join("") || '<div class="note">Nichts gefunden.</div>'}</div>`
+    ? `<div class="menu nlist">${(list.length ? list.map(n => `<button class="mbtn note" data-n="${esc(n.id)}"><span>${esc(n.t)}</span><small>${s ? esc(noteFolder(n)) + " · " : ""}${esc(noteSnip(n))}${n.img && n.img.length ? " · " + n.img.length + " Bild" + (n.img.length > 1 ? "er" : "") : ""}${n.doc && n.doc.length ? " · PDF" : ""}</small></button>`).join("") : `<div class="note">${s ? "Nichts gefunden." : "Noch keine Notiz in diesem Ordner. Lege mit «Neue Notiz» die erste an."}</div>`)}</div>`
     : `<div class="menu nlist">${folders.map(f => { const inF2 = all.filter(n => noteFolder(n) === f), own = inF2.every(n => n.own === NUSER), from = (inF2[0] || {}).own;
         return `<button class="mbtn note" data-nf="${esc(f)}"><span>${esc(f)}</span><small>${inF2.length} Notizen${own ? (shInfo(f) ? " · " + esc(shInfo(f)) : "") : " · geteilt von " + esc(from || "")}</small></button>`; }).join("") || '<div class="note">Noch keine Notizen. Lege mit «Neue Notiz» die erste an.</div>'}</div>`);
   const qi = document.getElementById("nq");
@@ -2094,6 +2100,7 @@ const LDB = {
   async rename(id, name) { const r = await this.tx("readonly", s => s.get(id)); r.name = name; return this.tx("readwrite", s => s.put(r)); }
 };
 const VMOD = { id: "vorlagen", chs: [{ k: "v", n: "Vorlagen Feuerwehr Zuchwil" }], sections: [] };
+const KMOD = { k10: { id: "kurs10", chs: [{ k: "k10", n: "Kurs 10" }], sections: [] }, k20: { id: "kurs20", chs: [{ k: "k20", n: "Kurs 20" }], sections: [] } };
 function chaptersOf(m) {
   if (m.chs) return m.chs;
   const seen = [];
@@ -2226,8 +2233,9 @@ async function lektionen(m, el) {
   });
 }
 
-backBtn.addEventListener("click", () => { if (state.view === "users") { settingsView(); return; } if (state.view === "wartf") { wartView(state.wy); return; } if (state.view === "notee") { state.nid ? noteView(state.nid) : notesView(); return; } if (state.view === "nsh") { notesView(""); return; }
-  if (state.view === "note") { const nb = state.nBack; state.nBack = null; if (nb && nb.fz) { fzDetail(nb.fz); return; } notesView(""); return; } if (state.view === "notes") { if (state.nf || state.nq) { state.nf = null; state.nq = ""; notesView(""); } else if (state.notHome) { state.notHome = false; start(); } else logView(); return; } if (state.view === "wart" || state.view === "fz") { logView(); return; } if (state.view === "fzd") { fzView(state.fzk); return; } if (state.view === "fze" || state.view === "fzl") { if (!state.fzn && state.fzFrom === "set") { state.fzFrom = null; settingsView(); return; } state.fzn ? fzDetail(state.fzn) : fzView(state.fzk); return; } if (state.view === "games") { if (state.gm) gamesView(); else { gmStop(); start(); } return; } if (state.view === "les" && state.lc === "v" && state.vorHome) { state.vorHome = false; state.lc = null; ausbView(); return; } if (state.view === "les" && (state.lc === "vl" || state.lc === "vn" || state.lc === "aa")) { state.lc = "v"; lesView(); window.scrollTo(0, 0); return; } if (state.view === "sub" && !state.mod) { home(); return; } if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "sim") { adlView(); return; } if (state.view === "masse" && state.fzBack) { state.fzBack = 0; fzDetail("Autodrehleiter"); return; } if (["masse", "joystick", "haus"].includes(state.view)) { adlView(); return; } if (state.view === "adl" || state.view === "gq" || state.view === "sgv" || state.view === "spick") { (state.sub ? subView(state.sub) : home()); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else (state.sub ? subView(state.sub) : home()); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.view === "les") { ausbView(); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) (state.sub ? subView(state.sub) : home()); else if (state.view === "ao" || state.view === "ao-sub") { if (state.view === "ao" && state.aoHome) { state.aoHome = false; ausbView(); } else aoBack(); } else start(); });
+backBtn.addEventListener("click", () => { if (state.view === "users") { settingsView(); return; }
+  if (state.view === "les" && (state.lc === "k10" || state.lc === "k20")) { const r = state.lc; state.lc = null; aoGo(r); return; } if (state.view === "wartf") { wartView(state.wy); return; } if (state.view === "notee") { state.nid ? noteView(state.nid) : notesView(); return; } if (state.view === "nsh") { notesView(""); return; }
+  if (state.view === "note") { const nb = state.nBack; state.nBack = null; if (nb && nb.fz) { fzDetail(nb.fz); return; } notesView(""); return; } if (state.view === "notes") { if (state.notFrom) { const r = state.notFrom; state.notFrom = null; state.nf = null; state.nq = ""; aoGo(r); return; } if (state.nf || state.nq) { state.nf = null; state.nq = ""; notesView(""); } else if (state.notHome) { state.notHome = false; start(); } else logView(); return; } if (state.view === "wart" || state.view === "fz") { logView(); return; } if (state.view === "fzd") { fzView(state.fzk); return; } if (state.view === "fze" || state.view === "fzl") { if (!state.fzn && state.fzFrom === "set") { state.fzFrom = null; settingsView(); return; } state.fzn ? fzDetail(state.fzn) : fzView(state.fzk); return; } if (state.view === "games") { if (state.gm) gamesView(); else { gmStop(); start(); } return; } if (state.view === "les" && state.lc === "v" && state.vorHome) { state.vorHome = false; state.lc = null; ausbView(); return; } if (state.view === "les" && (state.lc === "vl" || state.lc === "vn" || state.lc === "aa")) { state.lc = "v"; lesView(); window.scrollTo(0, 0); return; } if (state.view === "sub" && !state.mod) { home(); return; } if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "sim") { adlView(); return; } if (state.view === "masse" && state.fzBack) { state.fzBack = 0; fzDetail("Autodrehleiter"); return; } if (["masse", "joystick", "haus"].includes(state.view)) { adlView(); return; } if (state.view === "adl" || state.view === "gq" || state.view === "sgv" || state.view === "spick") { (state.sub ? subView(state.sub) : home()); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else (state.sub ? subView(state.sub) : home()); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.view === "les") { ausbView(); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) (state.sub ? subView(state.sub) : home()); else if (state.view === "ao" || state.view === "ao-sub") { if (state.view === "ao" && state.aoHome) { state.aoHome = false; ausbView(); } else aoBack(); } else start(); });
 /* ---------- Anmeldepflicht ---------- */
 let gateOffline = false;
 function gateNeeded() { return !!FWZ.enabled && !FWZ.user && !gateOffline; }
@@ -2265,10 +2273,10 @@ const CFG_ITEMS = [
   ["Startseite", [["home:reg", "Reglemente"], ["home:ausb", "Ausbildung"], ["home:log", "Logistik"], ["home:not", "Notizen"], ["home:games", "Feuerwehr Spiele"]]],
   ["Im Bereich Ausbildung", [["home:les", "Lektionen"], ["home:vor", "Vorlagen"], ["home:ao", "Ausbildungsoffizier"]]],
   ["Reglemente", [["reg:basis", "Basiswissen"], ["reg:einsatz", "Einsatzführung"], ["reg:sgv", "Kantonale Ergänzungen (SGV)"], ["reg:abc", "ABC-Handbuch"], ["reg:veg", "Vegetationsbrände"], ["reg:mat", "Materialdienst"], ["reg:adl", "Autodrehleiter"]]],
-  ["Ausbildungsoffizier", [["ao:check", "Checkliste"], ["ao:keil", "KEIL"], ["ao:lek", "Lektionen"], ["ao:kq", "Kurs-Quiz"], ["ao:fach", "Fachlektionen"], ["ao:meth", "Lektion halten"], ["ao:zahl", "Zahlen-Trainer"], ["ao:bil", "Erfolgsauswertung / Bilanz"], ["ao:prog", "Kursprogramm"], ["ao:regl", "Reglement Basiswissen"]]]
+  ["Ausbildungsoffizier", [["ao:check", "Checkliste"], ["ao:keil", "KEIL"], ["ao:lek", "Lektionen"], ["ao:kq", "Kurs-Quiz"], ["ao:fach", "Fachlektionen"], ["ao:meth", "Lektion halten"], ["ao:zahl", "Zahlen-Trainer"], ["ao:bil", "Erfolgsauswertung / Bilanz"], ["ao:prog", "Kursprogramm"], ["ao:regl", "Reglement Basiswissen"], ["ao:k10", "Kurs 10"], ["ao:k20", "Kurs 20"]]]
 ];
 /* Neu dazugekommene Bereiche: erst für Admins sichtbar, bis sie in den Einstellungen freigegeben werden */
-const CFG_NEW = ["home:log", "home:not"];
+const CFG_NEW = ["home:log", "home:not", "ao:k10", "ao:k20"];
 const CFG_DEF = () => ({ v: 1, t: 0, admins: ["tristan"], def: { hide: ["ao:check", "ao:keil", "ao:lek", "ao:kq", "ao:prog"] }, users: {} });
 let CFG = (() => { let c = null; try { const o = JSON.parse(localStorage.getItem("fwz-cfg") || "null"); if (o && o.def && o.users) c = o; } catch (e) {} return cfgSeed(c || CFG_DEF()); })();
 function cfgSeed(c) {

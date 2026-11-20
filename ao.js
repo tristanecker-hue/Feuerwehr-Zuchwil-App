@@ -217,11 +217,17 @@ function aoRows(src) {
 
 /* ---------- Navigation ---------- */
 function aoView() { aoGo(""); }
+function aoKurs(n) {
+  app.innerHTML = `<section class="hero"><h1>Kurs ${n}</h1><p>Lektionen und Notizen zum Kurs ${n}.</p></section>
+    <div class="menu"><button class="mbtn main" id="ku-les">Lektionen</button><button class="mbtn main" id="ku-not">Notizen</button></div>`;
+  document.getElementById("ku-les").onclick = () => { state.lc = "k" + n; lesView(); window.scrollTo(0, 0); };
+  document.getElementById("ku-not").onclick = () => { state.notFrom = "k" + n; state.notHome = false; state.nf = "Kurs " + n; notesView(""); };
+}
 function aoBack() { const r = state.aoR || ""; if (!r) return start(); aoGo(r.indexOf("lek:") === 0 ? "lek" : ""); }
 function aoGo(r) {
   state.aoR = r; state.from = null; state.direct = false; state.mod = null; state.view = r ? "ao-sub" : "ao"; backBtn.hidden = false;
   document.body.classList.remove("startpage"); document.querySelector(".top").hidden = false;
-  const f = { "": aoHub, check: aoCheck, keil: aoKeil, lek: aoTopics, fach: aoFach, meth: aoMeth, zahl: aoZahl, prog: aoProg, kq: aoKq, bil: aoBil }[r];
+  const f = { "": aoHub, check: aoCheck, keil: aoKeil, lek: aoTopics, fach: aoFach, meth: aoMeth, zahl: aoZahl, prog: aoProg, kq: aoKq, bil: aoBil, k10: () => aoKurs("10"), k20: () => aoKurs("20") }[r];
   if (f) f(); else if (r.indexOf("lek:") === 0) aoTopic(r.slice(4)); else aoHub();
   window.scrollTo(0, 0);
 }
@@ -247,9 +253,13 @@ function aoHub() {
     ["regl", "Nachschlagen", "Reglement Basiswissen", "Das ganze Reglement im PDF öffnen", 0, 0, ""]
   ];
   if (typeof fwzHidden === "function") for (let i = tiles.length - 1; i >= 0; i--) if (fwzHidden("ao:" + tiles[i][0])) tiles.splice(i, 1);
-  app.innerHTML = `<section class="hero"><h1>Ausbildungsoffizier</h1><p>Ku 70 · Di 20. bis Fr 23.10.2026 · Feuerwehr Grenchen. ${cnt}</p></section>
-    <div class="menu rgmenu aomenu">${tiles.map(t => `<button class="mbtn main pdfbtn aotile" data-r="${t[0]}"><span>${t[2]}</span><small>${t[6] || t[3]}</small></button>`).join("")}</div>
-    <p class="foot">Quellen: Kursaufgebot 70/26/1 und Tagesbefehl (Version 02.10.2026). Massgebend sind die Unterlagen des SGV und die Anweisungen im Kurs. Fachinhalte stehen im Reglement Basiswissen (FKS).</p>`;
+  const kurse = [["k10", "Kurs 10"], ["k20", "Kurs 20"]].filter(k => !(typeof fwzHidden === "function" && fwzHidden("ao:" + k[0])));
+  app.innerHTML = `<section class="hero"><h1>Ausbildungsoffizier</h1><p>Lektionen und Notizen der Kurse.</p></section>
+    <div class="menu">${kurse.map(k => `<button class="mbtn main aokurs" data-r="${k[0]}">${k[1]}</button>`).join("")}</div>
+    ${tiles.length ? `<details class="wgrp wyear aoarch"><summary><span>Archiv Kursvorbereitung</span><b>${tiles.length} Themen</b></summary>
+      <div class="menu rgmenu aomenu">${tiles.map(t => `<button class="mbtn main pdfbtn aotile" data-r="${t[0]}"><span>${t[2]}</span><small>${t[6] || t[3]}</small></button>`).join("")}</div>
+      <p class="foot">Unterlagen zur Kursvorbereitung Ku 70 (Di 20. bis Fr 23.10.2026, Feuerwehr Grenchen). ${cnt} Quellen: Kursaufgebot 70/26/1 und Tagesbefehl (Version 02.10.2026).</p></details>` : ""}`;
+  app.querySelectorAll(".aokurs").forEach(b => b.addEventListener("click", () => aoGo(b.dataset.r)));
   app.querySelectorAll(".aotile").forEach(b => b.addEventListener("click", () => { if (b.dataset.r === "regl") rgJump("basis", 0, () => aoGo("")); else aoGo(b.dataset.r); }));
 }
 
