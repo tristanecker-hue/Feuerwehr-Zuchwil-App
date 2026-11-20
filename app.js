@@ -1,4 +1,4 @@
-const APP_VERSION = "1.230";
+const APP_VERSION = "1.231";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -98,6 +98,7 @@ function start() {
         ${typeof fwzHidden === "function" && fwzHidden("home:ausb") ? "" : '<button class="mbtn main" id="t-ausb">Ausbildung</button>'}
         ${typeof fwzHidden === "function" && fwzHidden("home:ao") ? "" : '<button class="mbtn main" id="t-ao">Ausbildungsoffizier</button>'}
         ${typeof fwzHidden === "function" && fwzHidden("home:log") ? "" : '<button class="mbtn main" id="t-log">Logistik</button>'}
+        ${typeof fwzHidden === "function" && fwzHidden("home:not") ? "" : '<button class="mbtn main" id="t-not">Notizen</button>'}
         ${typeof fwzHidden === "function" && fwzHidden("home:games") ? "" : '<button class="mbtn main" id="t-gm">Feuerwehr Spiele</button>'}
       </div>
       <div class="bottom">
@@ -109,8 +110,9 @@ function start() {
   clearInterval(window.clk); tick(); window.clk = setInterval(tick, 1000); var clk = window.clk;
   document.getElementById("logoup").onclick = appUpdate;
   document.getElementById("wxs").onclick = wxView; wxStrip();
-  const tr = document.getElementById("t-reg"), ta = document.getElementById("t-ao"), tg = document.getElementById("t-gm"), tlo = document.getElementById("t-log"), tab = document.getElementById("t-ausb");
+  const tr = document.getElementById("t-reg"), ta = document.getElementById("t-ao"), tg = document.getElementById("t-gm"), tlo = document.getElementById("t-log"), tab = document.getElementById("t-ausb"), tno = document.getElementById("t-not");
   if (tlo) tlo.onclick = logView;
+  if (tno) tno.onclick = () => { state.notHome = true; state.nf = null; state.nq = ""; notesView(""); };
   if (tg) tg.onclick = gamesView;
   if (tab) tab.onclick = ausbView;
   if (tr) tr.onclick = home; if (ta) ta.onclick = aoView;
@@ -1213,7 +1215,7 @@ function logView() {
   document.getElementById("l-fz").onclick = () => fzView("Fahrzeuge");
   document.getElementById("l-ger").onclick = () => fzView("Material");
   document.getElementById("l-wart").onclick = () => { state.wy = 0; wartView(); };
-  document.getElementById("l-not").onclick = () => { state.nf = null; state.nq = ""; notesView(""); };
+  document.getElementById("l-not").onclick = () => { state.notHome = false; state.nf = null; state.nq = ""; notesView(""); };
   window.scrollTo(0, 0);
 }
 
@@ -1513,16 +1515,30 @@ async function notesView(q) {
     <div class="row spick"><button class="btn primary" id="nadd">Neue Notiz</button><button class="btn${srt === "a" ? " on" : ""}" id="nsort">${srt === "a" ? "A–Z" : "Reihenfolge"}</button></div>`;
   app.innerHTML = head + (list
     ? `<div class="menu nlist">${list.map(n => `<button class="mbtn note" data-n="${esc(n.id)}"><span>${esc(n.t)}</span><small>${s ? esc(noteFolder(n)) + " · " : ""}${esc(noteSnip(n))}${n.img && n.img.length ? " · " + n.img.length + " Bild" + (n.img.length > 1 ? "er" : "") : ""}${n.doc && n.doc.length ? " · PDF" : ""}</small></button>`).join("") || '<div class="note">Nichts gefunden.</div>'}</div>`
-    : `<div class="menu nlist">${folders.map(f => `<button class="mbtn note" data-nf="${esc(f)}"><span>${esc(f)}</span><small>${all.filter(n => noteFolder(n) === f).length} Notizen</small></button>`).join("")}</div>`);
+    : `<div class="menu nlist">${folders.map(f => `<div class="nfrow"><button class="mbtn note" data-nf="${esc(f)}"><span>${esc(f)}</span><small>${all.filter(n => noteFolder(n) === f).length} Notizen</small></button><button class="wedit" data-nfr="${esc(f)}" aria-label="Ordner ${esc(f)} umbenennen">Umbenennen</button></div>`).join("")}</div>`);
   const qi = document.getElementById("nq");
   qi.oninput = () => { clearTimeout(notesT2); notesT2 = setTimeout(() => notesView(qi.value), 250); };
   document.getElementById("nadd").onclick = () => noteEdit(null);
   document.getElementById("nsort").onclick = () => { try { localStorage.setItem("fwz-nsort", srt === "a" ? "0" : "a"); } catch (e) {} notesView(state.nq); };
   app.querySelectorAll("[data-n]").forEach(b => b.onclick = () => noteView(b.dataset.n));
   app.querySelectorAll("[data-nf]").forEach(b => b.onclick = () => { state.nf = b.dataset.nf; notesView(""); });
+  app.querySelectorAll("[data-nfr]").forEach(b => b.onclick = () => noteFolderRename(b.dataset.nfr));
   notesPull().then(ok => { if (ok && state.view === "notes") notesView(state.nq); });
 }
 let notesT2 = 0;
+function noteSetFolder(ids, f) {
+  NSTATE.ed = NSTATE.ed || {};
+  ids.forEach(id => { NSTATE.ed[id] = Object.assign({}, NSTATE.ed[id] || {}, { f }); });
+  notesSave();
+}
+function noteFolders() { return [...new Set(notesAll().map(noteFolder))].sort((a, b) => a.localeCompare(b, "de")); }
+function noteFolderRename(oldF) {
+  const nf = (prompt("Ordner umbenennen", oldF) || "").trim();
+  if (!nf || nf === oldF) return;
+  noteSetFolder(notesAll().filter(n => noteFolder(n) === oldF).map(n => n.id), nf);
+  if (state.nf === oldF) state.nf = nf;
+  notesView(state.nq);
+}
 function nLinks(t) {
   const re = /(https?:\/\/[^\s<>"']+|www\.[^\s<>"']+|[\w.+-]+@[\w-]+(?:\.[\w-]+)+|\+41[\s\d]{9,14}|\b0\d{2}\s?\d{3}\s?\d{2}\s?\d{2}\b)/g;
   let out = "", last = 0, m;
@@ -1541,6 +1557,7 @@ function noteView(id) {
   const n = notesAll().find(x => x.id === id); if (!n) return notesView();
   state.view = "note"; state.nid = id; backBtn.hidden = false;
   app.innerHTML = `<section class="hero"><h1>${esc(n.t)}</h1><p>${esc(noteFolder(n))}</p></section>
+    <div class="nmove"><label for="nmv">Ordner</label><select id="nmv">${noteFolders().concat(noteFolders().includes(noteFolder(n)) ? [] : [noteFolder(n)]).map(f => `<option${f === noteFolder(n) ? " selected" : ""}>${esc(f)}</option>`).join("")}<option value="__new">Neuer Ordner …</option></select></div>
     ${n.txt ? `<div class="ntxt">${nLinks(n.txt)}</div>` : ""}
     ${(n.doc || []).map((d, i) => `<div class="natt"><span>${esc(d.n)}</span><div class="row"><button class="btn" data-pa="open" data-pi="${i}">PDF öffnen</button><button class="btn" data-pa="share" data-pi="${i}">Teilen</button><button class="btn" data-pa="print" data-pi="${i}">Drucken</button></div></div>`).join("")}
     ${(n.doc || []).length ? '<div class="sinfo" id="namsg" role="status"></div>' : ""}
@@ -1557,6 +1574,13 @@ function noteView(id) {
       aoPdfActs(new File([u8], d.n, { type: "application/pdf" }), amsg)[b.dataset.pa]();
     } catch (e) { if (amsg) amsg.textContent = "PDF konnte nicht geöffnet werden."; }
   });
+  const mv = document.getElementById("nmv");
+  if (mv) mv.onchange = () => {
+    let f = mv.value;
+    if (f === "__new") { f = (prompt("Name des neuen Ordners", "") || "").trim(); if (!f) { noteView(id); return; } }
+    if (f === noteFolder(n)) return;
+    noteSetFolder([id], f); state.nf = f; noteView(id);
+  };
   document.getElementById("ned").onclick = () => noteEdit(id);
   document.getElementById("ndel").onclick = () => {
     if (!confirm("Diese Notiz wirklich löschen?")) return;
@@ -2053,7 +2077,7 @@ async function lektionen(m, el) {
   });
 }
 
-backBtn.addEventListener("click", () => { if (state.view === "wartf") { wartView(state.wy); return; } if (state.view === "notee") { state.nid ? noteView(state.nid) : notesView(); return; } if (state.view === "note") { const nb = state.nBack; state.nBack = null; if (nb && nb.fz) { fzDetail(nb.fz); return; } notesView(""); return; } if (state.view === "notes") { if (state.nf || state.nq) { state.nf = null; state.nq = ""; notesView(""); } else logView(); return; } if (state.view === "wart" || state.view === "fz") { logView(); return; } if (state.view === "fzd") { fzView(state.fzk); return; } if (state.view === "fze" || state.view === "fzl") { if (!state.fzn && state.fzFrom === "set") { state.fzFrom = null; settingsView(); return; } state.fzn ? fzDetail(state.fzn) : fzView(state.fzk); return; } if (state.view === "games") { if (state.gm) gamesView(); else { gmStop(); start(); } return; } if (state.view === "les" && state.lc === "v" && state.vorHome) { state.vorHome = false; state.lc = null; ausbView(); return; } if (state.view === "les" && (state.lc === "vl" || state.lc === "vn" || state.lc === "aa")) { state.lc = "v"; lesView(); window.scrollTo(0, 0); return; } if (state.view === "sub" && !state.mod) { home(); return; } if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "sim") { adlView(); return; } if (state.view === "masse" && state.fzBack) { state.fzBack = 0; fzDetail("Autodrehleiter"); return; } if (["masse", "joystick", "haus"].includes(state.view)) { adlView(); return; } if (state.view === "adl" || state.view === "gq" || state.view === "sgv" || state.view === "spick") { (state.sub ? subView(state.sub) : home()); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else (state.sub ? subView(state.sub) : home()); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.view === "les") { ausbView(); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) (state.sub ? subView(state.sub) : home()); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
+backBtn.addEventListener("click", () => { if (state.view === "wartf") { wartView(state.wy); return; } if (state.view === "notee") { state.nid ? noteView(state.nid) : notesView(); return; } if (state.view === "note") { const nb = state.nBack; state.nBack = null; if (nb && nb.fz) { fzDetail(nb.fz); return; } notesView(""); return; } if (state.view === "notes") { if (state.nf || state.nq) { state.nf = null; state.nq = ""; notesView(""); } else if (state.notHome) { state.notHome = false; start(); } else logView(); return; } if (state.view === "wart" || state.view === "fz") { logView(); return; } if (state.view === "fzd") { fzView(state.fzk); return; } if (state.view === "fze" || state.view === "fzl") { if (!state.fzn && state.fzFrom === "set") { state.fzFrom = null; settingsView(); return; } state.fzn ? fzDetail(state.fzn) : fzView(state.fzk); return; } if (state.view === "games") { if (state.gm) gamesView(); else { gmStop(); start(); } return; } if (state.view === "les" && state.lc === "v" && state.vorHome) { state.vorHome = false; state.lc = null; ausbView(); return; } if (state.view === "les" && (state.lc === "vl" || state.lc === "vn" || state.lc === "aa")) { state.lc = "v"; lesView(); window.scrollTo(0, 0); return; } if (state.view === "sub" && !state.mod) { home(); return; } if (state.view === "sgv-item") { sgvView(); return; } if (state.view === "sim") { adlView(); return; } if (state.view === "masse" && state.fzBack) { state.fzBack = 0; fzDetail("Autodrehleiter"); return; } if (["masse", "joystick", "haus"].includes(state.view)) { adlView(); return; } if (state.view === "adl" || state.view === "gq" || state.view === "sgv" || state.view === "spick") { (state.sub ? subView(state.sub) : home()); return; } if (state.view === "pdf") { rgClose(); const pb = state.pdfBack; state.pdfBack = null; if (pb) pb(); else (state.sub ? subView(state.sub) : home()); return; } if (state.view === "les" && state.lc) { state.lc = null; lesView(); window.scrollTo(0, 0); } else if (state.view === "les") { ausbView(); } else if (state.mod && state.from === "ao" && state.direct) { aoGo(state.aoR || ""); } else if (state.mod && state.ch && state.tab === "sum") { state.ch = null; renderMod(); window.scrollTo(0, 0); } else if (state.mod && state.from === "ao") { aoGo(state.aoR || ""); } else if (state.mod) (state.sub ? subView(state.sub) : home()); else if (state.view === "ao" || state.view === "ao-sub") aoBack(); else start(); });
 /* ---------- Anmeldepflicht ---------- */
 let gateOffline = false;
 function gateNeeded() { return !!FWZ.enabled && !FWZ.user && !gateOffline; }
@@ -2088,12 +2112,12 @@ function gateView() {
 
 /* ---------- Einstellungen: Sichtbarkeit und Benutzerverwaltung ---------- */
 const CFG_ITEMS = [
-  ["Startseite", [["home:reg", "Reglemente"], ["home:ausb", "Ausbildung"], ["home:les", "Ausbildung · Lektionen"], ["home:vor", "Ausbildung · Vorlagen"], ["home:ao", "Ausbildungsoffizier"], ["home:log", "Logistik"], ["home:games", "Feuerwehr Spiele"]]],
+  ["Startseite", [["home:reg", "Reglemente"], ["home:ausb", "Ausbildung"], ["home:les", "Ausbildung · Lektionen"], ["home:vor", "Ausbildung · Vorlagen"], ["home:ao", "Ausbildungsoffizier"], ["home:log", "Logistik"], ["home:not", "Notizen"], ["home:games", "Feuerwehr Spiele"]]],
   ["Reglemente", [["reg:basis", "Basiswissen"], ["reg:einsatz", "Einsatzführung"], ["reg:sgv", "Kantonale Ergänzungen (SGV)"], ["reg:abc", "ABC-Handbuch"], ["reg:veg", "Vegetationsbrände"], ["reg:mat", "Materialdienst"], ["reg:adl", "Autodrehleiter"]]],
   ["Ausbildungsoffizier", [["ao:check", "Checkliste"], ["ao:keil", "KEIL"], ["ao:lek", "Lektionen"], ["ao:kq", "Kurs-Quiz"], ["ao:fach", "Fachlektionen"], ["ao:meth", "Lektion halten"], ["ao:zahl", "Zahlen-Trainer"], ["ao:bil", "Erfolgsauswertung / Bilanz"], ["ao:prog", "Kursprogramm"], ["ao:regl", "Reglement Basiswissen"]]]
 ];
 /* Neu dazugekommene Bereiche: erst für Admins sichtbar, bis sie in den Einstellungen freigegeben werden */
-const CFG_NEW = ["home:log"];
+const CFG_NEW = ["home:log", "home:not"];
 const CFG_DEF = () => ({ v: 1, t: 0, admins: ["tristan"], def: { hide: ["ao:check", "ao:keil", "ao:lek", "ao:kq", "ao:prog"] }, users: {} });
 let CFG = (() => { let c = null; try { const o = JSON.parse(localStorage.getItem("fwz-cfg") || "null"); if (o && o.def && o.users) c = o; } catch (e) {} return cfgSeed(c || CFG_DEF()); })();
 function cfgSeed(c) {

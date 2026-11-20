@@ -728,3 +728,9 @@ html.dv .adlf{align-content:start}html.dv .adlf+.foot{max-width:none}
 .aalek .vlf { margin-top: 8px; }
 
 .ntxt a { color: var(--red); text-underline-offset: 2px; overflow-wrap: anywhere; }
+
+.nfrow { display: flex; align-items: stretch; gap: 8px; }
+.nfrow .mbtn { flex: 1 1 auto; }
+.nfrow .wedit { flex: 0 0 auto; align-self: center; }
+.nmove { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; color: var(--muted); font-size: .9rem; }
+.nmove select { flex: 1 1 auto; max-width: 320px; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 12px; padding: 9px 12px; font: inherit; }
