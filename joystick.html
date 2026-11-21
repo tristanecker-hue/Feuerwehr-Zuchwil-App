@@ -140,10 +140,11 @@ const SIGNS=new THREE.Group();SIGNS.visible=false;S.add(SIGNS);
    const co=new THREE.Mesh(new THREE.ConeGeometry(.17,.56,12),cm2);co.position.y=.3;co.castShadow=true;g.add(co);
    const ri=new THREE.Mesh(new THREE.CylinderGeometry(.115,.13,.09,12),wm2);ri.position.y=.33;g.add(ri);
    g.position.set(x,0,z);SIGNS.add(g)};
- /* Schadenplatzsignalisation: Trichter aus der jeweiligen Fahrtrichtung zur gesperrten Stelle */
- for(let k=0;k<7;k++)kegel(-27+k*2.9,-5+k*.78);          /* aus Richtung links, rechter Fahrbahnrand */
- for(let k=0;k<7;k++)kegel(27-k*2.9,6.4-k*.72);           /* aus Richtung rechts */
- for(let k=0;k<5;k++)kegel(-8+k*4,.6);                    /* Abgrenzung entlang des Arbeitsbereichs */
+ /* Schadenplatzsignalisation: gesperrte Zone hausseitig, Verkehr wird auf der Strassenseite vorbeigeführt */
+ const ZK=-3.2;                                           /* Kegellinie zwischen Arbeitsbereich und freier Spur */
+ for(let k=0;k<7;k++)kegel(-27+k*2.6,6.4-k*1.6);          /* Anlauf hinten: Fahrbahnrand hausseitig zur Linie */
+ for(let k=0;k<10;k++)kegel(-11+k*2.5,ZK);                /* entlang des Arbeitsbereichs */
+ for(let k=0;k<7;k++)kegel(14+k*2.6,ZK+k*1.6);            /* Auslauf vorne zurück zum Rand */
 }
 
 /* Flackerndes Licht und Funken beim Brand */
