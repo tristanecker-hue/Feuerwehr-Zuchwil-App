@@ -115,6 +115,33 @@ const CONES=new THREE.Group();CONES.visible=false;S.add(CONES);
   const co=new THREE.Mesh(new THREE.ConeGeometry(.19,.62,14),cm);co.position.y=.33;co.castShadow=true;g.add(co);
   const ri=new THREE.Mesh(new THREE.CylinderGeometry(.125,.145,.1,14),wm);ri.position.y=.36;g.add(ri);
   g.position.set(cx,0,cz);CONES.add(g)}}
+/* Faltsignale und Kegelgasse zur Absicherung der Einsatzstelle */
+const SIGNS=new THREE.Group();SIGNS.visible=false;S.add(SIGNS);
+{const stM=new THREE.MeshStandardMaterial({color:0x2b2e33,roughness:.6});
+ const sigTex=(()=>{const c=document.createElement("canvas");c.width=c.height=256;const g=c.getContext("2d");
+  g.clearRect(0,0,256,256);
+  const tri=(p,col)=>{g.beginPath();g.moveTo(128,18+p);g.lineTo(238-p*.9,214-p*.3);g.lineTo(18+p*.9,214-p*.3);g.closePath();g.fillStyle=col;g.fill()};
+  tri(0,"#d21c1c");tri(26,"#f7f4ee");
+  g.fillStyle="#1b1b1b";g.fillRect(120,96,16,62);g.beginPath();g.arc(128,178,9,0,7);g.fill();
+  const t=new THREE.CanvasTexture(c);t.anisotropy=4;return t})();
+ for(const [sx,ry] of [[30,-Math.PI/2],[-30,Math.PI/2]]){
+   const g=new THREE.Group();
+   const pl=new THREE.Mesh(new THREE.PlaneGeometry(.95,.95),new THREE.MeshBasicMaterial({map:sigTex,transparent:true,side:THREE.DoubleSide}));
+   pl.position.set(0,.78,0);g.add(pl);
+   for(const s2 of[-1,1]){const lgx=new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,.95,8),stM);lgx.position.set(0,.42,s2*.22);lgx.rotation.x=s2*.33;lgx.castShadow=true;g.add(lgx)}
+   const bar=new THREE.Mesh(new THREE.CylinderGeometry(.03,.03,.5,8),stM);bar.rotation.x=Math.PI/2;bar.position.y=.3;g.add(bar);
+   const lamp2=new THREE.Mesh(new THREE.SphereGeometry(.07,10,8),new THREE.MeshBasicMaterial({color:0x4a2a05}));lamp2.position.set(0,1.32,0);g.add(lamp2);
+   const mast=new THREE.Mesh(new THREE.CylinderGeometry(.025,.025,.3,8),stM);mast.position.set(0,1.18,0);g.add(mast);
+   g.position.set(sx,0,2.2);g.rotation.y=ry;SIGNS.add(g);(SIGNS.userData.lamps=SIGNS.userData.lamps||[]).push(lamp2)}
+ /* Kegelgasse, die den Verkehr an der Einsatzstelle vorbeiführt */
+ const cm2=M(0xe8541a,{roughness:.6}),wm2=M(0xf4f4f4,{roughness:.6});
+ for(const dir of[1,-1])for(let k=0;k<6;k++){
+   const g=new THREE.Group();
+   const bs=new THREE.Mesh(new THREE.BoxGeometry(.44,.05,.44),cm2);bs.position.y=.022;g.add(bs);
+   const co=new THREE.Mesh(new THREE.ConeGeometry(.17,.56,12),cm2);co.position.y=.3;co.castShadow=true;g.add(co);
+   const ri=new THREE.Mesh(new THREE.CylinderGeometry(.115,.13,.09,12),wm2);ri.position.y=.33;g.add(ri);
+   g.position.set(dir*(13+k*3.2),0,-.4-k*.85);SIGNS.add(g)}}
+
 /* Flackerndes Licht und Funken beim Brand */
 const fireL=new THREE.PointLight(0xff7b2a,0,22,2);fireL.position.set(0,0,0);W.add(fireL);
 const sparkG=new THREE.BufferGeometry(),SPN=90,sparkP=new Float32Array(SPN*3),sparkV=[];
@@ -123,6 +150,8 @@ sparkG.setAttribute("position",new THREE.BufferAttribute(sparkP,3));
 const sparks=new THREE.Points(sparkG,new THREE.PointsMaterial({color:0xffb04a,size:.12,transparent:true,opacity:.95,depthWrite:false,blending:THREE.AdditiveBlending}));W.add(sparks);
 function fxStep(dt,now){
   CONES.visible=sup.v>.45;const cs2=Math.min(1,(sup.v-.45)/.4);if(CONES.visible)CONES.scale.setScalar(.6+.4*Math.max(0,cs2));
+  SIGNS.visible=sup.v>.45;
+  if(SIGNS.visible){const bl2=Math.floor(now/430)%2===0;for(const l of (SIGNS.userData.lamps||[]))l.material.color.setHex(bl2?0xffb020:0x4a2a05)}
   const on=fire.visible&&fire.parent;
   fireL.visible=!!on;
   if(on){fireL.position.copy(fire.position);fireL.position.z-=.3;fireL.intensity=1.5+Math.sin(now/90)*.35+Math.random()*.5;}
