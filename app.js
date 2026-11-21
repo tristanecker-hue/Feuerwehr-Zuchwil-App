@@ -1,4 +1,4 @@
-const APP_VERSION = "1.249";
+const APP_VERSION = "1.250";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -1388,6 +1388,7 @@ function fzDetail(name) {
   h += yearHtml || (w.length ? "" : `<div class="note">Für dieses ${fzWort(K, 0)} ist noch keine Wartung erfasst.</div>`);
   h += '<section class="wgrp" id="fznot" hidden><h3>Notizen</h3><div class="menu nlist" id="fznotl"></div></section>';
   app.innerHTML = h; window.scrollTo(0, 0); nimgFill(app);
+  const foto = app.querySelector(".fzfoto"); if (foto) foto.onclick = () => lightbox([d.img], 0);
   if (!FZSEED) fzSeedLoad().then(o => { if (o && state.view === "fzd" && state.fzn === name) fzDetail(name); }).catch(() => {});
   if (!window.__nPull) { window.__nPull = 1; notesPull().then(ok => { if (ok && state.view === "fzd" && state.fzn === name) fzDetail(name); }).catch(() => {}); }
   notesLoad().then(() => {
@@ -1722,6 +1723,71 @@ function nLinks(t) {
   }
   return out + esc(t.slice(last));
 }
+/* ---------- Bilder im Vollbild ansehen (Zoom, Wischen) ---------- */
+function lightbox(list, start) {
+  const srcs = (list || []).filter(Boolean); if (!srcs.length) return;
+  let i = Math.max(0, Math.min(start || 0, srcs.length - 1));
+  let sc = 1, tx = 0, ty = 0;
+  const box = document.createElement("div");
+  box.className = "ifull";
+  box.innerHTML = `<button class="ifx" aria-label="Schliessen">×</button>
+    <button class="ifnav ifprev" aria-label="Vorheriges Bild">‹</button>
+    <button class="ifnav ifnext" aria-label="Nächstes Bild">›</button>
+    <div class="ifwrap"><img alt=""></div>
+    <div class="ifcnt"></div>`;
+  document.body.appendChild(box); document.body.classList.add("ifon");
+  const img = box.querySelector("img"), cnt = box.querySelector(".ifcnt"), nav = box.querySelectorAll(".ifnav");
+  const apply = () => { img.style.transform = `translate(${tx}px, ${ty}px) scale(${sc})`; img.style.cursor = sc > 1 ? "grab" : "zoom-in"; };
+  const show = () => {
+    sc = 1; tx = ty = 0; apply();
+    const src = srcs[i];
+    if (src.slice(0, 4) === "ref:") { img.removeAttribute("src"); img.dataset.ref = src; nimgFill(box); } else { delete img.dataset.ref; img.src = src; }
+    cnt.textContent = srcs.length > 1 ? (i + 1) + " / " + srcs.length : "";
+    nav.forEach(b => b.hidden = srcs.length < 2);
+  };
+  const close = () => { document.body.classList.remove("ifon"); box.remove(); document.removeEventListener("keydown", key); };
+  const go = d => { i = (i + d + srcs.length) % srcs.length; show(); };
+  const key = e => { if (e.key === "Escape") close(); else if (e.key === "ArrowRight") go(1); else if (e.key === "ArrowLeft") go(-1); };
+  document.addEventListener("keydown", key);
+  box.querySelector(".ifx").onclick = close;
+  box.querySelector(".ifprev").onclick = e => { e.stopPropagation(); go(-1); };
+  box.querySelector(".ifnext").onclick = e => { e.stopPropagation(); go(1); };
+  box.onclick = e => { if (e.target === box || e.target.classList.contains("ifwrap")) close(); };
+  /* Doppeltippen zoomt, ein Finger schiebt oder wischt, zwei Finger zoomen stufenlos */
+  let pts = new Map(), d0 = 0, s0 = 1, mid = null, last = 0, moved = 0, sx = 0, sy = 0, x0 = 0, y0 = 0;
+  img.addEventListener("pointerdown", e => {
+    e.preventDefault(); img.setPointerCapture(e.pointerId);
+    pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pts.size === 2) { const [a, b] = [...pts.values()]; d0 = Math.hypot(a.x - b.x, a.y - b.y); s0 = sc; mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; }
+    else { sx = e.clientX; sy = e.clientY; x0 = tx; y0 = ty; moved = 0; }
+  });
+  img.addEventListener("pointermove", e => {
+    if (!pts.has(e.pointerId)) return;
+    pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pts.size === 2) {
+      const [a, b] = [...pts.values()], d = Math.hypot(a.x - b.x, a.y - b.y);
+      if (d0) { sc = Math.max(1, Math.min(6, s0 * d / d0)); apply(); }
+      return;
+    }
+    const dx = e.clientX - sx, dy = e.clientY - sy;
+    moved = Math.max(moved, Math.hypot(dx, dy));
+    if (sc > 1) { tx = x0 + dx; ty = y0 + dy; apply(); }
+  });
+  const up = e => {
+    pts.delete(e.pointerId);
+    if (pts.size === 0) {
+      if (sc <= 1 && moved > 60) { go(Math.sign(sx - e.clientX) || 1); return; }
+      if (moved < 10) {
+        const now = Date.now();
+        if (now - last < 320) { sc = sc > 1 ? 1 : 2.5; tx = ty = 0; apply(); last = 0; }
+        else last = now;
+      }
+    }
+    if (sc <= 1) { tx = ty = 0; apply(); }
+  };
+  img.addEventListener("pointerup", up); img.addEventListener("pointercancel", up);
+  show();
+}
 function noteView(id) {
   const n = notesAll().find(x => x.id === id); if (!n) return notesView();
   state.view = "note"; state.nid = id; backBtn.hidden = false;
@@ -1730,9 +1796,10 @@ function noteView(id) {
     ${n.txt ? `<div class="ntxt">${nLinks(n.txt)}</div>` : ""}
     ${(n.doc || []).map((d, i) => `<div class="natt"><span>${esc(d.n)}</span><div class="row"><button class="btn" data-pa="open" data-pi="${i}">PDF öffnen</button><button class="btn" data-pa="share" data-pi="${i}">Teilen</button><button class="btn" data-pa="print" data-pi="${i}">Drucken</button></div></div>`).join("")}
     ${(n.doc || []).length ? '<div class="sinfo" id="namsg" role="status"></div>' : ""}
-    ${(n.img || []).map((src, i) => src.slice(0, 4) === "ref:" ? `<img class="nimg" data-ref="${esc(src)}" alt="Bild ${i + 1} der Notiz">` : `<img class="nimg" src="${src}" alt="Bild ${i + 1} der Notiz" loading="lazy">`).join("")}
+    ${(n.img || []).map((src, i) => src.slice(0, 4) === "ref:" ? `<img class="nimg" data-ref="${esc(src)}" data-lb="${i}" alt="Bild ${i + 1} der Notiz">` : `<img class="nimg" src="${src}" data-lb="${i}" alt="Bild ${i + 1} der Notiz" loading="lazy">`).join("")}
     ${n.ro ? `<p class="foot">Geteilt von ${esc(n.own)} · nur lesen.</p>` : '<div class="row spick"><button class="btn primary" id="ned">Bearbeiten</button><button class="btn wdel" id="ndel">Löschen</button></div>'}`;
   window.scrollTo(0, 0); nimgFill(app);
+  app.querySelectorAll("[data-lb]").forEach(im => im.onclick = () => lightbox(n.img || [], +im.dataset.lb));
   const amsg = document.getElementById("namsg");
   app.querySelectorAll("[data-pa]").forEach(b => b.onclick = () => {
     const d = (n.doc || [])[+b.dataset.pi]; if (!d) return;

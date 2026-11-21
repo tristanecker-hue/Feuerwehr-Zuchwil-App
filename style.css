@@ -751,3 +751,14 @@ html.dv .adlf{align-content:start}html.dv .adlf+.foot{max-width:none}
 
 .fzmore > summary { padding: 11px 14px; border-top: 1px solid var(--line); border-bottom: 0; }
 .fzmore[open] > summary { border-bottom: 1px solid var(--line); }
+
+/* Bild im Vollbild */
+body.ifon { overflow: hidden; }
+.ifull { position: fixed; inset: 0; z-index: 90; background: #0b0d10ee; display: grid; place-items: center; backdrop-filter: blur(3px); }
+.ifwrap { width: 100%; height: 100%; display: grid; place-items: center; overflow: hidden; padding: env(safe-area-inset-top, 0px) 8px env(safe-area-inset-bottom, 0px); }
+.ifull img { max-width: 100%; max-height: 100%; object-fit: contain; touch-action: none; user-select: none; -webkit-user-drag: none; transform-origin: center; transition: transform .12s ease-out; border-radius: 6px; }
+.ifx { z-index: 2; position: absolute; top: calc(env(safe-area-inset-top, 0px) + 10px); right: 12px; width: 44px; height: 44px; border-radius: 50%; border: 0; background: #ffffff22; color: #fff; font-size: 1.7rem; line-height: 1; cursor: pointer; }
+.ifnav { z-index: 2; position: absolute; top: 50%; transform: translateY(-50%); width: 44px; height: 64px; border: 0; border-radius: 12px; background: #ffffff18; color: #fff; font-size: 2rem; line-height: 1; cursor: pointer; }
+.ifprev { left: 8px; } .ifnext { right: 8px; }
+.ifcnt { z-index: 2; position: absolute; bottom: calc(env(safe-area-inset-bottom, 0px) + 14px); left: 0; right: 0; text-align: center; color: #ffffffcc; font-size: .9rem; font-variant-numeric: tabular-nums; }
+.nimg, .fzfoto { cursor: zoom-in; }
