@@ -762,3 +762,10 @@ body.ifon { overflow: hidden; }
 .ifprev { left: 8px; } .ifnext { right: 8px; }
 .ifcnt { z-index: 2; position: absolute; bottom: calc(env(safe-area-inset-bottom, 0px) + 14px); left: 0; right: 0; text-align: center; color: #ffffffcc; font-size: .9rem; font-variant-numeric: tabular-nums; }
 .nimg, .fzfoto { cursor: zoom-in; }
+
+/* Bildüberschriften in Notizen */
+.nfig { margin: 0 0 14px; }
+.nfig figcaption { font-family: var(--font-display); font-size: .95rem; letter-spacing: .02em; color: var(--ink); margin: 0 2px 6px; }
+.nfig .nimg { margin: 0; }
+.nthc { display: flex; flex-direction: column; gap: 6px; }
+.nthcap { width: 100%; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 7px 10px; font: inherit; font-size: .85rem; }

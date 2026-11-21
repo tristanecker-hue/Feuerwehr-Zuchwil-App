@@ -1,4 +1,4 @@
-const APP_VERSION = "1.250";
+const APP_VERSION = "1.251";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -1566,8 +1566,8 @@ async function notesLoad() {
 }
 function nBuild(owner, ed) {
   const seed = owner === NOWNER ? (NSEED || []) : [], list = [];
-  seed.forEach(n => { const e = ed[n.id]; if (e && e.del) return; list.push(e ? Object.assign({}, n, { t: e.t != null ? e.t : n.t, txt: e.txt != null ? e.txt : n.txt, img: e.img || n.img, f: e.f || n.f }) : n); });
-  Object.keys(ed).forEach(k => { const e = ed[k]; if (e.del || seed.some(n => n.id === k)) return; if (e.t != null || e.txt != null) list.push({ id: k, t: e.t || "Ohne Titel", txt: e.txt || "", img: e.img || [], f: e.f, fz: e.fz }); });
+  seed.forEach(n => { const e = ed[n.id]; if (e && e.del) return; list.push(e ? Object.assign({}, n, { t: e.t != null ? e.t : n.t, txt: e.txt != null ? e.txt : n.txt, img: e.img || n.img, cap: e.cap || n.cap, f: e.f || n.f }) : n); });
+  Object.keys(ed).forEach(k => { const e = ed[k]; if (e.del || seed.some(n => n.id === k)) return; if (e.t != null || e.txt != null) list.push({ id: k, t: e.t || "Ohne Titel", txt: e.txt || "", img: e.img || [], cap: e.cap || [], f: e.f, fz: e.fz }); });
   return list.map(n => { const s = owner === NUSER ? null : nShareGet(owner, noteFolder(n)); return Object.assign({}, n, { own: owner, ro: owner !== NUSER && !(s && s.w) }); });
 }
 function notesAll() {
@@ -1724,8 +1724,9 @@ function nLinks(t) {
   return out + esc(t.slice(last));
 }
 /* ---------- Bilder im Vollbild ansehen (Zoom, Wischen) ---------- */
-function lightbox(list, start) {
+function lightbox(list, start, caps) {
   const srcs = (list || []).filter(Boolean); if (!srcs.length) return;
+  const cap = caps || [];
   let i = Math.max(0, Math.min(start || 0, srcs.length - 1));
   let sc = 1, tx = 0, ty = 0;
   const box = document.createElement("div");
@@ -1742,7 +1743,8 @@ function lightbox(list, start) {
     sc = 1; tx = ty = 0; apply();
     const src = srcs[i];
     if (src.slice(0, 4) === "ref:") { img.removeAttribute("src"); img.dataset.ref = src; nimgFill(box); } else { delete img.dataset.ref; img.src = src; }
-    cnt.textContent = srcs.length > 1 ? (i + 1) + " / " + srcs.length : "";
+    const c = (cap[i] || "").trim();
+    cnt.textContent = (c ? c : "") + (srcs.length > 1 ? (c ? "  ·  " : "") + (i + 1) + " / " + srcs.length : "");
     nav.forEach(b => b.hidden = srcs.length < 2);
   };
   const close = () => { document.body.classList.remove("ifon"); box.remove(); document.removeEventListener("keydown", key); };
@@ -1796,10 +1798,12 @@ function noteView(id) {
     ${n.txt ? `<div class="ntxt">${nLinks(n.txt)}</div>` : ""}
     ${(n.doc || []).map((d, i) => `<div class="natt"><span>${esc(d.n)}</span><div class="row"><button class="btn" data-pa="open" data-pi="${i}">PDF öffnen</button><button class="btn" data-pa="share" data-pi="${i}">Teilen</button><button class="btn" data-pa="print" data-pi="${i}">Drucken</button></div></div>`).join("")}
     ${(n.doc || []).length ? '<div class="sinfo" id="namsg" role="status"></div>' : ""}
-    ${(n.img || []).map((src, i) => src.slice(0, 4) === "ref:" ? `<img class="nimg" data-ref="${esc(src)}" data-lb="${i}" alt="Bild ${i + 1} der Notiz">` : `<img class="nimg" src="${src}" data-lb="${i}" alt="Bild ${i + 1} der Notiz" loading="lazy">`).join("")}
+    ${(n.img || []).map((src, i) => { const cap = ((n.cap || [])[i] || "").trim();
+      const im = src.slice(0, 4) === "ref:" ? `<img class="nimg" data-ref="${esc(src)}" data-lb="${i}" alt="${esc(cap || "Bild " + (i + 1) + " der Notiz")}">` : `<img class="nimg" src="${src}" data-lb="${i}" alt="${esc(cap || "Bild " + (i + 1) + " der Notiz")}" loading="lazy">`;
+      return cap ? `<figure class="nfig"><figcaption>${esc(cap)}</figcaption>${im}</figure>` : im; }).join("")}
     ${n.ro ? `<p class="foot">Geteilt von ${esc(n.own)} · nur lesen.</p>` : '<div class="row spick"><button class="btn primary" id="ned">Bearbeiten</button><button class="btn wdel" id="ndel">Löschen</button></div>'}`;
   window.scrollTo(0, 0); nimgFill(app);
-  app.querySelectorAll("[data-lb]").forEach(im => im.onclick = () => lightbox(n.img || [], +im.dataset.lb));
+  app.querySelectorAll("[data-lb]").forEach(im => im.onclick = () => lightbox(n.img || [], +im.dataset.lb, n.cap || []));
   const amsg = document.getElementById("namsg");
   app.querySelectorAll("[data-pa]").forEach(b => b.onclick = () => {
     const d = (n.doc || [])[+b.dataset.pi]; if (!d) return;
@@ -1841,12 +1845,13 @@ function noteEdit(id) {
     <div class="row spick"><button class="btn primary" id="ne-s">Speichern</button><button class="btn" id="ne-c">Abbrechen</button></div>
     <div class="sinfo" id="ne-m" role="status"></div>`;
   window.scrollTo(0, 0);
-  let imgs = (n && n.img ? n.img.slice() : []);
+  let imgs = (n && n.img ? n.img.slice() : []), caps = (n && n.cap ? n.cap.slice() : []);
   const th = document.getElementById("ne-th");
   const drawTh = () => {
-    th.innerHTML = imgs.map((src, i) => `<div class="nth">${src.slice(0, 4) === "ref:" ? `<img data-ref="${esc(src)}" alt="">` : `<img src="${src}" alt="">`}<button class="nthx" data-i="${i}" aria-label="Bild entfernen">×</button></div>`).join("") || '<span class="sinfo">Noch keine Bilder.</span>';
+    th.innerHTML = imgs.map((src, i) => `<div class="nthc"><div class="nth">${src.slice(0, 4) === "ref:" ? `<img data-ref="${esc(src)}" alt="">` : `<img src="${src}" alt="">`}<button class="nthx" data-i="${i}" aria-label="Bild entfernen">×</button></div><input class="nthcap" data-c="${i}" value="${esc(caps[i] || "")}" placeholder="Überschrift zum Bild" aria-label="Überschrift zu Bild ${i + 1}"></div>`).join("") || '<span class="sinfo">Noch keine Bilder.</span>';
     nimgFill(th);
-    th.querySelectorAll(".nthx").forEach(b => b.onclick = () => { imgs.splice(+b.dataset.i, 1); drawTh(); });
+    th.querySelectorAll(".nthx").forEach(b => b.onclick = () => { const i = +b.dataset.i; imgs.splice(i, 1); caps.splice(i, 1); drawTh(); });
+    th.querySelectorAll("[data-c]").forEach(inp => inp.oninput = () => { caps[+inp.dataset.c] = inp.value; });
   };
   drawTh();
   document.getElementById("ne-img").onchange = async ev => {
@@ -1865,7 +1870,7 @@ function noteEdit(id) {
     const nid = id || "n" + Date.now().toString(36);
     const ow = (n && n.own) || NUSER, st = nStoreOf(ow); st.ed = st.ed || {};
     const f = (document.getElementById("ne-f").value || "").trim() || NF_DEF;
-    st.ed[nid] = Object.assign({}, st.ed[nid] || {}, { t, txt, f, img: imgs, del: 0 });
+    st.ed[nid] = Object.assign({}, st.ed[nid] || {}, { t, txt, f, img: imgs, cap: caps.slice(0, imgs.length), del: 0 });
     notesSaveOwner(ow); noteView(nid);
   };
 }
