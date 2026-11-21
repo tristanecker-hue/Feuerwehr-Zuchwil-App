@@ -95,7 +95,7 @@ function lamp(x,z){const g=new THREE.Group();const p=new THREE.Mesh(new THREE.Cy
 function car(x,z,c,r){const g=new THREE.Group();box(4.2,.8,1.8,M(c),0,.7,0,g);box(2.2,.7,1.6,M(c),-.2,1.4,0,g);box(2.0,.5,1.62,M(0x9db8c9,{roughness:.2}),-.2,1.42,0,g);for(const wx of[-1.4,1.4])for(const wz of[-.9,.9]){const w=new THREE.Mesh(new THREE.CylinderGeometry(.34,.34,.25,14),M(0x1a1b1e));w.rotation.x=Math.PI/2;w.position.set(wx,.34,wz);g.add(w)}g.position.set(x,0,z);g.rotation.y=r||0;W.add(g)}
 car(-20,5.4,0x2f5d9a);car(-30,5.5,0xdddddd);car(25,5.4,0x3a3d42);car(36,5.4,0xb0b4b8);
 /* --- zusaetzliche Details: Markierungen, Hydrant, Dolen, Hecke --- */
-for(let k=0;k<7;k++)flat(.55,11.4,0xf2f2f2,-11.4+k*.95,.5,.055);            /* Fussgaengerstreifen */
+for(let k=0;k<7;k++)flat(.55,11.4,0xf2f2f2,-62+k*.95,.5,.055);              /* Fussgaengerstreifen (ausserhalb der Einsatzstelle) */
 for(const px of[-34,-24,21,31,40])flat(.14,4.6,0xf2f2f2,px,5.3,.055);        /* Parkfelder */
 for(const dx of[-46,-18,10,38]){const dl=new THREE.Mesh(new THREE.CircleGeometry(.33,16),M(0x2b2d31,{roughness:1}));dl.rotation.x=-Math.PI/2;dl.position.set(dx,.06,6.6);dl.receiveShadow=true;W.add(dl)}
 function hydrant(x,z){const g=new THREE.Group(),hm=M(0xcf2027,{roughness:.55});
@@ -141,10 +141,10 @@ const SIGNS=new THREE.Group();SIGNS.visible=false;S.add(SIGNS);
    const ri=new THREE.Mesh(new THREE.CylinderGeometry(.115,.13,.09,12),wm2);ri.position.y=.33;g.add(ri);
    g.position.set(x,0,z);SIGNS.add(g)};
  /* Schadenplatzsignalisation: gesperrte Zone hausseitig, Verkehr wird auf der Strassenseite vorbeigeführt */
- const ZK=-3.2;                                           /* Kegellinie zwischen Arbeitsbereich und freier Spur */
- for(let k=0;k<7;k++)kegel(-27+k*2.6,6.4-k*1.6);          /* Anlauf hinten: Fahrbahnrand hausseitig zur Linie */
- for(let k=0;k<10;k++)kegel(-11+k*2.5,ZK);                /* entlang des Arbeitsbereichs */
- for(let k=0;k<7;k++)kegel(14+k*2.6,ZK+k*1.6);            /* Auslauf vorne zurück zum Rand */
+ const ZK=-4.3,ZR=6.3,DX=4;                               /* Linie 1,9 m neben den Stützen, Rand hausseitig */
+ for(let k=0;k<9;k++)kegel(-16+k*DX,ZK);                  /* gerade entlang des Arbeitsbereichs */
+ for(let k=1;k<=6;k++)kegel(-16-k*DX,ZK+k*(ZR-ZK)/6);     /* Verziehung hinten zum hausseitigen Rand */
+ for(let k=1;k<=6;k++)kegel(16+k*DX,ZK+k*(ZR-ZK)/6);      /* Verziehung vorne */
 }
 
 /* Flackerndes Licht und Funken beim Brand */
