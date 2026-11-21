@@ -115,7 +115,7 @@ const SIGNS=new THREE.Group();SIGNS.visible=false;S.add(SIGNS);
   tri(0,"#d21c1c");tri(26,"#f7f4ee");
   g.fillStyle="#1b1b1b";g.fillRect(120,96,16,62);g.beginPath();g.arc(128,178,9,0,7);g.fill();
   const t=new THREE.CanvasTexture(c);t.anisotropy=4;return t})();
- for(const [sx,sz,ry] of [[-50,-4.9,-Math.PI/2],[50,6.2,Math.PI/2]]){
+ for(const [sx,sz,ry] of [[-50,6.3,-Math.PI/2],[50,-5.0,Math.PI/2]]){
    const g=new THREE.Group();
    const pl=new THREE.Mesh(new THREE.PlaneGeometry(.95,.95),new THREE.MeshBasicMaterial({map:sigTex,transparent:true,side:THREE.DoubleSide}));
    pl.position.set(0,.78,0);g.add(pl);
@@ -138,21 +138,16 @@ const SIGNS=new THREE.Group();SIGNS.visible=false;S.add(SIGNS);
  for(let k=1;k<=6;k++)kegel(16+k*DX,ZK+k*(ZR-ZK)/6);      /* Verziehung vorne */
 }
 
-/* Prellbock: zweites Feuerwehrfahrzeug schräg hinter der Einsatzstelle (Basiswissen 10.5.1) */
-{const g=new THREE.Group();const rd2=M(0xb3151b,{roughness:.5}),dk2=M(0x1d2127),gl2=M(0x7aa6c4,{roughness:.2});
- box(6.2,1.9,2.3,rd2,0,1.35,0,g);box(2.2,1.3,2.25,rd2,3.1,2.45,0,g);box(1.9,.7,2.1,gl2,3.3,2.6,0,g);
- box(5.4,.5,2.36,M(0xf2f2f2),-.4,2.0,0,g);
- for(const wx of[-2,2])for(const wz of[-1.05,1.05]){const w2=new THREE.Mesh(new THREE.CylinderGeometry(.52,.52,.3,16),M(0x17181b));w2.rotation.x=Math.PI/2;w2.position.set(wx,.52,wz);g.add(w2)}
- const pb=[0,1].map(k=>{const m2=new THREE.MeshBasicMaterial({color:0x0b2a5a});const b2=new THREE.Mesh(new THREE.BoxGeometry(.2,.13,.62),m2);b2.position.set(2.4,3.17,-.34+k*.68);g.add(b2);return m2});
- g.position.set(-24,0,1.4);g.rotation.y=.34;SIGNS.add(g);SIGNS.userData.pb=pb}
-/* Verkehrsdienst beim hinteren Faltsignal */
-{const g=new THREE.Group();const wv=M(0xe8e24a,{roughness:.7}),hz=M(0x1b1e22),hm=M(0xd8261d);
- const b2=new THREE.Mesh(new THREE.CylinderGeometry(.21,.23,.62,12),wv);b2.position.y=1.15;b2.castShadow=true;g.add(b2);
- for(const sx of[-1,1]){const lgl=new THREE.Mesh(new THREE.CylinderGeometry(.09,.09,.72,8),hz);lgl.position.set(0,.4,sx*.12);g.add(lgl)}
- const hd=new THREE.Mesh(new THREE.SphereGeometry(.14,12,10),M(0xe8c9a0));hd.position.y=1.6;g.add(hd);
- const hl=new THREE.Mesh(new THREE.SphereGeometry(.17,12,8,0,Math.PI*2,0,Math.PI/2),hm);hl.position.y=1.63;g.add(hl);
- const st=new THREE.Mesh(new THREE.CylinderGeometry(.03,.03,.5,8),new THREE.MeshBasicMaterial({color:0xff5a2a}));st.position.set(.18,1.1,.26);st.rotation.z=-.5;g.add(st);
- g.position.set(-45,0,-4.4);g.rotation.y=-1.9;SIGNS.add(g);SIGNS.userData.stab=st}
+/* Verkehrsdienst: je eine Person beim Faltsignal, auf der Seite des ankommenden Verkehrs */
+{const wv=M(0xe8e24a,{roughness:.7}),hz2=M(0x1b1e22),hm2=M(0xd8261d),skin=M(0xe8c9a0);
+ for(const [px,pz,pry] of [[-44,5.6,-1.25],[44,-4.4,1.9]]){
+  const g=new THREE.Group();
+  const b2=new THREE.Mesh(new THREE.CylinderGeometry(.21,.23,.62,12),wv);b2.position.y=1.15;b2.castShadow=true;g.add(b2);
+  for(const sx of[-1,1]){const lgl=new THREE.Mesh(new THREE.CylinderGeometry(.09,.09,.72,8),hz2);lgl.position.set(0,.4,sx*.12);g.add(lgl)}
+  const hd=new THREE.Mesh(new THREE.SphereGeometry(.14,12,10),skin);hd.position.y=1.6;g.add(hd);
+  const hl=new THREE.Mesh(new THREE.SphereGeometry(.17,12,8,0,Math.PI*2,0,Math.PI/2),hm2);hl.position.y=1.63;g.add(hl);
+  const st=new THREE.Mesh(new THREE.CylinderGeometry(.03,.03,.5,8),new THREE.MeshBasicMaterial({color:0xff5a2a}));st.position.set(.2,1.1,.24);st.rotation.z=-.5;g.add(st);
+  g.position.set(px,0,pz);g.rotation.y=pry;SIGNS.add(g)}}
 
 /* Flackerndes Licht und Funken beim Brand */
 const fireL=new THREE.PointLight(0xff7b2a,0,22,2);fireL.position.set(0,0,0);W.add(fireL);
@@ -442,8 +437,6 @@ function setNight(v){
 }
 function cloudStep(dt,now){
   for(const c of CLOUDS){c.position.x+=dt*.45;if(c.position.x>250)c.position.x=-250}
-  const pb=SIGNS.userData.pb;
-  if(pb&&SIGNS.visible){const ph2=Math.floor(now/120)%8;pb[0].color.setHex(ph2===0||ph2===2?0x57b0ff:0x0b2a5a);pb[1].color.setHex(ph2===4||ph2===6?0x57b0ff:0x0b2a5a)}
 }
 function nightStep(now){
   if(night&&blL.intensity>0)blL.intensity*=2.4;
