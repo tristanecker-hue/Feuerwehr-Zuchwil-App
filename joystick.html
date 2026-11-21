@@ -106,15 +106,6 @@ function hydrant(x,z){const g=new THREE.Group(),hm=M(0xcf2027,{roughness:.55});
  g.position.set(x,0,z);W.add(g)}
 hydrant(-5.5,8.1);hydrant(33,8.1);
 for(const[hx,hw] of [[-52,12],[-38,10],[46,14]]){const h=box(hw,.9,.7,M(0x37632f,{roughness:1}),hx,.45,9.6,W);h.castShadow=h.receiveShadow=true}
-/* Leitkegel, erscheinen mit den Stuetzen */
-const CONES=new THREE.Group();CONES.visible=false;S.add(CONES);
-{const cm=M(0xe8541a,{roughness:.6}),wm=M(0xf4f4f4,{roughness:.6});
- for(const[cx,cz] of [[7.5,4.6],[7.5,-4.6],[-7.5,4.6],[-7.5,-4.6],[11.5,2.6],[11.5,-2.6],[-11.5,2.6],[-11.5,-2.6]]){
-  const g=new THREE.Group();
-  const bs=new THREE.Mesh(new THREE.BoxGeometry(.5,.05,.5),cm);bs.position.y=.025;bs.castShadow=true;g.add(bs);
-  const co=new THREE.Mesh(new THREE.ConeGeometry(.19,.62,14),cm);co.position.y=.33;co.castShadow=true;g.add(co);
-  const ri=new THREE.Mesh(new THREE.CylinderGeometry(.125,.145,.1,14),wm);ri.position.y=.36;g.add(ri);
-  g.position.set(cx,0,cz);CONES.add(g)}}
 /* Faltsignale und Kegelgasse zur Absicherung der Einsatzstelle */
 const SIGNS=new THREE.Group();SIGNS.visible=false;S.add(SIGNS);
 {const stM=new THREE.MeshStandardMaterial({color:0x2b2e33,roughness:.6});
@@ -154,7 +145,6 @@ for(let q=0;q<SPN;q++){sparkP[q*3]=0;sparkP[q*3+1]=-99;sparkP[q*3+2]=0;sparkV.pu
 sparkG.setAttribute("position",new THREE.BufferAttribute(sparkP,3));
 const sparks=new THREE.Points(sparkG,new THREE.PointsMaterial({color:0xffb04a,size:.12,transparent:true,opacity:.95,depthWrite:false,blending:THREE.AdditiveBlending}));W.add(sparks);
 function fxStep(dt,now){
-  CONES.visible=sup.v>.45;const cs2=Math.min(1,(sup.v-.45)/.4);if(CONES.visible)CONES.scale.setScalar(.6+.4*Math.max(0,cs2));
   SIGNS.visible=sup.v>.45;
   if(SIGNS.visible&&!SIGNS.userData.said){SIGNS.userData.said=1;warn("Notsignalisation innerorts: 50 m, fahrseitig am Strassenrand (Basiswissen 1.5.1)")}
   if(!SIGNS.visible)SIGNS.userData.said=0;
