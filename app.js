@@ -1,4 +1,4 @@
-const APP_VERSION = "1.248";
+const APP_VERSION = "1.249";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -1510,9 +1510,19 @@ function nShare() {
 }
 const nShareGet = (owner, f) => nShare().sh[owner + "|" + f] || null;
 function nShareOk(owner, f) { const s = nShareGet(owner, f); if (!s) return false; const u = s.u || []; return u.includes("alle") || u.includes(nUser()); }
+function nAcl() {
+  const me = nUser(), sh = nShare().sh || {}, acl = {};
+  Object.keys(sh).forEach(k => {
+    if (k.split("|")[0] !== me) return;
+    const e = sh[k] || {};
+    (e.u || []).forEach(u => { const key = u === "alle" ? "*" : u, v = e.w ? 2 : 1; if ((acl[key] || 0) < v) acl[key] = v; });
+  });
+  return acl;
+}
 function nShareSave(msgEl) {
   const sh = nShare(); sh.t = Date.now();
   try { localStorage.setItem("fwz-nshare", JSON.stringify(sh)); } catch (e) {}
+  nsEnsure(); NSTATE.acl = nAcl(); notesSaveOwner(NUSER);
   if (FWZ.user && FWZ.setDoc) FWZ.setDoc("notizen_share", sh).catch(() => { if (msgEl) msgEl.textContent = "Freigabe konnte nicht gespeichert werden."; });
 }
 const nStoreOf = owner => { nsEnsure(); return owner === NUSER ? NSTATE : (NOTHER[owner] = NOTHER[owner] || { ed: {}, t: 0 }); };
@@ -1588,7 +1598,8 @@ function imgShrink(file, max, q) {
   });
 }
 async function nimgPut(dataUrl) {
-  const id = "i" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const u = (nUser() || "x").replace(/[^a-z0-9._-]/g, "");
+  const id = u + "-i" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   NIMG[id] = dataUrl;
   try { localStorage.setItem("fwz-nimg-" + id, dataUrl); } catch (e) {}
   if (FWZ.user && FWZ.setDoc) { try { await FWZ.setDoc("notimg_" + id, { d: dataUrl, t: Date.now() }); } catch (e) {} }

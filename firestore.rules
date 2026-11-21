@@ -3,22 +3,38 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     function angemeldet() { return request.auth != null; }
+    /* Anmeldename = Teil der E-Mail vor dem @, genau wie in der App */
+    function ich() { return request.auth.token.email.lower().split('@')[0]; }
 
-    // Fortschritt: nur der eigene
+    /* Fortschritt: nur der eigene */
     match /fwz_progress/{uid} {
       allow read, write: if angemeldet() && request.auth.uid == uid;
     }
 
-    // Konfiguration / Drehleiter-Daten: alle angemeldeten lesen und schreiben
+    /* Konfiguration, Fahrzeuge, Wartungen, Drehleiter-Daten: alle Angemeldeten.
+       Ausnahme: Notizen gehören einer Person (Dokument notizen_<name>). */
     match /fwz_config/{id} {
-      allow read, write: if angemeldet();
+      function istNotiz() { return id.matches('notizen_.*') && id != 'notizen_share'; }
+      function besitzer() { return id.split('notizen_')[1]; }
+      function freigabe(stufe) {
+        return resource != null && 'acl' in resource.data
+          && (resource.data.acl.get(ich(), 0) >= stufe || resource.data.acl.get('*', 0) >= stufe);
+      }
+      function istBild() { return id.matches('notimg_.*'); }
+      function bildBesitzer() { return id.split('notimg_')[1].split('-')[0]; }
+
+      allow read: if angemeldet() && (!istNotiz() || besitzer() == ich() || freigabe(1));
+      allow create, update: if angemeldet()
+        && (!istNotiz() || besitzer() == ich() || freigabe(2))
+        && (!istBild() || bildBesitzer() == ich() || !id.matches('notimg_[a-z0-9._-]+-i.*'));
+      allow delete: if angemeldet() && (!istNotiz() || besitzer() == ich());
     }
 
-    // Lektionen (gemeinsame Dateien)
+    /* Lektionen (gemeinsame Dateien) */
     match /fwz_lessons/{id} { allow read, write: if angemeldet(); }
     match /fwz_parts/{id}   { allow read, write: if angemeldet(); }
 
-    // Eigene Dateien: nur der Besitzer
+    /* Eigene Dateien: nur der Besitzer */
     match /fwz_files/{id} {
       allow create: if angemeldet() && request.resource.data.uid == request.auth.uid;
       allow read, update, delete: if angemeldet() && resource.data.uid == request.auth.uid;
@@ -28,7 +44,7 @@ service cloud.firestore {
       allow read, update, delete: if angemeldet() && resource.data.uid == request.auth.uid;
     }
 
-    // NEU: Geräte-Übersicht und Nutzungsprotokoll
+    /* Geräte-Übersicht und Nutzungsprotokoll */
     match /fwz_presence/{id} { allow read, write: if angemeldet(); }
     match /fwz_log/{id}      { allow read, write: if angemeldet(); }
   }
