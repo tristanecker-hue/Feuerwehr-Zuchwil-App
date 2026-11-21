@@ -527,7 +527,7 @@ cv.onwheel=e=>{zoomBy(1+e.deltaY*.001);e.preventDefault()};
 /* Aufgabe */
 function addX(){const x=document.createElement('button');x.className='tx';x.textContent='✕';x.setAttribute('aria-label','Aufgabe ausblenden');x.onclick=()=>$('task').classList.add('gone');$('task').appendChild(x)}
 let peek=null;function peekGoal(){if(task&&!task.done)peek={t:0}}
-function resetRig(){Object.assign(L,{yaw:0,pitch:2,len:8.5,arm:0,ax:0});for(const k in V)V[k]=0;sup.t=0;sup.v=0;auto=false;setFr(false);apply()}
+function resetRig(){Object.assign(L,{yaw:0,pitch:2,len:8.5,arm:0,ax:0});for(const k in V)V[k]=0;sup.t=0;sup.v=0;setSup(0);setFold(1);auto=false;setFr(false);apply()}
 function restartRun(){view="ov";look.y=look.p=0;look.z=1;orb0.a=-2.55;orb0.e=.28;orb0.d=30;document.querySelectorAll("#views .chip").forEach(x=>x.classList.toggle("on",x.dataset.v==="ov"));lights.bl=true;lights.wb=false;$("bl").classList.toggle("on",true);$("wb").classList.toggle("on",false);newTask();stepUI();peek={t:-.8};warn("Patient in Sicherheit – neue Aufgabe")}
 function newTask3(first){let i=0;if(first!==true&&task){do{i=Math.floor(Math.random()*TG3.length)}while(i===task.i3)}const g=TG3[i];
  resetRig();W.position.x=-(g.x-(9+Math.random()*5));
