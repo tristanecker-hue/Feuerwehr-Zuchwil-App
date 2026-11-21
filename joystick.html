@@ -410,6 +410,50 @@ const CLOUDS=[];{const ct=(()=>{const c=document.createElement("canvas");c.width
  for(let q=0;q<14;q++){const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:ct,transparent:true,opacity:.75,depthWrite:false}));
   const sc2=26+Math.random()*34;sp.scale.set(sc2,sc2*.5,1);sp.position.set(-240+Math.random()*480,52+Math.random()*34,-150-Math.random()*220);S.add(sp);CLOUDS.push(sp)}}
 
+/* --- Schaulustige hinter der Absperrung, Polizei und Ambulanz --- */
+const WATCH=new THREE.Group();WATCH.visible=false;W.add(WATCH);
+function person(col,hat){const g=new THREE.Group();
+  const b=new THREE.Mesh(new THREE.CylinderGeometry(.2,.22,.6,12),M(col,{roughness:.8}));b.position.y=1.12;b.castShadow=true;g.add(b);
+  for(const sx of[-1,1]){const l=new THREE.Mesh(new THREE.CylinderGeometry(.085,.085,.7,8),M(0x2c3038));l.position.set(0,.38,sx*.11);g.add(l)}
+  const h=new THREE.Mesh(new THREE.SphereGeometry(.135,12,10),M(0xe8c9a0));h.position.y=1.56;g.add(h);
+  if(hat){const c=new THREE.Mesh(new THREE.SphereGeometry(.15,12,8,0,Math.PI*2,0,Math.PI/2),M(hat));c.position.y=1.58;g.add(c)}
+  return g}
+{const cols=[0x3a4a7a,0x7a3a3a,0x3f6b4a,0x6b5a3a,0x4a4a52,0x80506e];
+ const poses=[[-13.5,9.3],[-12.2,9.6],[-10.6,9.2],[6.8,9.4],[8.2,9.7],[9.6,9.2]];
+ poses.forEach((pp,i)=>{const g=person(cols[i%6],i%3===0?0x22262c:0);
+   if(i%2===0){const ph=new THREE.Mesh(new THREE.BoxGeometry(.05,.14,.08),M(0x15171a));ph.position.set(.22,1.42,0);g.add(ph);
+     const arm=new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,.42,8),M(cols[i%6]));arm.position.set(.16,1.3,0);arm.rotation.z=-.9;g.add(arm)}
+   g.position.set(pp[0],0,pp[1]);g.rotation.y=Math.PI+(Math.random()-.5)*.5;g.userData.ph=Math.random()*6;WATCH.add(g)})}
+/* Polizei und Ambulanz fahren nach, mit Blaulicht */
+const RESP=[];
+function einsatzwagen(col,stripe,x0,xt,xz,rot,delay){
+  const g=new THREE.Group();const body=M(col,{roughness:.5});
+  box(4.9,.95,2.0,body,0,.95,0,g);box(2.4,.8,1.95,body,-.3,1.72,0,g);
+  box(2.2,.5,1.97,M(0x8fb3c9,{roughness:.2}),-.3,1.78,0,g);
+  box(4.92,.3,2.02,M(stripe),0,1.05,0,g);
+  for(const wx of[-1.6,1.6])for(const wz of[-.95,.95]){const w=new THREE.Mesh(new THREE.CylinderGeometry(.37,.37,.26,14),M(0x17181b));w.rotation.x=Math.PI/2;w.position.set(wx,.37,wz);g.add(w)}
+  const bm=[0,1].map(k=>{const m=new THREE.MeshBasicMaterial({color:0x0b2a5a});const b=new THREE.Mesh(new THREE.BoxGeometry(.2,.12,.52),m);b.position.set(-.3,2.18,-.3+k*.6);g.add(b);return m});
+  g.position.set(x0,0,xz);g.rotation.y=rot;g.visible=false;W.add(g);
+  RESP.push({g,bm,x0,xt,delay,t:0});
+}
+einsatzwagen(0x1d2d57,0xf2f2f2,-92,-58,6.1,0,10);        /* Polizei: aussen bei der Notsignalisation */
+einsatzwagen(0xf2f2f2,0xe8541a,78,14,5.4,Math.PI,20);    /* Ambulanz: in der Sperrzone für die Patientenübergabe */
+function respStep(dt,now){
+  const on=SIGNS.visible;
+  WATCH.visible=on;
+  if(on)for(const p of WATCH.children){p.userData.ph+=dt;p.position.y=Math.sin(p.userData.ph*1.4)*.012}
+  for(const r of RESP){
+    if(!on){r.t=0;r.g.visible=false;continue}
+    r.t+=dt;
+    if(r.t<r.delay){r.g.visible=false;continue}
+    r.g.visible=true;
+    const u=Math.min(1,(r.t-r.delay)/9);
+    r.g.position.x=r.x0+(r.xt-r.x0)*(1-Math.pow(1-u,3));
+    const ph=Math.floor(now/110)%8;
+    r.bm[0].color.setHex(ph===0||ph===2?0x57b0ff:0x0b2a5a);
+    r.bm[1].color.setHex(ph===4||ph===6?0x57b0ff:0x0b2a5a);
+  }
+}
 /* --- Heck: Warnmarkierung und LED-Verkehrsleitbalken, Arbeitsscheinwerfer, Nachtmodus --- */
 const WARNT=cv2(320,64,(g,w,h)=>{g.fillStyle="#f2f2f2";g.fillRect(0,0,w,h);g.fillStyle="#c8161d";for(let i=-1;i<9;i++){g.beginPath();g.moveTo(i*40,h);g.lineTo(i*40+20,h);g.lineTo(i*40+20+h,0);g.lineTo(i*40+h,0);g.fill()}});
 {const wp=new THREE.Mesh(new THREE.PlaneGeometry(2.35,.42),new THREE.MeshBasicMaterial({map:WARNT}));wp.position.set(-2.93,.52,0);wp.rotation.y=-Math.PI/2;truck.add(wp)}
@@ -590,10 +634,10 @@ bypass=false;if(auto){if(moving||!fr.on||!ok){auto=false;warn("Korbeinstieg abge
  else if(view==="free"){}
  else if(view==="st"){const p=new THREE.Vector3(.4,3.1,.6);tt.localToWorld(p);const q=new THREE.Vector3(L.len+AL*.6,-.4,0);lp.localToWorld(q);cam.position.copy(p);cam.lookAt(q);lk()}
  else{S.updateMatrixWorld(true);const m=new THREE.Vector3();man.getWorldPosition(m);const f=new THREE.Vector3(1,0,0).transformDirection(cage.matrixWorld);f.y=0;f.normalize();const p=m.clone().addScaledVector(f,-3.4);p.y=m.y+3.2;const q=m.clone().addScaledVector(f,4);q.y=m.y-1.2;cam.position.copy(p);cam.lookAt(q);lk()}
- smokeStep(dt);fxStep(dt,now);cloudStep(dt,now);nightStep(now);victimStep(now);exitStep(dt,now);
+ smokeStep(dt);fxStep(dt,now);cloudStep(dt,now);respStep(dt,now);nightStep(now);victimStep(now);exitStep(dt,now);
  if(peek){peek.t+=dt;const D=3.6,u=peek.t/D;if(u>=1)peek=null;else if(u>0){const k=Math.sin(Math.PI*Math.min(1,u)),e=k*k*(3-2*k);const p1=new THREE.Vector3(T.x+9,Math.max(2.5,T.y*.6),T.z-15),o=new THREE.PerspectiveCamera();o.position.copy(p1);o.lookAt(T);const q0=cam.quaternion.clone();cam.position.lerp(p1,e);cam.quaternion.copy(q0).slerp(o.quaternion,e)}}
  R.render(S,cam)}
-apply();requestAnimationFrame(loop);window.__trainer={newTask,stepUI,resetRig,killPeek:()=>{peek=null},apply,hit,Th,W,vic,vic2,fire,vic,cam,setView:v=>{view=v},cageW:()=>{S.updateMatrixWorld(true);return cage.localToWorld(new THREE.Vector3(.6,-.4,0))},L,T,cageC,fr:setFr,orb0,sup,get task(){return task},ST};
+apply();requestAnimationFrame(loop);window.__trainer={RESP,WATCH,SIGNS,newTask,stepUI,resetRig,killPeek:()=>{peek=null},apply,hit,Th,W,vic,vic2,fire,vic,cam,setView:v=>{view=v},cageW:()=>{S.updateMatrixWorld(true);return cage.localToWorld(new THREE.Vector3(.6,-.4,0))},L,T,cageC,fr:setFr,orb0,sup,get task(){return task},ST};
 })();
 </script>
 
