@@ -124,7 +124,7 @@ const SIGNS=new THREE.Group();SIGNS.visible=false;S.add(SIGNS);
   tri(0,"#d21c1c");tri(26,"#f7f4ee");
   g.fillStyle="#1b1b1b";g.fillRect(120,96,16,62);g.beginPath();g.arc(128,178,9,0,7);g.fill();
   const t=new THREE.CanvasTexture(c);t.anisotropy=4;return t})();
- for(const [sx,ry] of [[30,-Math.PI/2],[-30,Math.PI/2]]){
+ for(const [sx,sz,ry] of [[-50,-4.9,-Math.PI/2],[50,6.2,Math.PI/2]]){
    const g=new THREE.Group();
    const pl=new THREE.Mesh(new THREE.PlaneGeometry(.95,.95),new THREE.MeshBasicMaterial({map:sigTex,transparent:true,side:THREE.DoubleSide}));
    pl.position.set(0,.78,0);g.add(pl);
@@ -132,15 +132,19 @@ const SIGNS=new THREE.Group();SIGNS.visible=false;S.add(SIGNS);
    const bar=new THREE.Mesh(new THREE.CylinderGeometry(.03,.03,.5,8),stM);bar.rotation.x=Math.PI/2;bar.position.y=.3;g.add(bar);
    const lamp2=new THREE.Mesh(new THREE.SphereGeometry(.07,10,8),new THREE.MeshBasicMaterial({color:0x4a2a05}));lamp2.position.set(0,1.32,0);g.add(lamp2);
    const mast=new THREE.Mesh(new THREE.CylinderGeometry(.025,.025,.3,8),stM);mast.position.set(0,1.18,0);g.add(mast);
-   g.position.set(sx,0,2.2);g.rotation.y=ry;SIGNS.add(g);(SIGNS.userData.lamps=SIGNS.userData.lamps||[]).push(lamp2)}
+   g.position.set(sx,0,sz);g.rotation.y=ry;SIGNS.add(g);(SIGNS.userData.lamps=SIGNS.userData.lamps||[]).push(lamp2)}
  /* Kegelgasse, die den Verkehr an der Einsatzstelle vorbeiführt */
  const cm2=M(0xe8541a,{roughness:.6}),wm2=M(0xf4f4f4,{roughness:.6});
- for(const dir of[1,-1])for(let k=0;k<6;k++){
-   const g=new THREE.Group();
+ const kegel=(x,z)=>{const g=new THREE.Group();
    const bs=new THREE.Mesh(new THREE.BoxGeometry(.44,.05,.44),cm2);bs.position.y=.022;g.add(bs);
    const co=new THREE.Mesh(new THREE.ConeGeometry(.17,.56,12),cm2);co.position.y=.3;co.castShadow=true;g.add(co);
    const ri=new THREE.Mesh(new THREE.CylinderGeometry(.115,.13,.09,12),wm2);ri.position.y=.33;g.add(ri);
-   g.position.set(dir*(13+k*3.2),0,-.4-k*.85);SIGNS.add(g)}}
+   g.position.set(x,0,z);SIGNS.add(g)};
+ /* Schadenplatzsignalisation: Trichter aus der jeweiligen Fahrtrichtung zur gesperrten Stelle */
+ for(let k=0;k<7;k++)kegel(-27+k*2.9,-5+k*.78);          /* aus Richtung links, rechter Fahrbahnrand */
+ for(let k=0;k<7;k++)kegel(27-k*2.9,6.4-k*.72);           /* aus Richtung rechts */
+ for(let k=0;k<5;k++)kegel(-8+k*4,.6);                    /* Abgrenzung entlang des Arbeitsbereichs */
+}
 
 /* Flackerndes Licht und Funken beim Brand */
 const fireL=new THREE.PointLight(0xff7b2a,0,22,2);fireL.position.set(0,0,0);W.add(fireL);
@@ -151,6 +155,8 @@ const sparks=new THREE.Points(sparkG,new THREE.PointsMaterial({color:0xffb04a,si
 function fxStep(dt,now){
   CONES.visible=sup.v>.45;const cs2=Math.min(1,(sup.v-.45)/.4);if(CONES.visible)CONES.scale.setScalar(.6+.4*Math.max(0,cs2));
   SIGNS.visible=sup.v>.45;
+  if(SIGNS.visible&&!SIGNS.userData.said){SIGNS.userData.said=1;warn("Notsignalisation innerorts: 50 m, fahrseitig am Strassenrand (Basiswissen 1.5.1)")}
+  if(!SIGNS.visible)SIGNS.userData.said=0;
   if(SIGNS.visible){const bl2=Math.floor(now/430)%2===0;for(const l of (SIGNS.userData.lamps||[]))l.material.color.setHex(bl2?0xffb020:0x4a2a05)}
   const on=fire.visible&&fire.parent;
   fireL.visible=!!on;
