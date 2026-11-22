@@ -1,4 +1,4 @@
-const APP_VERSION = "1.264";
+const APP_VERSION = "1.265";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -2193,24 +2193,39 @@ const KMOD = { k10: { id: "kurs10", chs: [{ k: "k10", n: "Kurs 10" }], sections:
 const K10LEK = {1: "Persönliche Ausrüstung, Bindungen, Bremsen, Knoten", 2: "Kommunikation", 3: "Einsatzort sichern", 4: "Rettungsmittel Leitern (Anlernstufe)", 5: "Rettungsmittel Leitern (Festigungsstufe)", 6: "Handhabung technischer Geräte", 7: "Kleinlöschgeräte", 8: "Personenrettung und Transport", 9: "Leitungsbau", 10: "Verbraucher", 11: "TLF (Anlernstufe)", 12: "TLF (Festigungsstufe)", 13: "MS ab Gewässer", 14: "Absturzsicherung – Rückhalten", 15: "Übung «Factum»"};
 const K10FILES = [
   { l: 1, n: "L01 Ausrüstung und Bindungen.docx", e: "k10/l01-ausruestung.enc", s: 45326 },
+  { l: 1, n: "L01 Ausrüstung und Bindungen.pdf", e: "k10/l01-ausruestung-pdf.enc", s: 57229 },
   { l: 2, n: "L02 Kommunikation.docx", e: "k10/l02-kommunikation.enc", s: 45756 },
+  { l: 2, n: "L02 Kommunikation.pdf", e: "k10/l02-kommunikation-pdf.enc", s: 49923 },
   { l: 2, n: "L02 Kommunikation (Präsentation).pptx", e: "k10/l02-kommunikation-ppt.enc", s: 1725231 },
   { l: 2, n: "L02 Funk Behelf V3.0.pdf", e: "k10/l02-funk-behelf.enc", s: 200064 },
   { l: 2, n: "L02 Übermittlungstextkarte.docx", e: "k10/l02-textkarte.enc", s: 840539 },
   { l: 2, n: "L02 Übermittlungstextkarte.pdf", e: "k10/l02-textkarte-pdf.enc", s: 446698 },
   { l: 3, n: "L03 Einsatzort sichern.docx", e: "k10/l03-einsatzort.enc", s: 50107 },
+  { l: 3, n: "L03 Einsatzort sichern.pdf", e: "k10/l03-einsatzort-pdf.enc", s: 53083 },
   { l: 4, n: "L04 Rettungsmittel Leitern (Anlernstufe).docx", e: "k10/l04-leitern-anlern.enc", s: 47636 },
+  { l: 4, n: "L04 Rettungsmittel Leitern (Anlernstufe).pdf", e: "k10/l04-leitern-anlern-pdf.enc", s: 55401 },
   { l: 5, n: "L05 Rettungsmittel Leitern (Festigungsstufe).docx", e: "k10/l05-leitern-festig.enc", s: 49461 },
+  { l: 5, n: "L05 Rettungsmittel Leitern (Festigungsstufe).pdf", e: "k10/l05-leitern-festig-pdf.enc", s: 52338 },
   { l: 6, n: "L06 Handhabung technischer Geräte.docx", e: "k10/l06-techn-geraete.enc", s: 41387 },
+  { l: 6, n: "L06 Handhabung technischer Geräte.pdf", e: "k10/l06-techn-geraete-pdf.enc", s: 53040 },
   { l: 7, n: "L07 Kleinlöschgeräte.docx", e: "k10/l07-kleinloeschgeraete.enc", s: 2605167 },
+  { l: 7, n: "L07 Kleinlöschgeräte.pdf", e: "k10/l07-kleinloeschgeraete-pdf.enc", s: 1216404 },
   { l: 8, n: "L08 Personenrettung und Transport.docx", e: "k10/l08-personenrettung.enc", s: 902153 },
+  { l: 8, n: "L08 Personenrettung und Transport.pdf", e: "k10/l08-personenrettung-pdf.enc", s: 745957 },
   { l: 9, n: "L09 Leitungsbau.docx", e: "k10/l09-leitungsbau.enc", s: 47083 },
+  { l: 9, n: "L09 Leitungsbau.pdf", e: "k10/l09-leitungsbau-pdf.enc", s: 60268 },
   { l: 10, n: "L10 Verbraucher.docx", e: "k10/l10-verbraucher.enc", s: 47230 },
+  { l: 10, n: "L10 Verbraucher.pdf", e: "k10/l10-verbraucher-pdf.enc", s: 57281 },
   { l: 11, n: "L11 TLF (Anlernstufe).docx", e: "k10/l11-tlf-anlern.enc", s: 49852 },
+  { l: 11, n: "L11 TLF (Anlernstufe).pdf", e: "k10/l11-tlf-anlern-pdf.enc", s: 53682 },
   { l: 12, n: "L12 TLF (Festigungsstufe).docx", e: "k10/l12-tlf-festig.enc", s: 49725 },
+  { l: 12, n: "L12 TLF (Festigungsstufe).pdf", e: "k10/l12-tlf-festig-pdf.enc", s: 52740 },
   { l: 13, n: "L13 MS ab Gewässer.docx", e: "k10/l13-ms-gewaesser.enc", s: 49769 },
+  { l: 13, n: "L13 MS ab Gewässer.pdf", e: "k10/l13-ms-gewaesser-pdf.enc", s: 50265 },
   { l: 14, n: "L14 Absturzsicherung – Rückhalten.docx", e: "k10/l14-absturzsicherung.enc", s: 1375807 },
-  { l: 15, n: "L15 Übung «Factum».docx", e: "k10/l15-uebung-factum.enc", s: 50499 }
+  { l: 14, n: "L14 Absturzsicherung – Rückhalten.pdf", e: "k10/l14-absturzsicherung-pdf.enc", s: 782198 },
+  { l: 15, n: "L15 Übung «Factum».docx", e: "k10/l15-uebung-factum.enc", s: 50499 },
+  { l: 15, n: "L15 Übung «Factum».pdf", e: "k10/l15-uebung-factum-pdf.enc", s: 58507 }
 ];
 const K10CACHE = {};
 async function k10Load(f, m) {
