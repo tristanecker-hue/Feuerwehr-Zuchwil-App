@@ -1,4 +1,4 @@
-const APP_VERSION = "1.263";
+const APP_VERSION = "1.264";
 const fwzViewMode = () => { try { return localStorage.getItem("fwz-view") || "auto"; } catch (e) { return "auto"; } };
 const fwzViewApply = () => { const m = fwzViewMode(); document.documentElement.classList.toggle("dv", m === "desktop" || (m === "auto" && window.innerWidth >= 1000)); };
 fwzViewApply(); window.addEventListener("resize", fwzViewApply);
@@ -1187,7 +1187,7 @@ function lesView() {
   if (state.lc === "aa") { aaView(); return; }
   if (state.lc === "k10" || state.lc === "k20") {
     const n = state.lc.slice(1);
-    app.innerHTML = `<section class="hero"><h1>Kurs ${n} · Lektionen</h1><p>Dateien (PDF / Word) zum Kurs ${n}, für alle angemeldeten Mitglieder.</p></section><div id="body"></div>`;
+    app.innerHTML = `<section class="hero"><h1>Kurs ${n} · Lektionen</h1><p>${n === "10" ? "Die Lektionen sind in der App enthalten – pro Lektion ein Ordner. Eigene Dateien kannst du ergänzen." : "Dateien (PDF / Word) zum Kurs " + n + ", für alle angemeldeten Mitglieder."}</p></section><div id="body"></div>`;
     lektionen(KMOD[state.lc], document.getElementById("body")); return;
   }
   if (state.lc === "v") { app.innerHTML = '<section class="hero"><h1>Vorlagen</h1><p>Vorlagen der Feuerwehr Zuchwil (PDF / Word), für alle angemeldeten Mitglieder.</p></section><div id="vbm" class="sinfo" role="status"></div><div id="body"></div>'; lektionen(VMOD, document.getElementById("body")); return; }
@@ -2164,8 +2164,9 @@ function loginView() {
 }
 
 /* ---------- Lektionen (PDFs je Kapitel, lokal im Browser gespeichert) ---------- */
-const isWord = n => /\.docx?$/i.test(n || "");
-const fileMime = n => /\.docx$/i.test(n) ? "application/vnd.openxmlformats-officedocument.wordprocessingml.document" : /\.doc$/i.test(n) ? "application/msword" : "application/pdf";
+const isWord = n => /\.(docx?|pptx?)$/i.test(n || "");
+const offTag = n => /\.pptx?$/i.test(n || "") ? "PowerPoint" : "Word";
+const fileMime = n => /\.docx$/i.test(n) ? "application/vnd.openxmlformats-officedocument.wordprocessingml.document" : /\.doc$/i.test(n) ? "application/msword" : /\.pptx$/i.test(n) ? "application/vnd.openxmlformats-officedocument.presentationml.presentation" : /\.ppt$/i.test(n) ? "application/vnd.ms-powerpoint" : "application/pdf";
 const LDB = {
   db: null,
   open() {
@@ -2188,6 +2189,43 @@ const LDB = {
 };
 const VMOD = { id: "vorlagen", chs: [{ k: "v", n: "Vorlagen Feuerwehr Zuchwil" }], sections: [] };
 const KMOD = { k10: { id: "kurs10", chs: [{ k: "k10", n: "Kurs 10" }], sections: [] }, k20: { id: "kurs20", chs: [{ k: "k20", n: "Kurs 20" }], sections: [] } };
+/* ---------- Kurs 10: Lektionen fest in der App (verschlüsselt), pro Lektion ein Ordner ---------- */
+const K10LEK = {1: "Persönliche Ausrüstung, Bindungen, Bremsen, Knoten", 2: "Kommunikation", 3: "Einsatzort sichern", 4: "Rettungsmittel Leitern (Anlernstufe)", 5: "Rettungsmittel Leitern (Festigungsstufe)", 6: "Handhabung technischer Geräte", 7: "Kleinlöschgeräte", 8: "Personenrettung und Transport", 9: "Leitungsbau", 10: "Verbraucher", 11: "TLF (Anlernstufe)", 12: "TLF (Festigungsstufe)", 13: "MS ab Gewässer", 14: "Absturzsicherung – Rückhalten", 15: "Übung «Factum»"};
+const K10FILES = [
+  { l: 1, n: "L01 Ausrüstung und Bindungen.docx", e: "k10/l01-ausruestung.enc", s: 45326 },
+  { l: 2, n: "L02 Kommunikation.docx", e: "k10/l02-kommunikation.enc", s: 45756 },
+  { l: 2, n: "L02 Kommunikation (Präsentation).pptx", e: "k10/l02-kommunikation-ppt.enc", s: 1725231 },
+  { l: 2, n: "L02 Funk Behelf V3.0.pdf", e: "k10/l02-funk-behelf.enc", s: 200064 },
+  { l: 2, n: "L02 Übermittlungstextkarte.docx", e: "k10/l02-textkarte.enc", s: 840539 },
+  { l: 2, n: "L02 Übermittlungstextkarte.pdf", e: "k10/l02-textkarte-pdf.enc", s: 446698 },
+  { l: 3, n: "L03 Einsatzort sichern.docx", e: "k10/l03-einsatzort.enc", s: 50107 },
+  { l: 4, n: "L04 Rettungsmittel Leitern (Anlernstufe).docx", e: "k10/l04-leitern-anlern.enc", s: 47636 },
+  { l: 5, n: "L05 Rettungsmittel Leitern (Festigungsstufe).docx", e: "k10/l05-leitern-festig.enc", s: 49461 },
+  { l: 6, n: "L06 Handhabung technischer Geräte.docx", e: "k10/l06-techn-geraete.enc", s: 41387 },
+  { l: 7, n: "L07 Kleinlöschgeräte.docx", e: "k10/l07-kleinloeschgeraete.enc", s: 2605167 },
+  { l: 8, n: "L08 Personenrettung und Transport.docx", e: "k10/l08-personenrettung.enc", s: 902153 },
+  { l: 9, n: "L09 Leitungsbau.docx", e: "k10/l09-leitungsbau.enc", s: 47083 },
+  { l: 10, n: "L10 Verbraucher.docx", e: "k10/l10-verbraucher.enc", s: 47230 },
+  { l: 11, n: "L11 TLF (Anlernstufe).docx", e: "k10/l11-tlf-anlern.enc", s: 49852 },
+  { l: 12, n: "L12 TLF (Festigungsstufe).docx", e: "k10/l12-tlf-festig.enc", s: 49725 },
+  { l: 13, n: "L13 MS ab Gewässer.docx", e: "k10/l13-ms-gewaesser.enc", s: 49769 },
+  { l: 14, n: "L14 Absturzsicherung – Rückhalten.docx", e: "k10/l14-absturzsicherung.enc", s: 1375807 },
+  { l: 15, n: "L15 Übung «Factum».docx", e: "k10/l15-uebung-factum.enc", s: 50499 }
+];
+const K10CACHE = {};
+async function k10Load(f, m) {
+  if (K10CACHE[f.enc]) return K10CACHE[f.enc];
+  if (!window.FWZ_CODE) throw new Error("Bitte App neu laden und PIN eingeben.");
+  if (m) m.textContent = "Lade Datei …";
+  const r = await fetch(f.enc); if (!r.ok) throw new Error("Datei nicht erreichbar (offline?).");
+  const raw = new Uint8Array(await r.arrayBuffer()); if (m) m.textContent = "Entschlüssle …";
+  const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(window.FWZ_CODE), "PBKDF2", false, ["deriveKey"]);
+  const key = await crypto.subtle.deriveKey({ name: "PBKDF2", salt: raw.slice(0, 16), iterations: 600000, hash: "SHA-256" }, base, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
+  const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: raw.slice(16, 28) }, key, raw.slice(28));
+  if (m) m.textContent = "";
+  return K10CACHE[f.enc] = new File([pt], f.name, { type: fileMime(f.name) });
+}
+const k10Fix = () => K10FILES.map((f, i) => ({ id: "k10f" + i, mod: "kurs10", ch: "k10", name: f.n, size: f.s, added: 0, fix: i + 1, enc: f.e, lek: f.l }));
 function chaptersOf(m) {
   if (m.chs) return m.chs;
   const seen = [];
@@ -2216,6 +2254,16 @@ function lesSec(secs, n) {
   return best;
 }
 function lesGroups(m, c, mine, rowH) {
+  if (m.id === "kurs10") {
+    state.lfo = state.lfo || new Set();
+    const num = f => f.lek || (/(?:^|[^\d])L\s?(\d{1,2})/i.test(f.name) ? +/(?:^|[^\d])L\s?(\d{1,2})/i.exec(f.name)[1] : 0);
+    const grp = new Map(), other = [];
+    mine.forEach(f => { const n = num(f); if (n && n <= 20) { if (!grp.has(n)) grp.set(n, []); grp.get(n).push(f); } else other.push(f); });
+    const ord = (a, b) => (a.fix || 99) - (b.fix || 99) || (b.added || 0) - (a.added || 0) || a.name.localeCompare(b.name, "de", { numeric: true });
+    const fold = (key, title, fs) => `<details class="lfold" data-k="${esc(key)}"${state.lfo.has(key) ? " open" : ""}><summary><span>${esc(title)}</span><b>${fs.length}</b></summary><div class="lfbody">${fs.sort(ord).map(rowH).join("")}</div></details>`;
+    const two = n => (n < 10 ? "0" : "") + n;
+    return [...grp.keys()].sort((a, b) => a - b).map(n => fold("k10:" + n, "Lektion " + two(n) + (K10LEK[n] ? " · " + K10LEK[n] : ""), grp.get(n))).join("") + (other.length ? fold("k10:_", "Weitere Dateien", other) : "");
+  }
   if (m.id === "vorlagen") {
     state.lfo = state.lfo || new Set();
     const fz = mine.filter(f => /Zuchwil/i.test(f.name)), ne = mine.filter(f => !/Zuchwil/i.test(f.name));
@@ -2239,8 +2287,10 @@ async function lektionen(m, el) {
     files = files.filter(f => f.mod === m.id);
   } catch (e) {
     if (FWZ.user) { cloudErr = /permission|insufficient/i.test(e.message || "") ? "Keine Berechtigung für Lektionen in der Datenbank (Firestore-Regeln fehlen)." : "Lektionen konnten nicht geladen werden (offline?)."; files = []; }
+    else if (m.id === "kurs10") { cloudErr = "Eigene Dateien können auf diesem Gerät nicht gespeichert werden (privater Modus?)."; files = []; }
     else { el.innerHTML = '<div class="note">Der Speicher im Browser ist nicht verfügbar (z. B. im privaten Modus). Lektionen können hier nicht abgelegt werden.</div>'; return; }
   }
+  if (m.id === "kurs10") files = k10Fix().concat(files);
   if (!state.lc) {
     el.innerHTML = '<div class="note">' + (FWZ.user ? 'Angemeldet als <b>' + esc(FWZ.label()) + '</b>. Lektionen sind für alle angemeldeten Mitglieder sichtbar. <button class="linkbtn" id="lgx">Abmelden</button>' : 'Lege hier PDF- oder Word-Lektionen pro Kapitel ab. Ohne Anmeldung bleiben sie nur auf diesem Gerät.') + (cloudErr ? '<br><b>' + cloudErr + '</b>' : '') + '</div><div class="grid">' + chs.map(c => {
       const n = files.filter(f => f.ch === c.k).length;
@@ -2253,10 +2303,10 @@ async function lektionen(m, el) {
   }
   const c = chs.find(x => x.k === state.lc) || chs[0];
   const mine = files.filter(f => f.ch === c.k).sort((a, b) => b.added - a.added);
-  const rowH = f => `<details class="hit les lfile" data-id="${f.id}"${state.lfo && state.lfo.has("f:" + f.id) ? " open" : ""}><summary><h3>${esc(f.name)}${isWord(f.name) ? ' <span class="tag plain">Word</span>' : ""}</h3></summary><p>${fmtSize(f.size)} · ${new Date(f.added).toLocaleDateString("de-CH")}${f.by ? " · von " + esc(f.by) : ""}</p>
-      <div class="lesact"><button class="btn" data-a="open">${isWord(f.name) ? "Öffnen / Laden" : "Öffnen"}</button><button class="btn" data-a="share">Teilen</button>${isWord(f.name) ? "" : '<button class="btn" data-a="print">Drucken</button>'}<button class="btn" data-a="ren">Umbenennen</button><button class="btn ghost" data-a="del">Löschen</button></div></details>`;
-  el.innerHTML = `${m.id === "vorlagen" ? "" : `<div class="banner"><h2>Kapitel ${c.k} – ${esc(c.n)}</h2><p>Lektionen als PDF oder Word-Datei</p></div>`}
-    <div class="lesbar"><span class="dzhint">PDF- oder Word-Dateien hierher ziehen oder</span> <label class="btn primary lesup">Datei hinzufügen (PDF / Word)<input type="file" id="lfile" accept="application/pdf,.pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple hidden></label></div>
+  const rowH = f => `<details class="hit les lfile" data-id="${f.id}"${state.lfo && state.lfo.has("f:" + f.id) ? " open" : ""}><summary><h3>${esc(f.name)}${isWord(f.name) ? ' <span class="tag plain">' + offTag(f.name) + '</span>' : ""}</h3></summary><p>${fmtSize(f.size)}${f.fix ? " · in der App enthalten" : " · " + new Date(f.added).toLocaleDateString("de-CH") + (f.by ? " · von " + esc(f.by) : "")}</p>
+      <div class="lesact"><button class="btn" data-a="open">${isWord(f.name) ? "Öffnen / Laden" : "Öffnen"}</button><button class="btn" data-a="share">Teilen</button>${isWord(f.name) ? "" : '<button class="btn" data-a="print">Drucken</button>'}${f.fix ? "" : '<button class="btn" data-a="ren">Umbenennen</button><button class="btn ghost" data-a="del">Löschen</button>'}</div></details>`;
+  el.innerHTML = `${/^(vorlagen|kurs10|kurs20)$/.test(m.id) ? "" : `<div class="banner"><h2>Kapitel ${c.k} – ${esc(c.n)}</h2><p>Lektionen als PDF oder Word-Datei</p></div>`}
+    <div class="lesbar"><span class="dzhint">PDF-, Word- oder PowerPoint-Dateien hierher ziehen oder</span> <label class="btn primary lesup">Datei hinzufügen (PDF / Word / PPT)<input type="file" id="lfile" accept="application/pdf,.pdf,.doc,.docx,.ppt,.pptx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.presentationml.presentation" multiple hidden></label></div>
     <div id="lmsg" class="sinfo" role="status"></div>
     <div class="sres">${mine.length || m.id === "vorlagen" ? lesGroups(m, c, mine, rowH) : '<p class="sinfo">Noch keine Dateien in diesem Kapitel.</p>'}</div>`;
   if (m.id === "vorlagen") vlLinksBind();
@@ -2264,7 +2314,7 @@ async function lektionen(m, el) {
   const upload = async list => {
     let ok = 0;
     for (const f of list) {
-      if (!/\.(pdf|docx?)$/i.test(f.name) && f.type !== "application/pdf") { msg.textContent = "«" + f.name + "» ist weder PDF noch Word-Datei."; continue; }
+      if (!/\.(pdf|docx?|pptx?)$/i.test(f.name) && f.type !== "application/pdf") { msg.textContent = "«" + f.name + "» ist weder PDF, Word- noch PowerPoint-Datei."; continue; }
       try {
         if (FWZ.user) await FWZ.addLesson(f, m.id, c.k, (i, n) => { msg.textContent = "Lade «" + f.name + "» hoch … " + i + "/" + n; });
         else await LDB.add({ mod: m.id, ch: c.k, name: f.name, size: f.size, added: Date.now(), blob: f });
@@ -2297,9 +2347,9 @@ async function lektionen(m, el) {
         inp.onkeydown = e => { if (e.key === "Enter") go(); else if (e.key === "Escape") lesView(); };
         return;
       }
-      if (a !== "del") { msg.textContent = f.cloud ? "Lade Datei …" : ""; }
+      if (a !== "del") { msg.textContent = f.cloud || f.fix ? "Lade Datei …" : ""; }
       let file = null;
-      if (a !== "del") { try { file = new File([f.cloud ? await FWZ.getLesson(f) : f.blob], f.name, { type: fileMime(f.name) }); msg.textContent = ""; } catch (err) { msg.textContent = err.message || "Datei konnte nicht geladen werden."; return; } }
+      if (a !== "del") { try { file = f.fix ? await k10Load(f, msg) : new File([f.cloud ? await FWZ.getLesson(f) : f.blob], f.name, { type: fileMime(f.name) }); msg.textContent = ""; } catch (err) { msg.textContent = err.message || "Datei konnte nicht geladen werden."; return; } }
       if (a === "open") { if (isWord(f.name)) aoPdfActs(file, msg).open(); else { const u = URL.createObjectURL(file); const w = window.open(u, "_blank"); if (!w) location.href = u; setTimeout(() => URL.revokeObjectURL(u), 60000); } }
       else if (a === "share") {
         try { if (navigator.canShare && navigator.canShare({ files: [file] })) await navigator.share({ files: [file], title: f.name }); else msg.textContent = "Teilen wird von diesem Gerät nicht unterstützt. Nutze «Öffnen» und dort das Teilen-Symbol."; }
