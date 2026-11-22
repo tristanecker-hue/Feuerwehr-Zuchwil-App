@@ -678,6 +678,9 @@ html.dv .adlf{align-content:start}html.dv .adlf+.foot{max-width:none}
 .wrow.log { align-items: baseline; }
 .wrow.log .fzd { flex: none; color: var(--muted); font-size: .9rem; font-variant-numeric: tabular-nums; min-width: 88px; }
 .wrow.log .fzt { flex: 1; min-width: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+.lgimgs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.lgimgs img { width: 62px; height: 62px; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); cursor: zoom-in; }
+.nth img { cursor: zoom-in; }
 
 .natt { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; margin: 10px 0; display: flex; flex-direction: column; gap: 10px; }
 .natt > span { font-weight: 600; overflow-wrap: anywhere; }
